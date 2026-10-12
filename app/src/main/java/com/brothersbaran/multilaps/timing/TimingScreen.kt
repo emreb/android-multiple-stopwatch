@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.LocalContentColor
@@ -33,6 +35,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brothersbaran.multilaps.R
 import com.brothersbaran.multilaps.stopwatch.Stopwatch
@@ -47,7 +50,11 @@ private const val SIDEWAYS_COLUMNS = 4
 private val MIN_TILE_WIDTH = 120.dp
 private val GAP = 8.dp
 
-/** What reset all needs beside the tiles; without it to spare, it stays above them. */
+/**
+ * What reset all is given beside the tiles, gap included; without that much to spare, it stays
+ * above them. It is held to this width, shrinking its label if need be, so that enlarged text
+ * cannot take from the tiles more than was allowed for.
+ */
 private val WIDTH_FOR_RESET_ALL = 104.dp
 
 /**
@@ -100,7 +107,7 @@ fun TimingScreen(viewModel: TimingViewModel) {
             if (resetAllBeside) {
                 Row(horizontalArrangement = Arrangement.spacedBy(GAP)) {
                     grid(Modifier.weight(1f))
-                    resetAll(Modifier.align(Alignment.Top))
+                    resetAll(Modifier.align(Alignment.Top).width(WIDTH_FOR_RESET_ALL - GAP))
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
@@ -194,13 +201,19 @@ private fun ResetAllButton(
                     role = Role.Button,
                     onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
                 )
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 8.dp)
                 .testTag("reset-all"),
         ) {
             Text(
                 text = stringResource(if (undoOffered) R.string.action_undo else R.string.action_reset_all),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 11.sp,
+                    maxFontSize = MaterialTheme.typography.titleMedium.fontSize,
+                    stepSize = 1.sp,
+                ),
             )
         }
     }

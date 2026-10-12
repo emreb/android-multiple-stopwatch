@@ -84,6 +84,7 @@ private val SHORT_TILE_LAP_BUTTON_HEIGHT = 56.dp
 private val SHORT_TILE_STOP_BUTTON_HEIGHT = 48.dp
 private val SHORT_TILE_CURRENT_LAP = 46.sp
 private val SHORT_TILE_LAP_LINE = 27.sp
+private val CLOSED_UP_CAPTION = 14.sp
 
 /**
  * One stopwatch, solid in its colour in every state so a runner is found by colour. What it is
@@ -225,12 +226,11 @@ private fun Figures(
         LabelledLap(R.string.best_lap_label, R.string.best_lap_description, stopwatch.bestLap, lapStyle)
     }
     // The two figures looked at least, small. Each has a line to itself, since a total past an
-    // hour is long. A short tile cannot spare the line, so there they share one, and the total
-    // shrinks if it must to stay whole beside the lap count.
+    // hour is long. A short tile cannot spare the line, so there they share one, closed up.
     if (totalAndLapCountOnOneLine) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TotalTime(totalTime, shrinkToFit = true, modifier = Modifier.weight(1f))
-            LapCount(stopwatch.lapCount, modifier = Modifier.width(IntrinsicSize.Max))
+            TotalTime(totalTime, closeUp = true, modifier = Modifier.weight(1f))
+            LapCount(stopwatch.lapCount, closeUp = true, modifier = Modifier.width(IntrinsicSize.Max))
         }
     } else {
         Column {
@@ -272,24 +272,25 @@ private fun CurrentLap(currentLap: String, state: StopwatchState, colour: Stopwa
 }
 
 @Composable
-private fun TotalTime(totalTime: String, modifier: Modifier = Modifier, shrinkToFit: Boolean = false) {
+private fun TotalTime(totalTime: String, modifier: Modifier = Modifier, closeUp: Boolean = false) {
     LabelledValue(
         label = R.string.total_time_label,
         value = totalTime,
         description = R.string.total_time_description,
         valueStyle = FigureStyles.small,
-        shrinkToFit = shrinkToFit,
+        closeUp = closeUp,
         modifier = modifier,
     )
 }
 
 @Composable
-private fun LapCount(lapCount: Int, modifier: Modifier = Modifier) {
+private fun LapCount(lapCount: Int, modifier: Modifier = Modifier, closeUp: Boolean = false) {
     LabelledValue(
         label = R.string.lap_count_label,
         value = lapCount.toString(),
         description = R.string.lap_count_description,
         valueStyle = FigureStyles.small,
+        closeUp = closeUp,
         modifier = modifier,
     )
 }
@@ -318,26 +319,32 @@ private fun LabelledValue(
     valueStyle: TextStyle,
     modifier: Modifier = Modifier,
     spokenValue: String = value,
-    shrinkToFit: Boolean = false,
+    closeUp: Boolean = false,
 ) {
     val spoken = stringResource(description, spokenValue)
     Row(
-        horizontalArrangement = Arrangement.spacedBy(if (shrinkToFit) 4.dp else 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (closeUp) 4.dp else 8.dp),
         verticalAlignment = Alignment.Bottom,
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
     ) {
-        Text(stringResource(label), style = FigureStyles.small, maxLines = 1)
+        // Sharing a line, the captions give ground so the values keep theirs.
+        Text(
+            text = stringResource(label),
+            style = if (closeUp) FigureStyles.small.copy(fontSize = CLOSED_UP_CAPTION) else FigureStyles.small,
+            maxLines = 1,
+        )
         Text(
             text = value,
             style = valueStyle,
             textAlign = TextAlign.End,
             maxLines = 1,
             softWrap = false,
-            autoSize = if (shrinkToFit) {
-                TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = valueStyle.fontSize, stepSize = 1.sp)
-            } else {
-                null
-            },
+            // A value never loses digits to a narrow tile or enlarged text; it shrinks instead.
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 11.sp,
+                maxFontSize = valueStyle.fontSize,
+                stepSize = 1.sp,
+            ),
             modifier = Modifier.weight(1f),
         )
     }

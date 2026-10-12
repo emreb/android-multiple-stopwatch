@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.brothersbaran.multilaps.Devices.BARELY_WIDE_ENOUGH
 import com.brothersbaran.multilaps.Devices.COMMON_PHONE_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.LANDSCAPE_PHONE
 import com.brothersbaran.multilaps.Devices.PORTRAIT_PHONE
@@ -479,6 +480,18 @@ class TimingScreenTest {
             tiles.all { it.height.value >= 0.9f * screen.height.value },
         )
         assertTrue("$control is large enough to hit", control.height >= 48.dp && control.width >= 48.dp)
+    }
+
+    @Test
+    @Config(qualifiers = BARELY_WIDE_ENOUGH, fontScale = 1.5f)
+    fun `beside the stopwatches, reset all takes no more than it was allowed, even with enlarged text`() {
+        val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val tiles = tileBounds()
+
+        assertTrue("reset all is ${control.width} wide", control.width <= 96.dp)
+        assertTrue(tiles.all { it.right <= control.left })
+        assertTrue("tiles are ${tiles.first().width} wide", tiles.all { it.width >= 120.dp })
+        assertButtonsAreLarge()
     }
 
     @Test
