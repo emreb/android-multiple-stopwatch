@@ -10,9 +10,11 @@ MultiLaps keeps three things, and only on your device:
 
 - The names you give the stopwatches.
 - The colours you choose for them.
-- The current timing: whether each stopwatch is running, and its lap times.
+- The current timing: whether each stopwatch is running, and its lap times. Alongside it the app notes when your device was last switched on, which is how a running stopwatch keeps the right time after a restart.
 
-This is kept so that your stopwatches are still there when you reopen the app. It is deleted when you reset the stopwatches, clear the app's data, or uninstall the app.
+This is kept so that your stopwatches are still there when you reopen the app.
+
+Resetting a stopwatch deletes its timing and lap times, but keeps its name and colour. A name or colour stays until you change it. Clearing the app's data, or uninstalling the app, deletes all of it.
 
 ## What the app does not do
 

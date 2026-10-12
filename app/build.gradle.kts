@@ -18,17 +18,25 @@ android {
 
     // The upload key lives outside the repository. Its location and passwords come from Gradle
     // properties, normally ~/.gradle/gradle.properties; without them a release build is left
-    // unsigned, which is all a machine that never uploads needs.
-    val uploadStoreFile = providers.gradleProperty("MULTILAPS_UPLOAD_STORE_FILE").orNull?.takeIf { it.isNotBlank() }
+    // unsigned, which is all a machine that never uploads needs. The store path is taken as
+    // written: give it in full, since "~" is not expanded.
+    fun signingProperty(name: String): String? = providers.gradleProperty(name).orNull?.takeIf { it.isNotBlank() }
+    fun requiredSigningProperty(name: String): String =
+        signingProperty(name) ?: error("$name is not set, though MULTILAPS_UPLOAD_STORE_FILE is")
+
+    val uploadStoreFile = signingProperty("MULTILAPS_UPLOAD_STORE_FILE")
     signingConfigs {
         if (uploadStoreFile != null) {
             create("upload") {
                 storeFile = file(uploadStoreFile)
-                storePassword = providers.gradleProperty("MULTILAPS_UPLOAD_STORE_PASSWORD").get()
-                keyAlias = providers.gradleProperty("MULTILAPS_UPLOAD_KEY_ALIAS").get()
-                keyPassword = providers.gradleProperty("MULTILAPS_UPLOAD_KEY_PASSWORD").get()
+                storePassword = requiredSigningProperty("MULTILAPS_UPLOAD_STORE_PASSWORD")
+                keyAlias = requiredSigningProperty("MULTILAPS_UPLOAD_KEY_ALIAS")
+                keyPassword = requiredSigningProperty("MULTILAPS_UPLOAD_KEY_PASSWORD")
             }
         }
+    }
+    if (uploadStoreFile == null && gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+        logger.warn("MultiLaps: no upload key is configured, so this release build will be unsigned.")
     }
 
     buildTypes {
