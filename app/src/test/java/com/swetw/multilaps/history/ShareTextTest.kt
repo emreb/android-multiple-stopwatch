@@ -29,7 +29,35 @@ class ShareTextTest {
             Lap 2: 1:22.00
             Lap 3: 1:25.00
             """.trimIndent(),
-            shareText(ada, lisbon, Locale.UK, resources),
+            shareText(listOf(ada), lisbon, Locale.UK, resources),
+        )
+    }
+
+    @Test
+    fun `several results are shared together, each day's under its date`() {
+        val ada = result(1, "2026-10-12T16:42", lisbon, name = "Ada", laps = listOf(83))
+        val leo = result(2, "2026-10-12T16:40", lisbon, name = "Leo", laps = listOf(90))
+        val mia = result(3, "2026-10-10T09:05", lisbon, name = "Mia", laps = listOf(75))
+
+        assertEquals(
+            """
+            MultiLaps, Monday, 12 October 2026
+
+            Ada, 16:42
+            Total 1:23.00, 1 lap, best 1:23.00
+            Lap 1: 1:23.00
+
+            Leo, 16:40
+            Total 1:30.00, 1 lap, best 1:30.00
+            Lap 1: 1:30.00
+
+            MultiLaps, Saturday, 10 October 2026
+
+            Mia, 09:05
+            Total 1:15.00, 1 lap, best 1:15.00
+            Lap 1: 1:15.00
+            """.trimIndent(),
+            shareText(listOf(ada, leo, mia), lisbon, Locale.UK, resources),
         )
     }
 
@@ -39,13 +67,13 @@ class ShareTextTest {
 
         assertEquals(
             listOf("Leo, 16:40", "Total 1:02:05.00, 1 lap, best 1:02:05.00", "Lap 1: 1:02:05.00"),
-            shareText(leo, lisbon, Locale.UK, resources).lines().drop(2),
+            shareText(listOf(leo), lisbon, Locale.UK, resources).lines().drop(2),
         )
     }
 
     @Test
     fun `dates and times of day are written the way the phone's language writes them`() {
-        val american = shareText(result(1, "2026-10-12T16:42", lisbon), lisbon, Locale.US, resources)
+        val american = shareText(listOf(result(1, "2026-10-12T16:42", lisbon)), lisbon, Locale.US, resources)
 
         assertEquals("MultiLaps, Monday, October 12, 2026", american.lines().first())
         assertEquals("1, 4:42 PM", american.lines()[2].replace('\u202f', ' '))

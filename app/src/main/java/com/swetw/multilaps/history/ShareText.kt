@@ -19,13 +19,21 @@ fun formatTimeOfDay(time: ZonedDateTime, locale: Locale): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(time)
 
 /**
- * One result as plain text to hand to another app: the date, whose it was and when, its figures,
- * and every lap in the order the laps were run.
+ * Results as plain text to hand to another app. Each day's come under its date: whose each was
+ * and when, its figures, and every lap in the order the laps were run. They stay in the order given.
  */
-fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
-    val reset = result.resetTime(zone)
-    val title = resources.getString(R.string.share_title, formatDate(reset.toLocalDate(), locale))
-    val heading = resources.getString(R.string.share_result_heading, result.name, formatTimeOfDay(reset, locale))
+fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Resources): String =
+    results.byDay(zone).joinToString("\n\n") { day ->
+        val title = resources.getString(R.string.share_title, formatDate(day.date, locale))
+        (listOf(title) + day.results.map { shareText(it, zone, locale, resources) }).joinToString("\n\n")
+    }
+
+private fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
+    val heading = resources.getString(
+        R.string.share_result_heading,
+        result.name,
+        formatTimeOfDay(result.resetTime(zone), locale),
+    )
     val summary = resources.getString(
         R.string.share_result_summary,
         formatTime(result.totalTime),
@@ -35,5 +43,5 @@ fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources
     val laps = result.laps.mapIndexed { index, lap ->
         resources.getString(R.string.share_lap, index + 1, formatTime(lap))
     }
-    return (listOf(title, "", heading, summary) + laps).joinToString("\n")
+    return (listOf(heading, summary) + laps).joinToString("\n")
 }

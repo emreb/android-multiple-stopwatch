@@ -21,4 +21,4 @@ Nothing in the way
 No ads. No account. No internet connection: the app cannot go online, and your times stay on your phone unless you choose to share them.
 
 Look back later
-Reset a stopwatch and what it timed is kept in History, by day. Open a result to see every lap, or share it as text. Results stay on your phone until you delete them.
+Reset a stopwatch and what it timed is kept in History, by day. Open a result to see every lap. Share one result as text, or pick several and share them together. Results stay on your phone until you delete them.

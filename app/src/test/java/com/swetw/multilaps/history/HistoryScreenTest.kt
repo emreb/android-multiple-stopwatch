@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertContentDescriptionEquals
@@ -22,6 +23,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
@@ -225,10 +230,200 @@ class HistoryScreenTest {
         assertEquals(Intent.ACTION_SEND, send.action)
         assertEquals("text/plain", send.type)
         val text = send.getStringExtra(Intent.EXTRA_TEXT)!!
-        assertEquals(shareText(ada, lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources), text)
+        assertEquals(shareText(listOf(ada), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources), text)
         assertTrue("Lap 3: 1:25.00" in text)
         assertFalse("Leo" in text)
         assertFalse("Mia" in text)
+    }
+
+    private fun sharedText(): String {
+        val chooser = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
+        assertEquals(Intent.ACTION_CHOOSER, chooser.action)
+        val send = chooser.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
+        assertEquals(Intent.ACTION_SEND, send.action)
+        assertEquals("text/plain", send.type)
+        return send.getStringExtra(Intent.EXTRA_TEXT)!!
+    }
+
+    private fun longPress(name: String) = row(name).performTouchInput { longClick() }
+    private fun selectionCount() = composeRule.onNodeWithTag("selection-count")
+    private fun shareSelected() = composeRule.onNodeWithTag("share-selected")
+    private fun cancelSelection() = composeRule.onNodeWithTag("cancel-selection")
+    private fun assertSelected(name: String, selected: Boolean) = assertEquals(
+        selected,
+        row(name).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected) == true,
+    )
+
+    @Test
+    fun `swiping a result to the left asks whether to delete it, and deletes only it`() {
+        show()
+        row("Leo").performTouchInput { swipeLeft() }
+
+        composeRule.onNodeWithText("Delete 1 result?").assertIsDisplayed()
+        assertEquals(3, results.size)
+
+        composeRule.onNodeWithTag("confirm-delete").performClick()
+
+        assertEquals(listOf(ada, mia), results)
+        rows().assertCountEquals(2)
+    }
+
+    @Test
+    fun `deciding against a swiped delete puts the result back where it was`() {
+        show()
+        val before = row("Leo").getUnclippedBoundsInRoot()
+        row("Leo").performTouchInput { swipeLeft() }
+        composeRule.onNodeWithTag("cancel-delete").performClick()
+
+        assertEquals(3, results.size)
+        assertEquals(before, row("Leo").assertIsDisplayed().getUnclippedBoundsInRoot())
+    }
+
+    @Test
+    fun `swiping a result to the right does nothing`() {
+        show()
+        row("Leo").performTouchInput { swipeRight() }
+
+        composeRule.onNodeWithText("Delete 1 result?").assertDoesNotExist()
+        assertEquals(3, results.size)
+    }
+
+    @Test
+    fun `a screen reader is offered delete on a result, since it cannot swipe`() {
+        show()
+        val actions = row("Leo").fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        assertEquals(listOf("Delete"), actions.map { it.label })
+
+        composeRule.runOnUiThread { actions.single().action() }
+
+        composeRule.onNodeWithText("Delete 1 result?").assertIsDisplayed()
+    }
+
+    @Test
+    fun `pressing and holding a result selects it, and tapping others adds them`() {
+        show()
+        longPress("Ada")
+
+        selectionCount().assertTextEquals("1 selected")
+        assertSelected("Ada", true)
+        assertSelected("Leo", false)
+        composeRule.onNodeWithTag("result-detail").assertDoesNotExist()
+
+        row("Mia").performClick()
+
+        selectionCount().assertTextEquals("2 selected")
+        assertSelected("Mia", true)
+        composeRule.onNodeWithTag("result-detail").assertDoesNotExist()
+    }
+
+    @Test
+    fun `tapping a selected result deselects it, and with none left the list is as it was`() {
+        show()
+        longPress("Ada")
+        row("Mia").performClick()
+        row("Ada").performClick()
+
+        selectionCount().assertTextEquals("1 selected")
+        assertSelected("Ada", false)
+
+        row("Mia").performClick()
+
+        selectionCount().assertDoesNotExist()
+        deleteAll().assertIsDisplayed()
+        row("Mia").performClick()
+        composeRule.onNodeWithTag("result-detail").assertIsDisplayed()
+    }
+
+    @Test
+    fun `the selected results are shared together, and no others`() {
+        show()
+        longPress("Ada")
+        row("Mia").performClick()
+        shareSelected().performClick()
+
+        val text = sharedText()
+        assertEquals(
+            shareText(listOf(ada, mia), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources),
+            text,
+        )
+        assertTrue("Ada" in text && "Mia" in text)
+        assertFalse("Leo" in text)
+    }
+
+    @Test
+    fun `sharing ends the selection`() {
+        show()
+        longPress("Ada")
+        shareSelected().performClick()
+
+        selectionCount().assertDoesNotExist()
+        assertSelected("Ada", false)
+    }
+
+    @Test
+    fun `cancel ends the selection without sharing or leaving history`() {
+        show()
+        longPress("Ada")
+        cancelSelection().performClick()
+
+        selectionCount().assertDoesNotExist()
+        assertSelected("Ada", false)
+        assertFalse(wentBack)
+        assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity)
+        rows().assertCountEquals(3)
+    }
+
+    @Test
+    fun `a selected result that is deleted meanwhile is no longer counted or shared`() {
+        show()
+        longPress("Ada")
+        row("Leo").performClick()
+
+        results = listOf(leo, mia)
+
+        selectionCount().assertTextEquals("1 selected")
+        shareSelected().performClick()
+        assertFalse("Ada" in sharedText())
+    }
+
+    @Test
+    fun `while selecting, a swipe does not offer to delete`() {
+        show()
+        longPress("Ada")
+        row("Leo").performTouchInput { swipeLeft() }
+
+        composeRule.onNodeWithText("Delete 1 result?").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the selection is still there after the screen is rebuilt, as on turning the phone`() {
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        longPress("Ada")
+        row("Mia").performClick()
+
+        restoration.emulateSavedInstanceStateRestore()
+
+        selectionCount().assertTextEquals("2 selected")
+        assertSelected("Ada", true)
+        assertSelected("Leo", false)
+    }
+
+    @Test
+    fun `a result says that holding it selects it`() {
+        show()
+
+        val label = row("Ada").fetchSemanticsNode().config[SemanticsActions.OnLongClick].label
+        assertEquals("select", label)
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
+    fun `the selection's controls keep their size and stay on screen on a small phone with enlarged text`() {
+        show()
+        longPress("Ada")
+
+        assertLargeAndOnScreen(cancelSelection(), shareSelected())
     }
 
     @Test

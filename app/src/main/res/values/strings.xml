@@ -77,6 +77,15 @@
     <string name="result_description">%1$s, %2$s, total time %3$s, %4$s, best lap %5$s</string>
     <!-- What tapping a result does, spoken after "double tap to". -->
     <string name="show_result">show its laps</string>
+    <!-- How many results are selected, shown in place of the title while selecting. -->
+    <plurals name="selection_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <!-- What pressing and holding a result does, spoken after "double tap and hold to". -->
+    <string name="select_result">select</string>
+    <!-- What tapping a result does while selecting, spoken after "double tap to". -->
+    <string name="toggle_result">select or deselect</string>
     <!-- A result as shared text. The placeholder of the title is the date. -->
     <string name="share_title">MultiLaps, %1$s</string>
     <!-- A result's heading in shared text: name, then time of day. -->

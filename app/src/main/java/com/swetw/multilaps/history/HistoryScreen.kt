@@ -4,8 +4,19 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.selected
+import com.swetw.multilaps.timing.contentColor
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -96,7 +107,16 @@ fun HistoryScreen(
         ) {
             if (open == null) {
                 BackHandler(onBack = onBack)
-                ResultList(results, listState, zone, locale, onResultPressed = { openResultId = it }, onAllResultsDeleted, onBack)
+                ResultList(
+                    results = results,
+                    listState = listState,
+                    zone = zone,
+                    locale = locale,
+                    onResultPressed = { openResultId = it },
+                    onResultDeleted = onResultDeleted,
+                    onAllResultsDeleted = onAllResultsDeleted,
+                    onBack = onBack,
+                )
             } else {
                 BackHandler { openResultId = null }
                 ResultDetail(open, zone, locale, onDeleted = { onResultDeleted(open.id) }, onBack = { openResultId = null })
@@ -105,6 +125,11 @@ fun HistoryScreen(
     }
 }
 
+/**
+ * The results by day. A tap opens one; a swipe to the left offers to delete it; pressing and
+ * holding one selects it, after which taps select and deselect, and what is selected can be shared
+ * together.
+ */
 @Composable
 private fun ResultList(
     results: List<Result>,
@@ -112,19 +137,49 @@ private fun ResultList(
     zone: ZoneId,
     locale: Locale,
     onResultPressed: (id: Long) -> Unit,
+    onResultDeleted: (id: Long) -> Unit,
     onAllResultsDeleted: () -> Unit,
     onBack: () -> Unit,
 ) {
-    var confirming by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    var confirmingDeleteAll by rememberSaveable { mutableStateOf(false) }
+    // The result a swipe has offered to delete, until that is answered.
+    var deleting by rememberSaveable { mutableStateOf<Long?>(null) }
+    var selectedIds by rememberSaveable(stateSaver = SelectionSaver) { mutableStateOf(emptySet<Long>()) }
+    // Only what is still there counts, so a result deleted meanwhile drops out of the selection.
+    val selected = results.filter { it.id in selectedIds }
+    val selecting = selected.isNotEmpty()
+    fun toggle(id: Long) {
+        val ids = selected.map { it.id }.toSet()
+        selectedIds = if (id in ids) ids - id else ids + id
+    }
 
-    TopBar(
-        title = stringResource(R.string.history_title),
-        onBack = onBack,
-        action = R.string.action_delete_all,
-        actionEnabled = results.isNotEmpty(),
-        onAction = { confirming = true },
-        actionTag = "delete-all",
-    )
+    if (selecting) {
+        BackHandler { selectedIds = emptySet() }
+        TopBar(
+            title = pluralStringResource(R.plurals.selection_count, selected.size, selected.size),
+            titleTag = "selection-count",
+            back = R.string.action_cancel,
+            backTag = "cancel-selection",
+            onBack = { selectedIds = emptySet() },
+            action = R.string.action_share,
+            actionEnabled = true,
+            onAction = {
+                context.share(shareText(selected, zone, locale, context.resources))
+                selectedIds = emptySet()
+            },
+            actionTag = "share-selected",
+        )
+    } else {
+        TopBar(
+            title = stringResource(R.string.history_title),
+            onBack = onBack,
+            action = R.string.action_delete_all,
+            actionEnabled = results.isNotEmpty(),
+            onAction = { confirmingDeleteAll = true },
+            actionTag = "delete-all",
+        )
+    }
     if (results.isEmpty()) {
         Text(
             text = stringResource(R.string.no_results_yet),
@@ -142,23 +197,45 @@ private fun ResultList(
                     DayHeading(formatDate(day.date, locale))
                 }
                 items(day.results, key = { "result-${it.id}" }) { result ->
-                    ResultRow(result, zone, locale, onPressed = { onResultPressed(result.id) })
+                    ResultRow(
+                        result = result,
+                        zone = zone,
+                        locale = locale,
+                        selecting = selecting,
+                        selected = result.id in selectedIds,
+                        onPressed = { if (selecting) toggle(result.id) else onResultPressed(result.id) },
+                        onHeld = { toggle(result.id) },
+                        onDeleteAsked = { deleting = result.id },
+                    )
                 }
             }
         }
     }
-    if (confirming) {
+    if (confirmingDeleteAll) {
         ConfirmDelete(
             count = results.size,
             confirm = R.string.action_delete_all,
             onConfirmed = {
-                confirming = false
+                confirmingDeleteAll = false
                 onAllResultsDeleted()
             },
-            onDismissed = { confirming = false },
+            onDismissed = { confirmingDeleteAll = false },
+        )
+    }
+    deleting?.let { id ->
+        ConfirmDelete(
+            count = 1,
+            confirm = R.string.action_delete,
+            onConfirmed = {
+                deleting = null
+                onResultDeleted(id)
+            },
+            onDismissed = { deleting = null },
         )
     }
 }
+
+private val SelectionSaver = Saver<Set<Long>, LongArray>(save = { it.toLongArray() }, restore = { it.toSet() })
 
 /** Hands [text] to whichever app the user picks from the phone's own share sheet. */
 private fun Context.share(text: String) {
@@ -175,6 +252,9 @@ private fun TopBar(
     actionEnabled: Boolean,
     onAction: () -> Unit,
     actionTag: String,
+    @StringRes back: Int = R.string.action_back,
+    backTag: String = "history-back",
+    titleTag: String = "history-title",
 ) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(GAP),
@@ -182,11 +262,11 @@ private fun TopBar(
         modifier = Modifier.fillMaxWidth(),
     ) {
         ScreenButton(
-            label = R.string.action_back,
+            label = back,
             enabled = true,
             outlined = true,
             onClick = onBack,
-            modifier = Modifier.testTag("history-back"),
+            modifier = Modifier.testTag(backTag),
         )
         Text(
             text = title,
@@ -194,7 +274,7 @@ private fun TopBar(
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f).semantics { heading() },
+            modifier = Modifier.weight(1f).testTag(titleTag).semantics { heading() },
         )
         ScreenButton(
             label = action,
@@ -215,49 +295,108 @@ private fun DayHeading(date: String) {
     )
 }
 
-/** One result in the list: whose it was, when, and the three figures worth comparing. */
+/**
+ * One result in the list: whose it was, when, and the three figures worth comparing. Swiped to
+ * the left it offers to be deleted, and springs back to wait for the answer; a screen reader,
+ * which cannot swipe, is offered the same as an action.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ResultRow(result: Result, zone: ZoneId, locale: Locale, onPressed: () -> Unit) {
+private fun ResultRow(
+    result: Result,
+    zone: ZoneId,
+    locale: Locale,
+    selecting: Boolean,
+    selected: Boolean,
+    onPressed: () -> Unit,
+    onHeld: () -> Unit,
+    onDeleteAsked: () -> Unit,
+) {
     val timeOfDay = formatTimeOfDay(result.resetTime(zone), locale)
     val total = formatTime(result.totalTime)
     val best = formatTime(result.bestLap)
     val laps = pluralStringResource(R.plurals.lap_count, result.lapCount, result.lapCount)
     val spoken = stringResource(R.string.result_description, result.name, timeOfDay, total, laps, best)
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .clip(BUTTON_SHAPE)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .clickable(onClickLabel = stringResource(R.string.show_result), role = Role.Button, onClick = onPressed)
-            .testTag("result-row")
-            .semantics(mergeDescendants = true) {
-                contentDescription = spoken
-                this[StopwatchColourKey] = result.colour
+    val delete = stringResource(R.string.action_delete)
+    val ink = MaterialTheme.colorScheme.onBackground
+    val askToDelete by rememberUpdatedState(onDeleteAsked)
+    val swipe = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) askToDelete()
+            // Never carried through here: the row stays until the question is answered.
+            false
+        },
+    )
+    SwipeToDismissBox(
+        state = swipe,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = !selecting,
+        backgroundContent = {
+            Box(
+                contentAlignment = Alignment.CenterEnd,
+                modifier = Modifier.fillMaxSize().clip(BUTTON_SHAPE).background(ink).padding(horizontal = 16.dp),
+            ) {
+                Text(delete, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.background)
             }
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        },
     ) {
-        Box(Modifier.size(28.dp).clip(BUTTON_SHAPE).background(result.colour.color))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = result.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .clip(BUTTON_SHAPE)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .then(if (selected) Modifier.border(2.dp, ink, BUTTON_SHAPE) else Modifier)
+                .combinedClickable(
+                    onClickLabel = stringResource(if (selecting) R.string.toggle_result else R.string.show_result),
+                    onLongClickLabel = stringResource(R.string.select_result),
+                    role = Role.Button,
+                    onLongClick = onHeld,
+                    onClick = onPressed,
                 )
-                Text(total, style = FigureStyles.lap, maxLines = 1)
+                .testTag("result-row")
+                .semantics(mergeDescendants = true) {
+                    contentDescription = spoken
+                    this[StopwatchColourKey] = result.colour
+                    if (selecting) this.selected = selected
+                    if (!selecting) {
+                        customActions = listOf(
+                            CustomAccessibilityAction(delete) {
+                                onDeleteAsked()
+                                true
+                            },
+                        )
+                    }
+                }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.size(28.dp).clip(BUTTON_SHAPE).background(result.colour.color),
+            ) {
+                if (selected) Text("✓", color = result.colour.contentColor, style = MaterialTheme.typography.titleMedium)
             }
-            // One line that may run to two, so that on a narrow phone with enlarged text the
-            // lesser figures wrap instead of squeezing the name out.
-            Text(
-                text = stringResource(R.string.result_details, timeOfDay, laps, best),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = result.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(total, style = FigureStyles.lap, maxLines = 1)
+                }
+                // One line that may run to two, so that on a narrow phone with enlarged text the
+                // lesser figures wrap instead of squeezing the name out.
+                Text(
+                    text = stringResource(R.string.result_details, timeOfDay, laps, best),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
@@ -298,7 +437,7 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 label = R.string.action_share,
                 enabled = true,
                 outlined = true,
-                onClick = { context.share(shareText(result, zone, locale, context.resources)) },
+                onClick = { context.share(shareText(listOf(result), zone, locale, context.resources)) },
                 modifier = Modifier.testTag("share-result"),
             )
         }
