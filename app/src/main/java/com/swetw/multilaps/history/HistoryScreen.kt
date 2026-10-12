@@ -497,6 +497,9 @@ private fun Figure(@StringRes caption: Int, @StringRes description: Int, value: 
 private fun ConfirmDelete(count: Int, @StringRes confirm: Int, onConfirmed: () -> Unit, onDismissed: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismissed,
+        // The theme's own plain grey, not the tinted default, which is the one colour on the screen
+        // that is neither black, white nor a stopwatch's.
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         title = { Text(pluralStringResource(R.plurals.delete_question, count, count)) },
         text = { Text(stringResource(R.string.delete_cannot_be_undone)) },
         confirmButton = {
