@@ -1,0 +1,43 @@
+# MultiLaps
+
+Timing several runners at once from the trackside, where each runner sets off at a different moment and laps are recorded by hand.
+
+## Language
+
+**Stopwatch**:
+One independent timer for one runner, carrying its own name, colour, state and laps. There are always four.
+_Avoid_: Timer, lane, runner
+
+**Lap**:
+One completed circuit, measured from the previous lap press (or the start) to the next lap press. Time spent stopped is not part of a lap.
+_Avoid_: Split, round
+
+**Current lap**:
+The lap in progress, not yet completed.
+
+**Last lap**:
+The most recently completed lap.
+
+**Best lap**:
+The shortest completed lap on a stopwatch since its last reset.
+_Avoid_: Fastest lap, record
+
+**Total time**:
+The running time accumulated on a stopwatch since its last reset, excluding time spent stopped. It includes the current lap, so it can exceed the sum of completed laps.
+_Avoid_: Elapsed, duration
+
+**Reset**:
+Returning a stopwatch to idle, discarding its laps. Name and colour are kept.
+_Avoid_: Clear
+
+## Stopwatch states
+
+**Idle**:
+Never started since the last reset; shows zero and has no laps.
+
+**Running**:
+Time is advancing.
+
+**Stopped**:
+Time is held and can be resumed; laps are kept.
+_Avoid_: Paused
