@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.brothersbaran.multilaps"
+    namespace = "com.swetw.multilaps"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.brothersbaran.multilaps"
+        applicationId = "com.swetw.multilaps"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
