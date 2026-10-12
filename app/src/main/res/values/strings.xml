@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MultiLaps</string>
+    <string name="action_start">Start</string>
+    <string name="total_time_description">Total time %1$s</string>
+</resources>
