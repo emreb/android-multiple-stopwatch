@@ -31,6 +31,11 @@ shot 1080,1920 docs/play-store/screenshots/1-time-four-runners.png 1-time-four-r
 Screenshots 2 to 5 are 1080 x 1920 like the first; number 6 is 1920 x 1080. Google Play
 refuses screenshots with transparency, and Chrome writes none here.
 
+A redrawn image looks the same as the committed one but is not the same bytes, so git
+will show it as changed. Only commit a redraw when the picture itself has changed. The kit's
+body text is set in Avenir Next, which ships with macOS; drawn elsewhere it falls back to
+another typeface and the pages reflow.
+
 The pages frame the plain screenshots in `marketing/screenshots/`. Those were taken from
 an emulator (a Pixel 9 Pro image) with a race staged on it. If the app's look changes,
 retake them under the same file names before redrawing.

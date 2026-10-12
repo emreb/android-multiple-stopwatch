@@ -302,7 +302,7 @@
     </div>
     <div>
       <img class="phone" src="../screenshots/4-race-dark.png" alt="">
-      <div class="cap">5. Bright in the sun, dark at dusk</div>
+      <div class="cap">5. Light by day, dark at dusk</div>
       <p class="capsub">Follows the phone's light or dark setting. The colours stay the same.</p>
     </div>
     <div style="align-self: center;">
@@ -352,7 +352,7 @@
   </div>
 
   <h2 style="margin-top:6mm;">Feature graphic</h2>
-  <p class="small quiet">A layout for the 1024 × 500 px banner Google Play requires, shown at reduced size. It needs rebuilding at full size before upload.</p>
+  <p class="small quiet">A layout for the 1024 × 500 px banner Google Play requires, shown at reduced size. The full-size file is in <code>docs/play-store/</code>.</p>
   <div class="graphic">
     <div class="t"><div class="n">MultiLaps</div><div class="l">Four stopwatches.<br>One screen.<br>Every lap.</div></div>
     <img src="../screenshots/3-race-landscape.png" alt="">
@@ -448,8 +448,8 @@
 
   <h2>Claims to confirm on a real phone</h2>
   <table class="todo">
-    <tr><td>1</td><td><b>"Feel every press."</b> The lap vibration was fixed after it failed on a Pixel 10 with touch feedback off, and has not been re-confirmed there. Confirm before using the vibration lines.</td></tr>
-    <tr><td>2</td><td><b>"Bright in the sun."</b> The contrast is measured, but nobody has yet read the screen at arm's length in sunlight. Soften the caption or test it.</td></tr>
+    <tr><td>1</td><td><b>The release build.</b> Everything so far was checked on test builds. The signed build that goes to Google Play has not been run on a phone; internal testing will be its first run.</td></tr>
+    <tr><td>2</td><td><b>Sunlight.</b> The contrast is measured, but nobody has yet read the screen at arm's length in sunlight. No line in this kit claims it; do not add one untested.</td></tr>
     <tr><td>3</td><td><b>"Carries on through a restart."</b> Covered by tests only; never tried by restarting a phone mid-timing. The copy says "to the nearest the phone's own clock allows" for that reason.</td></tr>
     <tr><td>4</td><td><b>Android 9 and 10.</b> On those versions a phone with touch feedback off will not vibrate. The listing does not promise otherwise, but a reviewer may notice.</td></tr>
   </table>
@@ -459,16 +459,13 @@
     <tr><td>1</td><td><b>Price.</b> No line in this kit says "free". Add it once decided; it belongs in the short description.</td></tr>
     <tr><td>2</td><td><b>Publisher name and contact email</b>, both required by Google Play.</td></tr>
     <tr><td>3</td><td><b>The package name</b> com.swetw.multilaps is permanent once published. Convention expects you to control swetw.com.</td></tr>
-    <tr><td>4</td><td><b>Privacy policy.</b> Google Play asks for a link even from apps that collect nothing. One paragraph will do: the app has no internet access and stores names, colours and timing on the device only.</td></tr>
+    <tr><td>4</td><td><b>Privacy policy.</b> Written, as <code>PRIVACY.md</code> at the top of the repository. It still needs the publisher name and contact email from decision 2.</td></tr>
   </table>
 
-  <h2>Assets still to make</h2>
+  <h2>Assets</h2>
   <table class="todo">
-    <tr><td>1</td><td><b>Feature graphic</b>, 1024 × 500 px, from the layout on page 7.</td></tr>
-    <tr><td>2</td><td><b>Store icon</b>, 512 × 512 px, exported from the app's launcher icon.</td></tr>
-    <tr><td>3</td><td><b>Captioned screenshots</b>, each capture placed on a 9:16 canvas with its caption from pages 5 and 6.</td></tr>
-    <tr><td>4</td><td><b>A signed release build.</b> The app exists only as a debug build so far.</td></tr>
-    <tr><td>5</td><td><b>A short video</b>, optional: fifteen seconds of four runners being lapped would show the idea faster than any caption.</td></tr>
+    <tr><td>1</td><td><b>Made</b>, in <code>docs/play-store/</code>: the feature graphic at 1024 × 500 px, the store icon at 512 × 512 px, and six captioned screenshots.</td></tr>
+    <tr><td>2</td><td><b>Still to make, optional: a short video.</b> Fifteen seconds of four runners being lapped would show the idea faster than any caption.</td></tr>
   </table>
 
   <h2>What not to say</h2>
