@@ -1,5 +1,6 @@
 package com.brothersbaran.multilaps.timing
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
@@ -51,16 +53,17 @@ private val MIN_TILE_WIDTH = 120.dp
 private val GAP = 8.dp
 
 /**
- * What reset all is given beside the tiles, gap included; without that much to spare, it stays
- * above them. It is held to this width, shrinking its label if need be, so that enlarged text
- * cannot take from the tiles more than was allowed for.
+ * What a control is given beside the tiles, gap included. Start all goes at their left and reset
+ * all at their right; without that much to spare for each, both stay above the tiles. A control
+ * is held to this width, shrinking its label if need be, so that enlarged text cannot take from
+ * the tiles more than was allowed for.
  */
-private val WIDTH_FOR_RESET_ALL = 104.dp
+private val WIDTH_FOR_CONTROL = 104.dp
 
 /**
- * All the stopwatches at once, with the one control that acts on all of them: above them when
- * upright, and beside them when on its side with width to spare, where height is what the tiles
- * are short of.
+ * All the stopwatches at once, with the two controls that act on all of them, start all at the
+ * top left and reset all at the top right: above the tiles when upright, and either side of them
+ * when on its side with width to spare, where height is what the tiles are short of.
  */
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
@@ -79,8 +82,17 @@ fun TimingScreen(viewModel: TimingViewModel) {
             // otherwise two by two.
             val widthForFour = MIN_TILE_WIDTH * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1)
             val sideways = maxWidth > maxHeight && maxWidth >= widthForFour
-            val resetAllBeside = sideways && maxWidth >= widthForFour + WIDTH_FOR_RESET_ALL
+            val controlsBeside = sideways && maxWidth >= widthForFour + WIDTH_FOR_CONTROL * 2
 
+            val startAll: @Composable (Modifier) -> Unit = { modifier ->
+                ScreenButton(
+                    label = R.string.action_start_all,
+                    enabled = canStartAll(stopwatches),
+                    outlined = true,
+                    onClick = viewModel::onStartAllPressed,
+                    modifier = modifier.testTag("start-all"),
+                )
+            }
             val resetAll: @Composable (Modifier) -> Unit = { modifier ->
                 ResetAllButton(
                     undoOffered = undoOffer?.fromResetAll == true,
@@ -104,14 +116,22 @@ fun TimingScreen(viewModel: TimingViewModel) {
                 )
             }
 
-            if (resetAllBeside) {
+            if (controlsBeside) {
+                val controlWidth = Modifier.width(WIDTH_FOR_CONTROL - GAP)
                 Row(horizontalArrangement = Arrangement.spacedBy(GAP)) {
+                    startAll(controlWidth.align(Alignment.Top))
                     grid(Modifier.weight(1f))
-                    resetAll(Modifier.align(Alignment.Top).width(WIDTH_FOR_RESET_ALL - GAP))
+                    resetAll(controlWidth.align(Alignment.Top))
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
-                    resetAll(Modifier.align(Alignment.End))
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        startAll(Modifier)
+                        resetAll(Modifier)
+                    }
                     grid(Modifier.weight(1f))
                 }
             }
@@ -181,39 +201,48 @@ private fun ResetAllButton(
     onUndoPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val active = undoOffered || enabled
-    val ink = MaterialTheme.colorScheme.onBackground.copy(alpha = if (active) 1f else DISABLED_STRENGTH)
+    ScreenButton(
+        label = if (undoOffered) R.string.action_undo else R.string.action_reset_all,
+        enabled = undoOffered || enabled,
+        outlined = undoOffered,
+        countdown = undoShareLeft.takeIf { undoOffered },
+        onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
+        modifier = modifier.testTag("reset-all"),
+    )
+}
+
+/**
+ * A control for all the stopwatches at once, in the screen's own ink. An [outlined] one is the
+ * one being offered; with a [countdown] it is an undo whose time is running out.
+ */
+@Composable
+private fun ScreenButton(
+    @StringRes label: Int,
+    enabled: Boolean,
+    outlined: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    countdown: (() -> Float)? = null,
+) {
+    val ink = MaterialTheme.colorScheme.onBackground.copy(alpha = if (enabled) 1f else DISABLED_STRENGTH)
     CompositionLocalProvider(LocalContentColor provides ink) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
                 .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                 .clip(BUTTON_SHAPE)
-                .then(
-                    if (undoOffered) {
-                        Modifier.border(2.dp, ink, BUTTON_SHAPE).undoCountdown(undoShareLeft, ink)
-                    } else {
-                        Modifier
-                    },
-                )
-                .clickable(
-                    enabled = active,
-                    role = Role.Button,
-                    onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
-                )
-                .padding(horizontal = 8.dp)
-                .testTag("reset-all"),
+                .then(if (outlined) Modifier.border(2.dp, ink, BUTTON_SHAPE) else Modifier)
+                .then(if (countdown != null) Modifier.undoCountdown(countdown, ink) else Modifier)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                .padding(horizontal = 12.dp),
         ) {
+            val style = MaterialTheme.typography.titleMedium
             Text(
-                text = stringResource(if (undoOffered) R.string.action_undo else R.string.action_reset_all),
-                style = MaterialTheme.typography.titleMedium,
+                text = stringResource(label),
+                style = style,
                 maxLines = 1,
                 softWrap = false,
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 11.sp,
-                    maxFontSize = MaterialTheme.typography.titleMedium.fontSize,
-                    stepSize = 1.sp,
-                ),
+                autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = style.fontSize, stepSize = 1.sp),
             )
         }
     }
