@@ -333,7 +333,9 @@ private fun ResultRow(
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = !selecting,
         backgroundContent = {
-            Box(
+            // Drawn only while the row is on its way over; at rest it would show as a dark
+            // fringe around the row's rounded corners.
+            if (swipe.dismissDirection == SwipeToDismissBoxValue.EndToStart) Box(
                 contentAlignment = Alignment.CenterEnd,
                 modifier = Modifier.fillMaxSize().clip(BUTTON_SHAPE).background(ink).padding(horizontal = 16.dp),
             ) {
