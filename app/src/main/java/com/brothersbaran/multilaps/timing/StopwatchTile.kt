@@ -1,12 +1,16 @@
 package com.brothersbaran.multilaps.timing
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
@@ -24,7 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -42,6 +48,7 @@ fun StopwatchTile(
     name: String,
     stopwatch: Stopwatch,
     clock: Clock,
+    onNamePressed: () -> Unit,
     onStartPressed: () -> Unit,
     onStopPressed: () -> Unit,
     onUndoPressed: () -> Unit,
@@ -58,7 +65,7 @@ fun StopwatchTile(
                 modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(name, style = MaterialTheme.typography.titleLarge)
+                TileName(name, onNamePressed)
                 LiveTimes(stopwatch, clock)
                 CompletedLaps(stopwatch)
             }
@@ -85,6 +92,25 @@ fun StopwatchTile(
                 )
             }
         }
+    }
+}
+
+/** The stopwatch's name, which is also the way in to its laps. */
+@Composable
+private fun TileName(name: String, onPressed: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .clickable(
+                onClickLabel = stringResource(R.string.show_laps),
+                role = Role.Button,
+                onClick = onPressed,
+            )
+            .testTag("stopwatch-name"),
+    ) {
+        Text(name, style = MaterialTheme.typography.titleLarge)
     }
 }
 

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -28,6 +29,7 @@ import com.brothersbaran.multilaps.Devices.SPLIT_SCREEN
 import com.brothersbaran.multilaps.Devices.TABLET_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.TABLET_PORTRAIT
 import com.brothersbaran.multilaps.stopwatch.FakeClock
+import com.brothersbaran.multilaps.stopwatch.StopwatchState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -47,12 +49,13 @@ class TimingScreenTest {
     val composeRule = createComposeRule()
 
     private val clock = FakeClock()
+    private val viewModel = TimingViewModel(clock, FakeTimingStore())
 
     @Before
     fun setUp() {
         // A running stopwatch redraws every frame, so the test drives frames by hand.
         composeRule.mainClock.autoAdvance = false
-        composeRule.setContent { TimingScreen(TimingViewModel(clock, FakeTimingStore())) }
+        composeRule.setContent { TimingScreen(viewModel) }
     }
 
     @Test
@@ -451,6 +454,160 @@ class TimingScreenTest {
         clock.advanceBy(duration)
         composeRule.mainClock.advanceTimeBy(duration.inWholeMilliseconds)
     }
+
+    @Test
+    fun `tapping a stopwatch's name opens its lap sheet`() {
+        lapSheet().assertDoesNotExist()
+
+        openLapSheet(tile = 2)
+
+        lapSheet().assertIsDisplayed()
+        inSheet(hasText("Stopwatch 2")).assertIsDisplayed()
+    }
+
+    @Test
+    fun `pressing start or stop does not open the lap sheet`() {
+        press("Start", tile = 2)
+        advance(20.seconds)
+        press("Lap", tile = 2)
+        press("Stop", tile = 2)
+        composeRule.mainClock.advanceTimeBy(1_000)
+
+        lapSheet().assertDoesNotExist()
+    }
+
+    @Test
+    fun `the lap sheet of a stopwatch without completed laps says so`() {
+        press("Start", tile = 1)
+        advance(5.seconds)
+        openLapSheet(tile = 1)
+
+        inSheet(hasText("No laps yet")).assertIsDisplayed()
+        lapRows().assertCountEquals(0)
+    }
+
+    @Test
+    fun `the lap sheet lists each lap with its number, time and total, newest first`() {
+        press("Start", tile = 1)
+        advance(30.seconds)
+        press("Lap", tile = 1)
+        advance(25.seconds)
+        press("Lap", tile = 1)
+        advance(40.seconds)
+        press("Lap", tile = 1)
+        openLapSheet(tile = 1)
+
+        lapRows().assertCountEquals(3)
+        lapRows()[0].assertTextEquals("3", "0:40.00", "1:35.00")
+        lapRows()[1].assertTextEquals("2", "0:25.00", "0:55.00", "Best")
+        lapRows()[2].assertTextEquals("1", "0:30.00", "0:30.00")
+        inSheet(hasText("No laps yet")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `lap rows are read out whole, and the best lap is named`() {
+        press("Start", tile = 1)
+        advance(30.seconds)
+        press("Lap", tile = 1)
+        advance(25.seconds)
+        press("Lap", tile = 1)
+        openLapSheet(tile = 1)
+
+        inSheet(hasContentDescription("Lap 2, 0:25.00, total time 0:55.00, best lap")).assertIsDisplayed()
+        inSheet(hasContentDescription("Lap 1, 0:30.00, total time 0:30.00")).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the lap sheet shows only its own stopwatch's laps`() {
+        press("Start", tile = 1)
+        press("Start", tile = 2)
+        advance(30.seconds)
+        press("Lap", tile = 1)
+        openLapSheet(tile = 2)
+
+        lapRows().assertCountEquals(0)
+    }
+
+    @Test
+    fun `timing continues behind the lap sheet, and a lap recorded meanwhile joins the list`() {
+        press("Start", tile = 1)
+        press("Start", tile = 3)
+        advance(30.seconds)
+        press("Lap", tile = 1)
+        openLapSheet(tile = 1)
+        lapRows().assertCountEquals(1)
+
+        advance(12.seconds)
+        viewModel.onStartPressed(0)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        lapRows().assertCountEquals(2)
+        lapRows()[0].assertTextEquals("2", "0:12.00", "0:42.00", "Best")
+        assertEquals(StopwatchState.Running, viewModel.stopwatches.value[2].state)
+        assertEquals(42.seconds, viewModel.stopwatches.value[2].totalTime(clock.now()))
+    }
+
+    @Test
+    fun `the lap sheet can be closed, leaving the stopwatch as it was`() {
+        press("Start", tile = 1)
+        advance(30.seconds)
+        press("Lap", tile = 1)
+        openLapSheet(tile = 1)
+
+        inSheet(hasText("Close")).performClick()
+        letSheetSettle()
+
+        lapSheet().assertDoesNotExist()
+        described("Laps 1", tile = 1).assertIsDisplayed()
+        text("Lap", tile = 1).assertIsEnabled()
+    }
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `the lap sheet works in landscape`() {
+        press("Start", tile = 4)
+        advance(30.seconds)
+        press("Lap", tile = 4)
+        openLapSheet(tile = 4)
+
+        lapSheet().assertIsDisplayed()
+        lapRows().assertCountEquals(1)
+        lapRows()[0].assertIsDisplayed()
+    }
+
+    @Test
+    fun `the name is a touch target of its own, large enough to hit`() {
+        for (tile in 1..4) {
+            val bounds = name(tile).getUnclippedBoundsInRoot()
+            assertTrue(bounds.height >= 48.dp)
+            assertTrue(bounds.width >= 48.dp)
+        }
+    }
+
+    private fun name(tile: Int) = composeRule.onNode(hasTestTag("stopwatch-name") and inTile(tile))
+
+    private fun openLapSheet(tile: Int) {
+        name(tile).performClick()
+        letSheetSettle()
+    }
+
+    /**
+     * The sheet is a window of its own that measures itself before it slides, so it needs frames
+     * and idle passes in turn; advancing the clock in one step leaves it off screen.
+     */
+    private fun letSheetSettle() {
+        repeat(40) {
+            composeRule.mainClock.advanceTimeByFrame()
+            composeRule.waitForIdle()
+        }
+    }
+
+    private fun lapSheet() = composeRule.onNodeWithTag("lap-sheet")
+
+    private fun inSheet(matcher: SemanticsMatcher) =
+        composeRule.onNode(matcher and hasAnyAncestor(hasTestTag("lap-sheet")))
+
+    private fun lapRows() = composeRule.onAllNodesWithTag("lap-row")
 
     private fun resetAll() = composeRule.onNodeWithTag("reset-all")
 
