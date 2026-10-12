@@ -1,6 +1,8 @@
 package com.brothersbaran.multilaps.timing
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.os.VibrationAttributes
 import android.os.Vibrator
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -78,6 +80,47 @@ class VibratorHapticsTest {
         val haptics = VibratorHaptics(null)
 
         for (feedback in Feedback.entries) haptics.play(feedback)
+    }
+
+    /**
+     * What the system would class the last vibration as. From Android 12 the test vibrator records
+     * this after the platform's own reckoning, including its habit of taking a short vibration
+     * with no clear usage for touch feedback.
+     */
+    private fun usageOfLastVibration(): Int? =
+        (shadow.vibrationAttributesFromLastVibration as VibrationAttributes?)?.usage
+
+    @Test
+    fun `every vibration is played as an alarm's, which touch feedback being off does not silence`() {
+        for (feedback in Feedback.entries) {
+            vibrator.cancel()
+            haptics.play(feedback)
+
+            assertTrue("$feedback", shadow.isVibrating)
+            assertEquals("$feedback", VibrationAttributes.USAGE_ALARM, usageOfLastVibration())
+        }
+    }
+
+    @Test
+    @Config(sdk = [32])
+    fun `on Android 12 the platform still reckons every vibration an alarm's, not touch feedback`() {
+        for (feedback in Feedback.entries) {
+            vibrator.cancel()
+            haptics.play(feedback)
+
+            assertTrue("$feedback", shadow.isVibrating)
+            assertEquals("$feedback", VibrationAttributes.USAGE_ALARM, usageOfLastVibration())
+        }
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `on Android 11 the vibration is handed over as an alarm's`() {
+        for (feedback in Feedback.entries) {
+            haptics.play(feedback)
+
+            assertEquals("$feedback", AudioAttributes.USAGE_ALARM, shadow.audioAttributesFromLastVibration?.usage)
+        }
     }
 
     @Test
