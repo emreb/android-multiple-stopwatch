@@ -1,6 +1,7 @@
 package com.brothersbaran.multilaps.stopwatch
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -99,5 +100,15 @@ class StopwatchTest {
         val stopwatch = Stopwatch().start(now = 100.seconds).stop(now = 100.seconds)
 
         assertEquals(StopwatchState.Stopped, stopwatch.state)
+    }
+
+    @Test
+    fun `a stopwatch cannot be built running without a start reading, or holding one while not running`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            Stopwatch(state = StopwatchState.Running)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            Stopwatch(state = StopwatchState.Stopped, startedAt = 100.seconds)
+        }
     }
 }

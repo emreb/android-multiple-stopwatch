@@ -14,6 +14,12 @@ data class Stopwatch(
     private val startedAt: Duration? = null,
 ) {
 
+    init {
+        require((startedAt != null) == (state == StopwatchState.Running)) {
+            "A stopwatch has a start reading exactly while it is running"
+        }
+    }
+
     fun start(now: Duration): Stopwatch = when (state) {
         StopwatchState.Running -> this
         StopwatchState.Idle, StopwatchState.Stopped ->
@@ -27,7 +33,7 @@ data class Stopwatch(
     }
 
     fun reset(): Stopwatch = when (state) {
-        StopwatchState.Stopped -> Stopwatch()
+        StopwatchState.Stopped -> copy(state = StopwatchState.Idle, accumulated = Duration.ZERO)
         StopwatchState.Idle, StopwatchState.Running -> this
     }
 

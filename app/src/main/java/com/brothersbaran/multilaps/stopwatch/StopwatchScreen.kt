@@ -75,8 +75,10 @@ private fun rememberTotalTime(stopwatch: Stopwatch, readTotalTime: () -> Duratio
     val isRunning = stopwatch.state == StopwatchState.Running
     var frame by remember { mutableLongStateOf(0L) }
     LaunchedEffect(isRunning) {
-        while (isRunning) {
-            withFrameNanos { frame = it }
+        if (isRunning) {
+            while (true) {
+                withFrameNanos { frame = it }
+            }
         }
     }
     // Reading the frame subscribes this composition to it.

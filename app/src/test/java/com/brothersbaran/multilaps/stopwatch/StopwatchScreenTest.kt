@@ -65,6 +65,14 @@ class StopwatchScreenTest {
     }
 
     @Test
+    fun `only stop can be pressed while running`() {
+        press("Start")
+
+        composeRule.onNodeWithText("Start").assertIsNotEnabled()
+        composeRule.onNodeWithText("Stop").assertIsEnabled()
+    }
+
+    @Test
     fun `stop holds the time and the stop button becomes reset`() {
         press("Start")
         advance(1234.milliseconds)
@@ -110,16 +118,6 @@ class StopwatchScreenTest {
         composeRule.onNodeWithText("1:02:03.45").assertIsDisplayed()
     }
 
-    private fun press(label: String) {
-        composeRule.onNodeWithText(label).performClick()
-        composeRule.mainClock.advanceTimeByFrame()
-    }
-
-    private fun advance(duration: Duration) {
-        clock.advanceBy(duration)
-        composeRule.mainClock.advanceTimeByFrame()
-    }
-
     @Test
     fun `a screen reader hears the total time and its value`() {
         composeRule.onNodeWithContentDescription("Total time 0:00.00").assertIsDisplayed()
@@ -130,5 +128,15 @@ class StopwatchScreenTest {
         composeRule.mainClock.advanceTimeByFrame()
 
         composeRule.onNodeWithContentDescription("Total time 0:01.23").assertIsDisplayed()
+    }
+
+    private fun press(label: String) {
+        composeRule.onNodeWithText(label).performClick()
+        composeRule.mainClock.advanceTimeByFrame()
+    }
+
+    private fun advance(duration: Duration) {
+        clock.advanceBy(duration)
+        composeRule.mainClock.advanceTimeByFrame()
     }
 }
