@@ -14,8 +14,8 @@ enum class StopwatchState { Idle, Running, Stopped }
 data class Stopwatch(
     val state: StopwatchState = StopwatchState.Idle,
     val laps: List<Duration> = emptyList(),
-    private val accumulated: Duration = Duration.ZERO,
-    private val countingFrom: Duration? = null,
+    val accumulated: Duration = Duration.ZERO,
+    val countingFrom: Duration? = null,
 ) {
 
     private val completedLapsTime: Duration = laps.fold(Duration.ZERO, Duration::plus)
@@ -65,6 +65,13 @@ data class Stopwatch(
             copy(state = StopwatchState.Idle, laps = emptyList(), accumulated = Duration.ZERO)
         StopwatchState.Idle, StopwatchState.Running -> this
     }
+
+    /**
+     * Carries a running stopwatch onto a clock whose readings differ by [shift]. A reading that
+     * would land after [now] is held to it, so the stopwatch never shows less than it had gathered.
+     */
+    fun rebased(shift: Duration, now: Duration): Stopwatch =
+        if (countingFrom == null) this else copy(countingFrom = minOf(countingFrom + shift, now))
 
     fun totalTime(now: Duration): Duration =
         accumulated + (countingFrom?.let { now - it } ?: Duration.ZERO)
