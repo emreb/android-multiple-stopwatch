@@ -98,6 +98,7 @@ fun StopwatchTile(
 /** The stopwatch's name, which is also the way in to its laps. */
 @Composable
 private fun TileName(name: String, onPressed: () -> Unit) {
+    val spoken = stringResource(R.string.stopwatch_title, name)
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -108,6 +109,7 @@ private fun TileName(name: String, onPressed: () -> Unit) {
                 role = Role.Button,
                 onClick = onPressed,
             )
+            .semantics { contentDescription = spoken }
             .testTag("stopwatch-name"),
     ) {
         Text(name, style = MaterialTheme.typography.titleLarge)

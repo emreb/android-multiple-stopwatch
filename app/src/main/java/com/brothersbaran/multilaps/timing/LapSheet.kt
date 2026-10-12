@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -29,15 +30,16 @@ import com.brothersbaran.multilaps.stopwatch.LapEntry
 import com.brothersbaran.multilaps.stopwatch.Stopwatch
 import com.brothersbaran.multilaps.stopwatch.formatTime
 import com.brothersbaran.multilaps.stopwatch.lapEntries
+import kotlinx.coroutines.launch
 
 /** One stopwatch's completed laps, over the timing screen, which keeps running behind it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LapSheet(name: String, stopwatch: Stopwatch, onDismiss: () -> Unit) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-    ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(modifier = Modifier.testTag("lap-sheet").padding(horizontal = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -45,7 +47,10 @@ fun LapSheet(name: String, stopwatch: Stopwatch, onDismiss: () -> Unit) {
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f).semantics { heading() },
                 )
-                TextButton(onClick = onDismiss) {
+                // Slides away like a swipe or the back button would, rather than vanishing.
+                TextButton(
+                    onClick = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
+                ) {
                     Text(stringResource(R.string.action_close))
                 }
             }
@@ -65,32 +70,36 @@ fun LapSheet(name: String, stopwatch: Stopwatch, onDismiss: () -> Unit) {
 
 @Composable
 private fun LapList(entries: List<LapEntry>) {
-    LapColumns(
-        number = stringResource(R.string.lap_column),
-        time = stringResource(R.string.lap_time_column),
-        totalTime = stringResource(R.string.total_time_label),
-        modifier = Modifier.padding(vertical = 8.dp),
-    )
-    LazyColumn {
-        items(entries, key = { it.number }) { entry ->
-            val time = formatTime(entry.time)
-            val totalTime = formatTime(entry.totalTimeAtCompletion)
-            val spoken = stringResource(
-                if (entry.isBest) R.string.best_lap_row_description else R.string.lap_row_description,
-                entry.number,
-                time,
-                totalTime,
-            )
-            LapColumns(
-                number = entry.number.toString(),
-                time = time,
-                totalTime = totalTime,
-                best = entry.isBest,
-                modifier = Modifier
-                    .testTag("lap-row")
-                    .semantics(mergeDescendants = true) { contentDescription = spoken }
-                    .padding(vertical = 8.dp),
-            )
+    Column {
+        LapColumns(
+            number = stringResource(R.string.lap_column),
+            time = stringResource(R.string.lap_time_column),
+            totalTime = stringResource(R.string.total_time_label),
+            modifier = Modifier.padding(vertical = 8.dp),
+        )
+        // Not keyed by lap: a keyed list holds on to the row it was showing, which would leave a
+        // lap recorded meanwhile out of sight above the top.
+        LazyColumn(modifier = Modifier.testTag("lap-list")) {
+            items(entries) { entry ->
+                val time = formatTime(entry.time)
+                val totalTime = formatTime(entry.totalTimeAtCompletion)
+                val spoken = stringResource(
+                    if (entry.isBest) R.string.best_lap_row_description else R.string.lap_row_description,
+                    entry.number,
+                    time,
+                    totalTime,
+                )
+                LapColumns(
+                    number = entry.number.toString(),
+                    time = time,
+                    totalTime = totalTime,
+                    best = entry.isBest,
+                    modifier = Modifier
+                        .testTag("lap-row")
+                        .semantics(mergeDescendants = true) { contentDescription = spoken }
+                        .padding(vertical = 8.dp),
+                )
+            }
         }
     }
 }
