@@ -80,7 +80,9 @@ You have done these. For reference, what is true of the app:
 - **App access:** everything is available without sign-in.
 - **Target audience:** adults (parents and coaches), 18 and over. Declaring a children's
   audience brings Google's Families rules with it.
-- **Permissions:** vibrate only.
+- **Permissions:** vibrate only. Play Console may also list
+  `com.swetw.multilaps.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. A library adds it, it is
+  private to the app, and users are never asked for it.
 
 ## 4. Go to production
 
