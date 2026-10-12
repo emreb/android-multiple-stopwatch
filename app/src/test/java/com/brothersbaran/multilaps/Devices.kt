@@ -8,8 +8,8 @@ object Devices {
     const val COMMON_PHONE_LANDSCAPE = "w760dp-h336dp-land"
     /** Wide but very short, as a phone on its side in split-screen: the tiles go to their short form. */
     const val SHORT_WIDE_WINDOW = "w891dp-h280dp-land"
-    /** On its side and only just wide enough for the two controls to sit either side of the tiles. */
-    const val BARELY_WIDE_ENOUGH = "w728dp-h320dp-land"
+    /** On its side and only just wide enough for the controls' column to sit beside the tiles. */
+    const val BARELY_WIDE_ENOUGH = "w624dp-h320dp-land"
     const val SMALL_PHONE = "w320dp-h568dp-port"
     const val SMALL_PHONE_LANDSCAPE = "w568dp-h320dp-land"
 

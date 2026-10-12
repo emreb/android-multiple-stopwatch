@@ -53,17 +53,18 @@ private val MIN_TILE_WIDTH = 120.dp
 private val GAP = 8.dp
 
 /**
- * What a control is given beside the tiles, gap included. Start all goes at their left and reset
- * all at their right; without that much to spare for each, both stay above the tiles. A control
- * is held to this width, shrinking its label if need be, so that enlarged text cannot take from
- * the tiles more than was allowed for.
+ * What the two controls are given in a column beside the tiles, gap included; without that much
+ * to spare, they stay above the tiles. They are held to this width, shrinking their labels if
+ * need be, so that enlarged text cannot take from the tiles more than was allowed for.
  */
-private val WIDTH_FOR_CONTROL = 104.dp
+private val WIDTH_FOR_CONTROLS = 104.dp
 
 /**
- * All the stopwatches at once, with the two controls that act on all of them, start all at the
- * top left and reset all at the top right: above the tiles when upright, and either side of them
- * when on its side with width to spare, where height is what the tiles are short of.
+ * All the stopwatches at once, with the two controls that act on all of them. Upright, they sit
+ * above the tiles, start all at the top left and reset all at the top right. On its side with
+ * width to spare, where height is what the tiles are short of, they share one column at the left,
+ * start all at its top and reset all at its foot: one column, because a second would leave the
+ * tiles too narrow for a Lap button that outsizes Stop.
  */
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
@@ -82,7 +83,7 @@ fun TimingScreen(viewModel: TimingViewModel) {
             // otherwise two by two.
             val widthForFour = MIN_TILE_WIDTH * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1)
             val sideways = maxWidth > maxHeight && maxWidth >= widthForFour
-            val controlsBeside = sideways && maxWidth >= widthForFour + WIDTH_FOR_CONTROL * 2
+            val controlsBeside = sideways && maxWidth >= widthForFour + WIDTH_FOR_CONTROLS
 
             val startAll: @Composable (Modifier) -> Unit = { modifier ->
                 ScreenButton(
@@ -117,11 +118,15 @@ fun TimingScreen(viewModel: TimingViewModel) {
             }
 
             if (controlsBeside) {
-                val controlWidth = Modifier.width(WIDTH_FOR_CONTROL - GAP)
                 Row(horizontalArrangement = Arrangement.spacedBy(GAP)) {
-                    startAll(controlWidth.align(Alignment.Top))
+                    Column(
+                        verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.width(WIDTH_FOR_CONTROLS - GAP).fillMaxHeight(),
+                    ) {
+                        startAll(Modifier.fillMaxWidth())
+                        resetAll(Modifier.fillMaxWidth())
+                    }
                     grid(Modifier.weight(1f))
-                    resetAll(controlWidth.align(Alignment.Top))
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
@@ -212,8 +217,8 @@ private fun ResetAllButton(
 }
 
 /**
- * A control for all the stopwatches at once, in the screen's own ink. An [outlined] one is the
- * one being offered; with a [countdown] it is an undo whose time is running out.
+ * A control for all the stopwatches at once, in the screen's own ink, drawn [outlined] to stand
+ * out. With a [countdown] it is an undo whose time is running out.
  */
 @Composable
 private fun ScreenButton(
@@ -234,7 +239,7 @@ private fun ScreenButton(
                 .then(if (outlined) Modifier.border(2.dp, ink, BUTTON_SHAPE) else Modifier)
                 .then(if (countdown != null) Modifier.undoCountdown(countdown, ink) else Modifier)
                 .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 8.dp),
         ) {
             val style = MaterialTheme.typography.titleMedium
             Text(
