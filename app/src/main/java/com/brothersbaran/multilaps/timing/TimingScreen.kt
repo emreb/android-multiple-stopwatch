@@ -16,6 +16,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -43,6 +46,8 @@ fun TimingScreen(viewModel: TimingViewModel) {
     val undoOffer by viewModel.undoOffer.collectAsStateWithLifecycle()
     KeepScreenOn(stopwatches.any { it.state == StopwatchState.Running })
     ExpireUndoOffer(undoOffer, viewModel::undoTimeLeft, viewModel::onUndoExpired)
+    // Which stopwatch's laps are being looked at, by position; kept through a rotation.
+    var lapSheetFor by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
@@ -53,10 +58,25 @@ fun TimingScreen(viewModel: TimingViewModel) {
                 onUndoPressed = viewModel::onUndoPressed,
                 modifier = Modifier.align(Alignment.End),
             )
-            StopwatchGrid(stopwatches, undoOffer, viewModel, modifier = Modifier.weight(1f))
+            StopwatchGrid(
+                stopwatches = stopwatches,
+                undoOffer = undoOffer,
+                viewModel = viewModel,
+                onNamePressed = { lapSheetFor = it },
+                modifier = Modifier.weight(1f),
+            )
         }
     }
+    lapSheetFor?.let { index ->
+        LapSheet(
+            name = stopwatchName(index),
+            stopwatch = stopwatches[index],
+            onDismiss = { lapSheetFor = null },
+        )
+    }
 }
+
+private fun stopwatchName(index: Int): String = (index + 1).toString()
 
 /**
  * Side by side when the space is wider than tall and wide enough for four tiles, otherwise two by
@@ -67,6 +87,7 @@ private fun StopwatchGrid(
     stopwatches: List<Stopwatch>,
     undoOffer: UndoOffer?,
     viewModel: TimingViewModel,
+    onNamePressed: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -84,7 +105,8 @@ private fun StopwatchGrid(
                         // Keyed so a tile keeps its own state when the grid changes shape.
                         key(index) {
                             StopwatchTile(
-                                name = (index + 1).toString(),
+                                name = stopwatchName(index),
+                                onNamePressed = { onNamePressed(index) },
                                 stopwatch = stopwatches[index],
                                 clock = viewModel.clock,
                                 onStartPressed = { viewModel.onStartPressed(index) },

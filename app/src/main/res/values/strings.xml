@@ -7,11 +7,16 @@
     <string name="action_reset">Reset</string>
     <string name="action_undo">Undo</string>
     <string name="action_reset_all">Reset all</string>
+    <string name="action_close">Close</string>
 
     <string name="total_time_label">Total</string>
     <string name="last_lap_label">Last</string>
     <string name="best_lap_label">Best</string>
     <string name="lap_count_label">Laps</string>
+    <string name="stopwatch_title">Stopwatch %1$s</string>
+    <string name="lap_column">Lap</string>
+    <string name="lap_time_column">Time</string>
+    <string name="no_laps_yet">No laps yet</string>
     <string name="no_lap">–:––.––</string>
 
     <!-- Spoken by screen readers; the placeholder is a time such as 1:23.45. -->
@@ -21,4 +26,9 @@
     <string name="best_lap_description">Best lap %1$s</string>
     <string name="lap_count_description">Laps %1$s</string>
     <string name="no_lap_description">none</string>
+    <!-- What tapping a stopwatch's name does, spoken after "double tap to". -->
+    <string name="show_laps">show laps</string>
+    <!-- A row of the lap list: lap number, lap time, total time when the lap was completed. -->
+    <string name="lap_row_description">Lap %1$d, %2$s, total time %3$s</string>
+    <string name="best_lap_row_description">Lap %1$d, %2$s, total time %3$s, best lap</string>
 </resources>
