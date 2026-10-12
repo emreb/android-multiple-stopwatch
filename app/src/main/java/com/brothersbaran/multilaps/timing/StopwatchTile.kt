@@ -28,6 +28,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -46,11 +47,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.brothersbaran.multilaps.R
@@ -62,28 +66,29 @@ import com.brothersbaran.multilaps.theme.FigureStyles
 import kotlin.time.Duration
 
 private val TILE_SHAPE = RoundedCornerShape(20.dp)
-private val BUTTON_SHAPE = RoundedCornerShape(16.dp)
 private val PLATE_SHAPE = RoundedCornerShape(10.dp)
+private val PLATE_INSET = 6.dp
 
 /** Lap is pressed far more than anything else, so it is the bigger target in both directions. */
 private val LAP_BUTTON_HEIGHT = 72.dp
 private val STOP_BUTTON_HEIGHT = 56.dp
-
-/**
- * Shorter than this, as on a phone turned sideways, a tile sets its current lap and its Lap
- * button a little smaller so that every figure still fits above the buttons.
- */
-private val SHORT_TILE = 360.dp
-private val SHORT_TILE_LAP_BUTTON_HEIGHT = 56.dp
-private val SHORT_TILE_STOP_BUTTON_HEIGHT = 48.dp
-private val SHORT_TILE_CURRENT_LAP = 48.sp
 private val MIN_STOP_BUTTON_WIDTH = 48.dp
 private const val STOP_BUTTON_SHARE = 0.32f
 
 /**
+ * Shorter than this, as on a phone turned sideways, a tile sets its current lap and its buttons a
+ * little smaller so that every figure still fits above the buttons.
+ */
+private val SHORT_TILE = 330.dp
+private val SHORT_TILE_LAP_BUTTON_HEIGHT = 56.dp
+private val SHORT_TILE_STOP_BUTTON_HEIGHT = 48.dp
+private val SHORT_TILE_CURRENT_LAP = 46.sp
+private val SHORT_TILE_LAP_LINE = 27.sp
+
+/**
  * One stopwatch, solid in its colour in every state so a runner is found by colour. What it is
- * doing shows in the current lap: ticking on the colour while running, set on a plate once
- * stopped.
+ * doing shows in the current lap: lighter while idle, ticking on the colour while running, set on
+ * a plate once stopped.
  */
 @Composable
 fun StopwatchTile(
@@ -95,42 +100,32 @@ fun StopwatchTile(
     onStopPressed: () -> Unit,
     onUndoPressed: () -> Unit,
     undoOffered: Boolean,
-    undoTimeLeft: () -> Float,
+    undoShareLeft: () -> Float,
     modifier: Modifier = Modifier,
 ) {
     val colour = label.colour
-    val state = stringResource(
-        when (stopwatch.state) {
-            StopwatchState.Idle -> R.string.state_idle
-            StopwatchState.Running -> R.string.state_running
-            StopwatchState.Stopped -> R.string.state_stopped
-        },
-    )
     Card(
         shape = TILE_SHAPE,
         colors = CardDefaults.cardColors(
             containerColor = colour.color,
             contentColor = colour.contentColor,
         ),
-        modifier = modifier.semantics {
-            this[StopwatchColourKey] = colour
-            stateDescription = state
-        },
+        modifier = modifier.semantics { this[StopwatchColourKey] = colour },
     ) {
         BoxWithConstraints {
             val short = maxHeight < SHORT_TILE
-            Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
+            Column(modifier = Modifier.fillMaxSize().padding(if (short) 8.dp else 10.dp)) {
                 // The figures take what the buttons leave, and scroll if that is not enough.
                 Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                    TileName(label.name, onNamePressed)
-                    CurrentLap(
+                    TileName(label.name, stopwatch.state, onNamePressed)
+                    Figures(
                         stopwatch = stopwatch,
                         clock = clock,
                         colour = colour,
-                        largest = if (short) SHORT_TILE_CURRENT_LAP else FigureStyles.currentLap.fontSize,
+                        largestCurrentLap = if (short) SHORT_TILE_CURRENT_LAP else FigureStyles.currentLap.fontSize,
+                        totalAndLapCountOnOneLine = short,
+                        tight = short,
                     )
-                    CompletedLaps(stopwatch)
-                    TotalAndLapCount(stopwatch, clock, onOneLine = short)
                 }
                 TileButtons(
                     stopwatchName = label.name,
@@ -139,7 +134,7 @@ fun StopwatchTile(
                     lapButtonHeight = if (short) SHORT_TILE_LAP_BUTTON_HEIGHT else LAP_BUTTON_HEIGHT,
                     stopButtonHeight = if (short) SHORT_TILE_STOP_BUTTON_HEIGHT else STOP_BUTTON_HEIGHT,
                     undoOffered = undoOffered,
-                    undoTimeLeft = undoTimeLeft,
+                    undoShareLeft = undoShareLeft,
                     onStartPressed = onStartPressed,
                     onStopPressed = onStopPressed,
                     onUndoPressed = onUndoPressed,
@@ -149,10 +144,21 @@ fun StopwatchTile(
     }
 }
 
-/** The stopwatch's name, which is also the way in to its laps; the mark beside it says so. */
+/**
+ * The stopwatch's name, which is also the way in to its laps; the mark beside it says so. It is
+ * where a screen reader stops to say whose tile this is, so it says what the stopwatch is doing
+ * too.
+ */
 @Composable
-private fun TileName(name: String, onPressed: () -> Unit) {
+private fun TileName(name: String, state: StopwatchState, onPressed: () -> Unit) {
     val spoken = stringResource(R.string.stopwatch_title, name)
+    val spokenState = stringResource(
+        when (state) {
+            StopwatchState.Idle -> R.string.state_idle
+            StopwatchState.Running -> R.string.state_running
+            StopwatchState.Stopped -> R.string.state_stopped
+        },
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -164,7 +170,10 @@ private fun TileName(name: String, onPressed: () -> Unit) {
                 role = Role.Button,
                 onClick = onPressed,
             )
-            .semantics { contentDescription = spoken }
+            .semantics {
+                contentDescription = spoken
+                stateDescription = spokenState
+            }
             .testTag("stopwatch-name"),
     ) {
         Text(
@@ -192,100 +201,107 @@ private fun ListMark() {
 }
 
 /**
- * The one figure meant to be read at arm's length. Once stopped it is set on a plate in the
- * tile's reversed colours, so a time that has come to rest looks different from one still going.
+ * Every figure on the tile, read against one clock reading, so that the current lap and the total
+ * time never disagree. It is what recomposes on every frame while the stopwatch runs.
  */
 @Composable
-private fun CurrentLap(stopwatch: Stopwatch, clock: Clock, colour: StopwatchColour, largest: TextUnit) {
+private fun Figures(
+    stopwatch: Stopwatch,
+    clock: Clock,
+    colour: StopwatchColour,
+    largestCurrentLap: TextUnit,
+    totalAndLapCountOnOneLine: Boolean,
+    tight: Boolean,
+) {
     val now = rememberNow(stopwatch, clock)
-    val currentLap = formatTime(stopwatch.currentLap(now))
+    val totalTime = formatTime(stopwatch.totalTime(now))
+
+    CurrentLap(formatTime(stopwatch.currentLap(now)), stopwatch.state, colour, largestCurrentLap)
+    // A short tile closes up the space between its lines to get them all in.
+    val lapStyle = if (tight) FigureStyles.lap.copy(lineHeight = SHORT_TILE_LAP_LINE) else FigureStyles.lap
+    val gap = if (tight) 0.dp else 4.dp
+    Column(modifier = Modifier.padding(top = gap)) {
+        LabelledLap(R.string.last_lap_label, R.string.last_lap_description, stopwatch.lastLap, lapStyle)
+        LabelledLap(R.string.best_lap_label, R.string.best_lap_description, stopwatch.bestLap, lapStyle)
+    }
+    // The two figures looked at least, small. Each has a line to itself, since a total past an
+    // hour is long. A short tile cannot spare the line, so there they share one, and the total
+    // shrinks if it must to stay whole beside the lap count.
+    if (totalAndLapCountOnOneLine) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TotalTime(totalTime, shrinkToFit = true, modifier = Modifier.weight(1f))
+            LapCount(stopwatch.lapCount, modifier = Modifier.width(IntrinsicSize.Max))
+        }
+    } else {
+        Column {
+            TotalTime(totalTime, modifier = Modifier.fillMaxWidth())
+            LapCount(stopwatch.lapCount, modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+
+/**
+ * The one figure meant to be read at arm's length, as large as its tile's width allows up to
+ * [largest]. Idle, it is set lighter. Stopped, it is set on a plate in the tile's reversed
+ * colours, so a time that has come to rest looks different from one still going. It keeps the
+ * same inset in every state, so the digits do not move when the plate appears.
+ */
+@Composable
+private fun CurrentLap(currentLap: String, state: StopwatchState, colour: StopwatchColour, largest: TextUnit) {
     val spoken = stringResource(R.string.current_lap_description, currentLap)
-    val stopped = stopwatch.state == StopwatchState.Stopped
+    val stopped = state == StopwatchState.Stopped
 
     Text(
         text = currentLap,
-        style = FigureStyles.currentLap.copy(fontSize = largest, lineHeight = largest),
+        style = FigureStyles.currentLap.copy(
+            fontSize = largest,
+            // In ems, so a time shrunk to fit a narrow tile does not keep a tall line.
+            lineHeight = 1.1.em,
+            fontWeight = if (state == StopwatchState.Idle) FontWeight.Medium else FontWeight.SemiBold,
+        ),
         color = if (stopped) colour.color else colour.contentColor,
         maxLines = 1,
         softWrap = false,
-        autoSize = TextAutoSize.StepBased(
-            minFontSize = 28.sp,
-            maxFontSize = largest,
-            stepSize = 2.sp,
-        ),
+        autoSize = TextAutoSize.StepBased(minFontSize = 28.sp, maxFontSize = largest, stepSize = 2.sp),
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (stopped) {
-                    Modifier.background(colour.contentColor, PLATE_SHAPE).padding(horizontal = 6.dp)
-                } else {
-                    Modifier
-                },
-            )
+            .then(if (stopped) Modifier.background(colour.contentColor, PLATE_SHAPE) else Modifier)
+            .padding(horizontal = PLATE_INSET)
             .semantics { contentDescription = spoken },
     )
 }
 
 @Composable
-private fun CompletedLaps(stopwatch: Stopwatch) {
-    Column(modifier = Modifier.padding(top = 4.dp)) {
-        LabelledLap(R.string.last_lap_label, R.string.last_lap_description, stopwatch.lastLap)
-        LabelledLap(R.string.best_lap_label, R.string.best_lap_description, stopwatch.bestLap)
-    }
-}
-
-/**
- * The two figures looked at least, small. Each has a line to itself, since a total past an hour
- * is long; a short tile cannot spare the line, so there they share one.
- */
-@Composable
-private fun TotalAndLapCount(stopwatch: Stopwatch, clock: Clock, onOneLine: Boolean) {
-    if (onOneLine) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(top = 2.dp),
-        ) {
-            TotalTime(stopwatch, clock, modifier = Modifier.weight(1f))
-            LapCount(stopwatch, modifier = Modifier.width(IntrinsicSize.Max))
-        }
-    } else {
-        Column(modifier = Modifier.padding(top = 2.dp)) {
-            TotalTime(stopwatch, clock, modifier = Modifier.fillMaxWidth())
-            LapCount(stopwatch, modifier = Modifier.fillMaxWidth())
-        }
-    }
-}
-
-@Composable
-private fun TotalTime(stopwatch: Stopwatch, clock: Clock, modifier: Modifier = Modifier) {
-    val now = rememberNow(stopwatch, clock)
+private fun TotalTime(totalTime: String, modifier: Modifier = Modifier, shrinkToFit: Boolean = false) {
     LabelledValue(
         label = R.string.total_time_label,
-        value = formatTime(stopwatch.totalTime(now)),
+        value = totalTime,
         description = R.string.total_time_description,
-        small = true,
+        valueStyle = FigureStyles.small,
+        shrinkToFit = shrinkToFit,
         modifier = modifier,
     )
 }
 
 @Composable
-private fun LapCount(stopwatch: Stopwatch, modifier: Modifier = Modifier) {
+private fun LapCount(lapCount: Int, modifier: Modifier = Modifier) {
     LabelledValue(
         label = R.string.lap_count_label,
-        value = stopwatch.lapCount.toString(),
+        value = lapCount.toString(),
         description = R.string.lap_count_description,
-        small = true,
+        valueStyle = FigureStyles.small,
         modifier = modifier,
     )
 }
 
 @Composable
-private fun LabelledLap(@StringRes label: Int, @StringRes description: Int, lap: Duration?) {
+private fun LabelledLap(@StringRes label: Int, @StringRes description: Int, lap: Duration?, style: TextStyle) {
     LabelledValue(
         label = label,
         value = lap?.let(::formatTime) ?: stringResource(R.string.no_lap),
         description = description,
         spokenValue = lap?.let(::formatTime) ?: stringResource(R.string.no_lap_description),
+        valueStyle = style,
         modifier = Modifier.fillMaxWidth(),
     )
 }
@@ -299,23 +315,29 @@ private fun LabelledValue(
     @StringRes label: Int,
     value: String,
     @StringRes description: Int,
+    valueStyle: TextStyle,
     modifier: Modifier = Modifier,
     spokenValue: String = value,
-    small: Boolean = false,
+    shrinkToFit: Boolean = false,
 ) {
     val spoken = stringResource(description, spokenValue)
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (shrinkToFit) 4.dp else 8.dp),
         verticalAlignment = Alignment.Bottom,
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
     ) {
         Text(stringResource(label), style = FigureStyles.small, maxLines = 1)
         Text(
             text = value,
-            style = if (small) FigureStyles.small else FigureStyles.lap,
+            style = valueStyle,
             textAlign = TextAlign.End,
             maxLines = 1,
             softWrap = false,
+            autoSize = if (shrinkToFit) {
+                TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = valueStyle.fontSize, stepSize = 1.sp)
+            } else {
+                null
+            },
             modifier = Modifier.weight(1f),
         )
     }
@@ -333,7 +355,7 @@ private fun TileButtons(
     lapButtonHeight: Dp,
     stopButtonHeight: Dp,
     undoOffered: Boolean,
-    undoTimeLeft: () -> Float,
+    undoShareLeft: () -> Float,
     onStartPressed: () -> Unit,
     onStopPressed: () -> Unit,
     onUndoPressed: () -> Unit,
@@ -358,7 +380,7 @@ private fun TileButtons(
                 ink = colour.contentColor,
                 paper = colour.color,
                 filled = false,
-                countdown = undoTimeLeft.takeIf { undoes },
+                countdown = undoShareLeft.takeIf { undoes },
                 modifier = Modifier.width(stopWidth).height(stopButtonHeight),
             )
             TileButton(
@@ -379,7 +401,8 @@ private fun TileButtons(
 
 /**
  * A button on a tile, announced along with whose stopwatch it is. A [filled] one is solid in the
- * tile's [ink] and is the one to reach for; the other is an outline.
+ * tile's [ink] with its label in the tile's own colour, [paper], and is the one to reach for; the
+ * other is an outline.
  */
 @Composable
 private fun TileButton(
@@ -396,31 +419,43 @@ private fun TileButton(
     val action = stringResource(label)
     val spoken = stringResource(R.string.button_description, action, stopwatchName)
     val strength = if (enabled) 1f else DISABLED_STRENGTH
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .clip(BUTTON_SHAPE)
-            .then(
-                if (filled) {
-                    Modifier.background(ink.copy(alpha = strength))
-                } else {
-                    Modifier.border(2.dp, ink.copy(alpha = strength), BUTTON_SHAPE)
-                },
+    val labelColour = if (filled) paper else ink.copy(alpha = strength)
+    val labelStyle = if (filled) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium
+
+    // The press ripple takes the content colour, so it is given the label's, which shows on the
+    // button; the tile's own would be ink on ink on the filled one.
+    CompositionLocalProvider(LocalContentColor provides labelColour) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier
+                .clip(BUTTON_SHAPE)
+                .then(
+                    if (filled) {
+                        Modifier.background(ink.copy(alpha = strength))
+                    } else {
+                        Modifier.border(2.dp, ink.copy(alpha = strength), BUTTON_SHAPE)
+                    },
+                )
+                .then(if (countdown != null) Modifier.undoCountdown(countdown, ink) else Modifier)
+                .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+                .padding(horizontal = 4.dp)
+                .semantics { contentDescription = spoken },
+        ) {
+            // Shrinks rather than loses letters where the button is narrow or the text enlarged.
+            Text(
+                text = action,
+                style = labelStyle,
+                maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 11.sp,
+                    maxFontSize = labelStyle.fontSize,
+                    stepSize = 1.sp,
+                ),
             )
-            .then(if (countdown != null) Modifier.undoCountdown(countdown, ink) else Modifier)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = spoken },
-    ) {
-        Text(
-            text = action,
-            style = if (filled) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
-            color = if (filled) paper else ink.copy(alpha = strength),
-            maxLines = 1,
-        )
+        }
     }
 }
-
-private const val DISABLED_STRENGTH = 0.38f
 
 /**
  * The clock reading to show: taken again whenever the stopwatch changes, and on every frame

@@ -9,14 +9,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,7 +47,14 @@ private const val SIDEWAYS_COLUMNS = 4
 private val MIN_TILE_WIDTH = 120.dp
 private val GAP = 8.dp
 
-/** All the stopwatches at once, under the one control that acts on all of them. */
+/** What reset all needs beside the tiles; without it to spare, it stays above them. */
+private val WIDTH_FOR_RESET_ALL = 104.dp
+
+/**
+ * All the stopwatches at once, with the one control that acts on all of them: above them when
+ * upright, and beside them when on its side with width to spare, where height is what the tiles
+ * are short of.
+ */
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
     val stopwatches by viewModel.stopwatches.collectAsStateWithLifecycle()
@@ -54,29 +62,52 @@ fun TimingScreen(viewModel: TimingViewModel) {
     val undoOffer by viewModel.undoOffer.collectAsStateWithLifecycle()
     KeepScreenOn(stopwatches.any { it.state == StopwatchState.Running })
     ExpireUndoOffer(undoOffer, viewModel::undoTimeLeft, viewModel::onUndoExpired)
-    val undoTimeLeft = rememberUndoTimeLeft(undoOffer, viewModel::undoTimeLeft)
+    val undoShareLeft = rememberUndoShareLeft(undoOffer, viewModel::undoTimeLeft)
     // Which stopwatch's laps are being looked at, by position; kept through a rotation.
     var lapSheetFor by rememberSaveable { mutableStateOf<Int?>(null) }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
-            ResetAllButton(
-                undoOffered = undoOffer?.fromResetAll == true,
-                undoTimeLeft = undoTimeLeft,
-                enabled = canResetAll(stopwatches),
-                onResetAllPressed = viewModel::onResetAllPressed,
-                onUndoPressed = viewModel::onUndoPressed,
-                modifier = Modifier.align(Alignment.End),
-            )
-            StopwatchGrid(
-                stopwatches = stopwatches,
-                labels = labels,
-                undoOffer = undoOffer,
-                undoTimeLeft = undoTimeLeft,
-                viewModel = viewModel,
-                onNamePressed = { lapSheetFor = it },
-                modifier = Modifier.weight(1f),
-            )
+        BoxWithConstraints(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
+            // Side by side when the space is wider than tall and wide enough for four tiles,
+            // otherwise two by two.
+            val widthForFour = MIN_TILE_WIDTH * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1)
+            val sideways = maxWidth > maxHeight && maxWidth >= widthForFour
+            val resetAllBeside = sideways && maxWidth >= widthForFour + WIDTH_FOR_RESET_ALL
+
+            val resetAll: @Composable (Modifier) -> Unit = { modifier ->
+                ResetAllButton(
+                    undoOffered = undoOffer?.fromResetAll == true,
+                    undoShareLeft = undoShareLeft,
+                    enabled = canResetAll(stopwatches),
+                    onResetAllPressed = viewModel::onResetAllPressed,
+                    onUndoPressed = viewModel::onUndoPressed,
+                    modifier = modifier,
+                )
+            }
+            val grid: @Composable (Modifier) -> Unit = { modifier ->
+                StopwatchGrid(
+                    columns = if (sideways) SIDEWAYS_COLUMNS else UPRIGHT_COLUMNS,
+                    stopwatches = stopwatches,
+                    labels = labels,
+                    undoOffer = undoOffer,
+                    undoShareLeft = undoShareLeft,
+                    viewModel = viewModel,
+                    onNamePressed = { lapSheetFor = it },
+                    modifier = modifier,
+                )
+            }
+
+            if (resetAllBeside) {
+                Row(horizontalArrangement = Arrangement.spacedBy(GAP)) {
+                    grid(Modifier.weight(1f))
+                    resetAll(Modifier.align(Alignment.Top))
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
+                    resetAll(Modifier.align(Alignment.End))
+                    grid(Modifier.weight(1f))
+                }
+            }
         }
     }
     lapSheetFor?.let { index ->
@@ -90,51 +121,42 @@ fun TimingScreen(viewModel: TimingViewModel) {
     }
 }
 
-/**
- * Side by side when the space is wider than tall and wide enough for four tiles, otherwise two by
- * two.
- */
 @Composable
 private fun StopwatchGrid(
+    columns: Int,
     stopwatches: List<Stopwatch>,
     labels: List<StopwatchLabel>,
     undoOffer: UndoOffer?,
-    undoTimeLeft: () -> Float,
+    undoShareLeft: () -> Float,
     viewModel: TimingViewModel,
     onNamePressed: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier) {
-        val widthForFour = MIN_TILE_WIDTH * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1)
-        val sideways = maxWidth > maxHeight && maxWidth >= widthForFour
-        val columns = if (sideways) SIDEWAYS_COLUMNS else UPRIGHT_COLUMNS
-
-        Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
-            stopwatches.indices.chunked(columns).forEach { row ->
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.spacedBy(GAP),
-                ) {
-                    row.forEach { index ->
-                        // Keyed so a tile keeps its own state when the grid changes shape.
-                        key(index) {
-                            StopwatchTile(
-                                label = labels[index],
-                                onNamePressed = { onNamePressed(index) },
-                                stopwatch = stopwatches[index],
-                                clock = viewModel.clock,
-                                onStartPressed = { viewModel.onStartPressed(index) },
-                                onStopPressed = { viewModel.onStopPressed(index) },
-                                onUndoPressed = viewModel::onUndoPressed,
-                                undoOffered = undoOffer?.fromResetAll == false &&
-                                    index in undoOffer.stopwatches,
-                                undoTimeLeft = undoTimeLeft,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .testTag("stopwatch-${index + 1}"),
-                            )
-                        }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(GAP)) {
+        stopwatches.indices.chunked(columns).forEach { row ->
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(GAP),
+            ) {
+                row.forEach { index ->
+                    // Keyed so a tile keeps its own state when the grid changes shape.
+                    key(index) {
+                        StopwatchTile(
+                            label = labels[index],
+                            onNamePressed = { onNamePressed(index) },
+                            stopwatch = stopwatches[index],
+                            clock = viewModel.clock,
+                            onStartPressed = { viewModel.onStartPressed(index) },
+                            onStopPressed = { viewModel.onStopPressed(index) },
+                            onUndoPressed = viewModel::onUndoPressed,
+                            undoOffered = undoOffer?.fromResetAll == false &&
+                                index in undoOffer.stopwatches,
+                            undoShareLeft = undoShareLeft,
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .testTag("stopwatch-${index + 1}"),
+                        )
                     }
                 }
             }
@@ -146,35 +168,41 @@ private fun StopwatchGrid(
 @Composable
 private fun ResetAllButton(
     undoOffered: Boolean,
-    undoTimeLeft: () -> Float,
+    undoShareLeft: () -> Float,
     enabled: Boolean,
     onResetAllPressed: () -> Unit,
     onUndoPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val ink = MaterialTheme.colorScheme.onBackground
-    val shape = RoundedCornerShape(14.dp)
     val active = undoOffered || enabled
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .padding(bottom = GAP)
-            .heightIn(min = 48.dp)
-            .clip(shape)
-            .then(if (undoOffered) Modifier.border(2.dp, ink, shape).undoCountdown(undoTimeLeft, ink) else Modifier)
-            .clickable(
-                enabled = active,
-                role = Role.Button,
-                onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
+    val ink = MaterialTheme.colorScheme.onBackground.copy(alpha = if (active) 1f else DISABLED_STRENGTH)
+    CompositionLocalProvider(LocalContentColor provides ink) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = modifier
+                .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .clip(BUTTON_SHAPE)
+                .then(
+                    if (undoOffered) {
+                        Modifier.border(2.dp, ink, BUTTON_SHAPE).undoCountdown(undoShareLeft, ink)
+                    } else {
+                        Modifier
+                    },
+                )
+                .clickable(
+                    enabled = active,
+                    role = Role.Button,
+                    onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
+                )
+                .padding(horizontal = 16.dp)
+                .testTag("reset-all"),
+        ) {
+            Text(
+                text = stringResource(if (undoOffered) R.string.action_undo else R.string.action_reset_all),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
             )
-            .padding(horizontal = 16.dp)
-            .testTag("reset-all"),
-    ) {
-        Text(
-            text = stringResource(if (undoOffered) R.string.action_undo else R.string.action_reset_all),
-            style = MaterialTheme.typography.titleMedium,
-            color = if (active) ink else ink.copy(alpha = 0.38f),
-        )
+        }
     }
 }
 

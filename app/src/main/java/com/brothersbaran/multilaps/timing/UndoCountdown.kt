@@ -1,49 +1,72 @@
 package com.brothersbaran.multilaps.timing
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
 
-private const val FILL_STRENGTH = 0.28f
+/** The shape every button on the timing screen shares. */
+val BUTTON_SHAPE = RoundedCornerShape(16.dp)
+
+/** How strongly a control that cannot be pressed is drawn. */
+const val DISABLED_STRENGTH = 0.38f
+
+private val BAR_HEIGHT = 6.dp
 
 /**
- * The share of an undo offer's time that is left, from one down to nothing, running down
- * smoothly. It starts from the time the offer really has left, so it is right after a rotation.
+ * The share of its time an undo has left, from one down to nothing; exposed so it can be checked
+ * without reading pixels. It is not a progress bar to a screen reader: the button stays a button.
+ */
+val UndoTimeLeftKey = SemanticsPropertyKey<Float>("UndoTimeLeft")
+
+/**
+ * The share of an undo offer's time that is left, from one down to nothing. It is read from the
+ * offer's own clock on every frame rather than animated, so it is right after a rotation and
+ * runs at the true speed whatever the phone's animation setting.
  */
 @Composable
-fun rememberUndoTimeLeft(offer: UndoOffer?, timeLeft: (UndoOffer) -> Duration): () -> Float {
-    val share = remember { Animatable(1f) }
+fun rememberUndoShareLeft(offer: UndoOffer?, timeLeft: (UndoOffer) -> Duration): () -> Float {
+    var share by remember { mutableFloatStateOf(1f) }
     LaunchedEffect(offer?.id) {
         if (offer != null) {
-            val left = timeLeft(offer)
-            share.snapTo((left / TimingViewModel.UNDO_WINDOW).toFloat())
-            share.animateTo(0f, tween(left.inWholeMilliseconds.toInt(), easing = LinearEasing))
+            while (true) {
+                share = (timeLeft(offer) / TimingViewModel.UNDO_WINDOW).toFloat()
+                withFrameNanos { }
+            }
         }
     }
-    return { share.value }
+    return { share }
 }
 
 /**
- * Marks a button as an undo whose time is running out: a wash in [ink] that drains away to the
- * left, and word of it to a screen reader when it appears.
+ * Marks a button as an undo whose time is running out: a bar in [ink] along its foot that
+ * shortens to nothing, and word of the button to a screen reader when it appears. The bar is kept
+ * clear of the label, which stays as readable as on any other button.
  */
-fun Modifier.undoCountdown(timeLeft: () -> Float, ink: Color): Modifier =
+fun Modifier.undoCountdown(shareLeft: () -> Float, ink: Color): Modifier =
     drawBehind {
-        drawRect(ink.copy(alpha = FILL_STRENGTH), size = Size(size.width * timeLeft(), size.height))
+        val height = BAR_HEIGHT.toPx()
+        drawRect(
+            color = ink,
+            topLeft = Offset(0f, size.height - height),
+            size = Size(size.width * shareLeft(), height),
+        )
     }.semantics {
-        progressBarRangeInfo = ProgressBarRangeInfo(timeLeft(), 0f..1f)
+        this[UndoTimeLeftKey] = shareLeft()
         liveRegion = LiveRegionMode.Polite
     }

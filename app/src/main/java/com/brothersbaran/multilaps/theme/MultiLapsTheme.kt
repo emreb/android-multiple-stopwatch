@@ -22,7 +22,6 @@ import com.brothersbaran.multilaps.R
 val BarlowCondensed = FontFamily(
     Font(R.font.barlow_condensed_medium, FontWeight.Medium),
     Font(R.font.barlow_condensed_semibold, FontWeight.SemiBold),
-    Font(R.font.barlow_condensed_bold, FontWeight.Bold),
 )
 
 /** Digits of equal width, so a ticking time does not jitter from side to side. */
