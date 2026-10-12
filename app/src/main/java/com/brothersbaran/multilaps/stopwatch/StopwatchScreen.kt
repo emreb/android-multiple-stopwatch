@@ -2,6 +2,7 @@ package com.brothersbaran.multilaps.stopwatch
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
@@ -11,7 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -43,22 +44,41 @@ fun StopwatchScreen(viewModel: StopwatchViewModel) {
                 style = MaterialTheme.typography.displayLarge,
                 modifier = Modifier.semantics { contentDescription = totalTimeDescription },
             )
-            Button(onClick = viewModel::onStartPressed) {
-                Text(stringResource(R.string.action_start))
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Button(
+                    onClick = viewModel::onStopPressed,
+                    enabled = stopwatch.state != StopwatchState.Idle,
+                ) {
+                    val label = when (stopwatch.state) {
+                        StopwatchState.Stopped -> R.string.action_reset
+                        StopwatchState.Idle, StopwatchState.Running -> R.string.action_stop
+                    }
+                    Text(stringResource(label))
+                }
+                Button(
+                    onClick = viewModel::onStartPressed,
+                    enabled = stopwatch.state != StopwatchState.Running,
+                ) {
+                    Text(stringResource(R.string.action_start))
+                }
             }
         }
     }
 }
 
-/** Re-reads the total time on every frame while the stopwatch is running. */
+/**
+ * Reads the total time afresh on every recomposition, and recomposes on every frame while the
+ * stopwatch is running.
+ */
 @Composable
 private fun rememberTotalTime(stopwatch: Stopwatch, readTotalTime: () -> Duration): Duration {
-    var totalTime by remember { mutableStateOf(readTotalTime()) }
-    LaunchedEffect(stopwatch) {
-        totalTime = readTotalTime()
-        while (stopwatch.isRunning) {
-            withFrameNanos { totalTime = readTotalTime() }
+    val isRunning = stopwatch.state == StopwatchState.Running
+    var frame by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(isRunning) {
+        while (isRunning) {
+            withFrameNanos { frame = it }
         }
     }
-    return totalTime
+    // Reading the frame subscribes this composition to it.
+    return remember(stopwatch, frame) { readTotalTime() }
 }

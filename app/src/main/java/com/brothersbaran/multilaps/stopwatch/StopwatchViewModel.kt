@@ -19,6 +19,17 @@ class StopwatchViewModel(private val clock: Clock) : ViewModel() {
         _stopwatch.update { it.start(clock.now()) }
     }
 
+    /** Stop holds a running stopwatch; pressed again while stopped, it resets. */
+    fun onStopPressed() {
+        _stopwatch.update {
+            when (it.state) {
+                StopwatchState.Running -> it.stop(clock.now())
+                StopwatchState.Stopped -> it.reset()
+                StopwatchState.Idle -> it
+            }
+        }
+    }
+
     fun totalTime(): Duration = stopwatch.value.totalTime(clock.now())
 
     companion object {
