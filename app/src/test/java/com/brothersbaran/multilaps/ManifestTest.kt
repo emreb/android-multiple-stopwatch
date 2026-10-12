@@ -21,6 +21,11 @@ class ManifestTest {
     }
 
     @Test
+    fun `the app is named MultiLaps`() {
+        assertEquals("MultiLaps", context.applicationInfo.loadLabel(context.packageManager).toString())
+    }
+
+    @Test
     fun `the app requests no network access`() {
         val requested = context.packageManager
             .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)

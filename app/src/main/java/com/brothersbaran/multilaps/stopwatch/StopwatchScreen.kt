@@ -36,9 +36,10 @@ fun StopwatchScreen(viewModel: StopwatchViewModel) {
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val totalTimeDescription = stringResource(R.string.total_time_description)
+            val formattedTotalTime = formatTime(totalTime)
+            val totalTimeDescription = stringResource(R.string.total_time_description, formattedTotalTime)
             Text(
-                text = formatTime(totalTime),
+                text = formattedTotalTime,
                 style = MaterialTheme.typography.displayLarge,
                 modifier = Modifier.semantics { contentDescription = totalTimeDescription },
             )

@@ -29,7 +29,6 @@ class StopwatchScreenTest {
 
     @Test
     fun `shows one stopwatch at zero with a start button`() {
-        composeRule.onNodeWithContentDescription("Total time").assertIsDisplayed()
         composeRule.onNodeWithText("0:00.00").assertIsDisplayed()
         composeRule.onNodeWithText("Start").assertIsDisplayed()
     }
@@ -54,5 +53,17 @@ class StopwatchScreenTest {
         clock.advanceBy(60_000.milliseconds)
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.onNodeWithText("1:01.23").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a screen reader hears the total time and its value`() {
+        composeRule.onNodeWithContentDescription("Total time 0:00.00").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Start").performClick()
+        composeRule.mainClock.advanceTimeByFrame()
+        clock.advanceBy(1234.milliseconds)
+        composeRule.mainClock.advanceTimeByFrame()
+
+        composeRule.onNodeWithContentDescription("Total time 0:01.23").assertIsDisplayed()
     }
 }
