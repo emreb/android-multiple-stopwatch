@@ -5,18 +5,9 @@ import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.rememberSwipeToDismissBoxState
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.semantics.selected
-import com.swetw.multilaps.timing.contentColor
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,11 +26,16 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,10 +46,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.paneTitle
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -68,8 +67,10 @@ import com.swetw.multilaps.timing.LapRow
 import com.swetw.multilaps.timing.ScreenButton
 import com.swetw.multilaps.timing.StopwatchColourKey
 import com.swetw.multilaps.timing.color
+import com.swetw.multilaps.timing.contentColor
 import java.time.ZoneId
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 private val GAP = 8.dp
 
@@ -319,16 +320,16 @@ private fun ResultRow(
     val spoken = stringResource(R.string.result_description, result.name, timeOfDay, total, laps, best)
     val delete = stringResource(R.string.action_delete)
     val ink = MaterialTheme.colorScheme.onBackground
-    val askToDelete by rememberUpdatedState(onDeleteAsked)
-    val swipe = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) askToDelete()
-            // Never carried through here: the row stays until the question is answered.
-            false
-        },
-    )
+    val swipe = rememberSwipeToDismissBoxState()
+    val scope = rememberCoroutineScope()
     SwipeToDismissBox(
         state = swipe,
+        // Called once the row has been let go far enough over, not while it is still being
+        // dragged. The row goes back to wait for the answer rather than staying swiped away.
+        onDismiss = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) onDeleteAsked()
+            scope.launch { swipe.reset() }
+        },
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = !selecting,
         backgroundContent = {

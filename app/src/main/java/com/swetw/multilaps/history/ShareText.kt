@@ -20,7 +20,7 @@ fun formatTimeOfDay(time: ZonedDateTime, locale: Locale): String =
 
 /**
  * Results as plain text to hand to another app. Each day's come under its date: whose each was
- * and when, its figures, and every lap in the order the laps were run. They stay in the order given.
+ * and when, its figures, and every lap in the order the laps were run. Days come in the order they are first met.
  */
 fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Resources): String =
     results.byDay(zone).joinToString("\n\n") { day ->

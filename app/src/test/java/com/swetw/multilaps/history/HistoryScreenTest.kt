@@ -1,6 +1,9 @@
 package com.swetw.multilaps.history
 
 import android.content.Intent
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -65,11 +68,16 @@ class HistoryScreenTest {
 
     private var results by mutableStateOf(listOf(ada, leo, mia))
     private var wentBack = false
+    private lateinit var backDispatcher: OnBackPressedDispatcher
+
+    private fun pressSystemBack() = composeRule.runOnUiThread { backDispatcher.onBackPressed() }
+    private fun deleteQuestion() = composeRule.onNodeWithText("Delete 1 result?")
 
     private fun show() = composeRule.setContent { Screen() }
 
     @androidx.compose.runtime.Composable
     private fun Screen() {
+        backDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
         MultiLapsTheme {
             HistoryScreen(
                 results = results,
@@ -224,12 +232,7 @@ class HistoryScreenTest {
         row("Ada").performClick()
         composeRule.onNodeWithTag("share-result").performClick()
 
-        val chooser = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
-        assertEquals(Intent.ACTION_CHOOSER, chooser.action)
-        val send = chooser.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)!!
-        assertEquals(Intent.ACTION_SEND, send.action)
-        assertEquals("text/plain", send.type)
-        val text = send.getStringExtra(Intent.EXTRA_TEXT)!!
+        val text = sharedText()
         assertEquals(shareText(listOf(ada), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources), text)
         assertTrue("Lap 3: 1:25.00" in text)
         assertFalse("Leo" in text)
@@ -277,6 +280,115 @@ class HistoryScreenTest {
 
         assertEquals(3, results.size)
         assertEquals(before, row("Leo").assertIsDisplayed().getUnclippedBoundsInRoot())
+    }
+
+    @Test
+    fun `a result is not asked about while it is still being dragged, only once it is let go`() {
+        show()
+        row("Leo").performTouchInput {
+            down(center)
+            moveBy(Offset(-width * 0.4f, 0f))
+            moveBy(Offset(-width * 0.4f, 0f))
+        }
+
+        deleteQuestion().assertDoesNotExist()
+
+        row("Leo").performTouchInput { up() }
+
+        deleteQuestion().assertIsDisplayed()
+    }
+
+    @Test
+    fun `a result dragged out and brought back before letting go is not asked about`() {
+        show()
+        row("Leo").performTouchInput {
+            down(center)
+            moveBy(Offset(-width * 0.4f, 0f))
+            moveBy(Offset(-width * 0.3f, 0f))
+            moveBy(Offset(width * 0.35f, 0f))
+            moveBy(Offset(width * 0.35f, 0f))
+            advanceEventTime(500)
+            up()
+        }
+
+        deleteQuestion().assertDoesNotExist()
+        assertEquals(3, results.size)
+    }
+
+    @Test
+    fun `a short slow drag to the left does not ask`() {
+        show()
+        row("Leo").performTouchInput {
+            down(center)
+            moveBy(Offset(-width * 0.15f, 0f))
+            advanceEventTime(500)
+            moveBy(Offset(-width * 0.1f, 0f))
+            advanceEventTime(500)
+            up()
+        }
+
+        deleteQuestion().assertDoesNotExist()
+    }
+
+    @Test
+    fun `the question about a swiped result is still there after the screen is rebuilt, and deletes that result`() {
+        val restoration = StateRestorationTester(composeRule)
+        restoration.setContent { Screen() }
+        row("Leo").performTouchInput { swipeLeft() }
+
+        restoration.emulateSavedInstanceStateRestore()
+
+        deleteQuestion().assertIsDisplayed()
+        composeRule.onNodeWithTag("confirm-delete").performClick()
+        assertEquals(listOf(ada, mia), results)
+    }
+
+    @Test
+    fun `while selecting, the phone's back button ends the selection first, and only then leaves history`() {
+        show()
+        longPress("Ada")
+        pressSystemBack()
+
+        selectionCount().assertDoesNotExist()
+        assertFalse(wentBack)
+        rows().assertCountEquals(3)
+
+        pressSystemBack()
+
+        assertTrue(wentBack)
+    }
+
+    @Test
+    fun `while selecting, delete is not offered, neither for all nor to a screen reader on a result`() {
+        show()
+        longPress("Ada")
+
+        deleteAll().assertDoesNotExist()
+        val config = row("Leo").fetchSemanticsNode().config
+        assertNull(config.getOrNull(SemanticsActions.CustomActions))
+        assertEquals("select or deselect", config[SemanticsActions.OnClick].label)
+    }
+
+    @Test
+    fun `a result says that tapping it shows its laps`() {
+        show()
+
+        assertEquals("show its laps", row("Ada").fetchSemanticsNode().config[SemanticsActions.OnClick].label)
+    }
+
+    @Test
+    fun `holding a result and then dragging it selects it and does not ask to delete`() {
+        show()
+        row("Leo").performTouchInput {
+            down(center)
+            advanceEventTime(viewConfiguration.longPressTimeoutMillis + 100)
+            moveBy(Offset(-width * 0.4f, 0f))
+            moveBy(Offset(-width * 0.4f, 0f))
+            up()
+        }
+
+        selectionCount().assertTextEquals("1 selected")
+        deleteQuestion().assertDoesNotExist()
     }
 
     @Test
