@@ -1,0 +1,17 @@
+App name (28 of 30 characters)
+MultiLaps: 4 Lap Stopwatches
+
+Short description (74 of 80 characters)
+Time four runners at once. Big lap buttons, best laps, no ads, no account.
+
+Full description
+See full-description.txt
+
+Release notes for the first release
+First release. Four stopwatches on one screen, each with its own laps, name and colour.
+
+Category
+Sports
+
+Privacy policy link
+https://github.com/emreb/android-multiple-stopwatch/blob/main/PRIVACY.md
