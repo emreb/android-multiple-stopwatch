@@ -20,6 +20,7 @@ class TimingViewModel(
     val clock: Clock,
     private val store: TimingStore,
     private val labelStore: LabelStore,
+    private val haptics: Haptics = Haptics.None,
 ) : ViewModel() {
 
     private val _stopwatches = MutableStateFlow(restored())
@@ -45,10 +46,10 @@ class TimingViewModel(
         val now = clock.now()
         val stopwatch = stopwatchAt(index)
         when (stopwatch.state) {
-            StopwatchState.Running -> replace(mapOf(index to stopwatch.lap(now)))
+            StopwatchState.Running -> replace(mapOf(index to stopwatch.lap(now)), Feedback.Lap)
             StopwatchState.Idle, StopwatchState.Stopped -> {
                 withdrawFromUndoOffer(index)
-                replace(mapOf(index to stopwatch.start(now)))
+                replace(mapOf(index to stopwatch.start(now)), Feedback.Start)
             }
         }
     }
@@ -63,7 +64,7 @@ class TimingViewModel(
         when (stopwatch.state) {
             StopwatchState.Running -> {
                 stoppedAt[index] = now
-                replace(mapOf(index to stopwatch.stop(now)))
+                replace(mapOf(index to stopwatch.stop(now)), Feedback.Stop)
             }
             StopwatchState.Stopped -> if (!isBounce(since = stoppedAt[index], now)) {
                 reset(listOf(index), fromResetAll = false, now)
@@ -99,7 +100,7 @@ class TimingViewModel(
         offer.stopwatches.keys.forEach { stoppedAt[it] = now }
         lastUndoAt = now
         _undoOffer.value = null
-        replace(offer.stopwatches)
+        replace(offer.stopwatches, Feedback.Undo)
     }
 
     /** How much longer [offer] stays open, measured from its reset whenever this is asked. */
@@ -133,7 +134,7 @@ class TimingViewModel(
             fromResetAll = fromResetAll,
             offeredAt = now,
         )
-        replace(indices.associateWith { stopwatches[it].reset() })
+        replace(indices.associateWith { stopwatches[it].reset() }, Feedback.Reset)
     }
 
     /**
@@ -154,13 +155,17 @@ class TimingViewModel(
         return _stopwatches.value[index]
     }
 
-    /** Puts [replacements] in place by position and saves, unless nothing actually changed. */
-    private fun replace(replacements: Map<Int, Stopwatch>) {
+    /**
+     * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback];
+     * unless nothing actually changed, as when a lap press is ignored as a bounce.
+     */
+    private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback) {
         val before = _stopwatches.value
         val after = before.mapIndexed { index, stopwatch -> replacements[index] ?: stopwatch }
         if (after == before) return
         _stopwatches.value = after
         save(after)
+        haptics.play(feedback)
     }
 
     private fun restored(): List<Stopwatch> {
@@ -193,6 +198,7 @@ class TimingViewModel(
                     labelStore = PreferencesLabelStore(
                         application.getSharedPreferences(PreferencesLabelStore.FILE_NAME, Context.MODE_PRIVATE),
                     ),
+                    haptics = VibratorHaptics.from(application),
                 )
             }
         }
