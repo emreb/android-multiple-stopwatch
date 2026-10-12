@@ -23,10 +23,12 @@ MULTILAPS_UPLOAD_KEY_PASSWORD=...
 Everything hangs on `MULTILAPS_UPLOAD_STORE_FILE`:
 
 - All four set: `./gradlew bundleRelease` produces a signed bundle.
-- Store file set, another one missing: the build stops and names the missing one.
+- Store file set, another one missing: every Gradle command stops, tests and debug builds
+  included, and names the missing one.
 - Store file missing or blank: the build succeeds and the bundle is **unsigned**, whatever
-  the other three say. A task with "Release" in its name, such as `bundleRelease`, prints
-  a warning; `./gradlew bundle` or `build` does not.
+  the other three say. Asking for a task by a name containing "Release", such as
+  `bundleRelease`, prints a warning; `./gradlew bundle`, `build` or a shortened name such
+  as `bR` does not.
 
 So check who signed a bundle, as below, before uploading it.
 
