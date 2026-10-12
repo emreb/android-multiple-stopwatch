@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MultiLaps marketing kit</title>
+<style>
+  @font-face { font-family: "Barlow Condensed"; font-weight: 500; src: url("fonts/BarlowCondensed-Medium.ttf"); }
+  @font-face { font-family: "Barlow Condensed"; font-weight: 600; src: url("fonts/BarlowCondensed-SemiBold.ttf"); }
+  @font-face { font-family: "Barlow Condensed"; font-weight: 700; src: url("fonts/BarlowCondensed-Bold.ttf"); }
+
+  :root {
+    --blue: #1565C0; --red: #E53935; --green: #43A047; --orange: #FB8C00;
+    --ink: #000; --paper: #fff; --quiet: #5a5a5a; --rule: #d9d9d9; --wash: #f3f3f3;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Avenir Next", "Avenir", "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt; line-height: 1.5; color: var(--ink);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page { width: 210mm; height: 297mm; padding: 18mm 18mm 16mm; position: relative; overflow: hidden; page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  h1, h2, h3, .display { font-family: "Barlow Condensed", sans-serif; font-weight: 700; margin: 0; line-height: 1; }
+  h1 { font-size: 40pt; margin-bottom: 4mm; }
+  h2 { font-size: 19pt; font-weight: 600; margin: 8mm 0 2.5mm; }
+  h3 { font-size: 13.5pt; font-weight: 600; margin: 5mm 0 1.2mm; }
+  p { margin: 0 0 2.6mm; max-width: 150mm; }
+  .lede { font-size: 13pt; line-height: 1.45; max-width: 150mm; margin-bottom: 5mm; }
+  .quiet { color: var(--quiet); }
+  .small { font-size: 9pt; line-height: 1.45; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; max-width: 150mm; }
+  li { margin-bottom: 1.2mm; }
+
+  /* The four tile colours as a running band: the one piece of decoration, and it is the product. */
+  .band { position: absolute; left: 0; top: 0; width: 100%; height: 5mm; display: flex; }
+  .band i { flex: 1; }
+  .b1 { background: var(--blue); } .b2 { background: var(--red); } .b3 { background: var(--green); } .b4 { background: var(--orange); }
+  .folio { position: absolute; left: 18mm; right: 18mm; bottom: 9mm; display: flex; justify-content: space-between;
+           font-family: "Barlow Condensed", sans-serif; font-weight: 500; font-size: 10pt; color: var(--quiet); }
+
+  .phone { border: 2.2mm solid #000; border-radius: 7mm; display: block; background: #000; }
+  .copybox { background: var(--wash); border-radius: 3mm; padding: 4.5mm 5.5mm; margin: 0 0 4mm; max-width: 160mm; }
+  .copybox p:last-child, .copybox ul:last-child { margin-bottom: 0; }
+  .label { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 11pt; color: var(--quiet); margin-bottom: 1mm; }
+  .count { font-family: "Barlow Condensed", sans-serif; font-weight: 500; font-size: 10pt; color: var(--quiet); }
+  .tagline { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 21pt; line-height: 1.1; margin: 0 0 1mm; }
+
+  table { border-collapse: collapse; width: 100%; margin: 0 0 4mm; }
+  th, td { text-align: left; vertical-align: top; padding: 2.2mm 3mm 2.2mm 0; border-bottom: 0.3mm solid var(--rule); }
+  th { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 11.5pt; width: 40mm; }
+  td { font-size: 10pt; }
+
+  /* Cover */
+  .cover { padding: 0; background: #000; color: #fff; }
+  .cover .tiles { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2.5mm; background: #fff; }
+  .cover .tiles i { display: block; }
+  .cover .text { position: absolute; left: 16mm; top: 22mm; width: 92mm; }
+  .cover .name { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 78pt; line-height: 0.9; color: #fff; }
+  .cover .line { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 25pt; line-height: 1.08; color: #fff; margin-top: 7mm; }
+  .cover .kit { position: absolute; left: 16mm; bottom: 20mm; font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 15pt; color: #000; }
+  .cover .hero { position: absolute; right: 16mm; top: 50%; transform: translateY(-50%); width: 76mm; }
+  .cover .icon { width: 26mm; height: 26mm; margin-bottom: 8mm; display: block; }
+
+  .shots3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7mm; margin-top: 3mm; }
+  .shots3 img { width: 100%; }
+  .cap { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 14pt; line-height: 1.12; margin: 3mm 0 1mm; }
+  .capsub { font-size: 9pt; line-height: 1.4; color: var(--quiet); margin: 0; }
+  .wide { width: 100%; margin-top: 6mm; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10mm; }
+  .cols p, .cols ul { max-width: none; }
+  .feature h3 { margin-top: 4mm; }
+  .chip { display: inline-block; width: 3.2mm; height: 3.2mm; border-radius: 0.8mm; margin-right: 2mm; vertical-align: baseline; }
+
+  .graphic { width: 96mm; height: 46.9mm; border-radius: 2.5mm; overflow: hidden; position: relative; background: #000; margin: 1.5mm 0 0; }
+  .graphic .t { position: absolute; left: 5.5mm; top: 50%; transform: translateY(-50%); color: #fff; width: 34mm; }
+  .graphic .t .n { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 23pt; line-height: 0.9; }
+  .graphic .t .l { font-family: "Barlow Condensed", sans-serif; font-weight: 600; font-size: 9.5pt; line-height: 1.12; margin-top: 2mm; }
+  .graphic img { position: absolute; right: 4.5mm; top: 50%; transform: translateY(-50%); width: 53mm; border: 1mm solid #fff; border-radius: 2.6mm; }
+  .graphic .strip { position: absolute; left: 0; right: 0; bottom: 0; height: 2.2mm; display: flex; }
+  .graphic .strip i { flex: 1; }
+  .tight { font-size: 9.4pt; line-height: 1.42; }
+  .tight h1 { font-size: 34pt; margin-bottom: 2.5mm; }
+  .tight .lede { font-size: 11.5pt; margin-bottom: 3.5mm; }
+  .tight .copybox { padding: 3.2mm 5mm; margin-bottom: 2.8mm; max-width: none; }
+  .tight .copybox p { margin-bottom: 1.9mm; max-width: none; }
+  .roomy { font-size: 10.1pt; line-height: 1.46; }
+  .roomy td { font-size: 9.9pt; padding: 1.9mm 3mm 1.9mm 0; }
+  .roomy th { font-size: 11.2pt; }
+  .tight h2 { font-size: 16pt; margin: 5mm 0 1.8mm; }
+  .tight h3 { font-size: 12pt; margin: 3mm 0 1mm; }
+  .tight p, .tight ul { max-width: none; }
+  .tight li { margin-bottom: 0.7mm; }
+  .tight ul { margin-bottom: 1.5mm; }
+  .tight .tagline { font-size: 18pt; }
+  .tight table { margin-bottom: 2.5mm; }
+  .tight td { font-size: 9.2pt; padding: 1.5mm 3mm 1.5mm 0; }
+  .tight th { font-size: 10.5pt; padding: 1.5mm 3mm 1.5mm 0; }
+  .todo td:first-child { width: 8mm; font-family: "Barlow Condensed", sans-serif; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- 1 Cover -->
+<section class="page cover">
+  <div class="tiles"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <div class="text">
+    <svg class="icon" viewBox="18 18 72 72" xmlns="http://www.w3.org/2000/svg">
+      <defs><clipPath id="m"><rect x="18" y="18" width="72" height="72" rx="17"/></clipPath></defs>
+      <g clip-path="url(#m)">
+        <rect width="54" height="54" fill="#1565C0"/><rect x="54" width="54" height="54" fill="#E53935"/>
+        <rect y="54" width="54" height="54" fill="#43A047"/><rect x="54" y="54" width="54" height="54" fill="#FB8C00"/>
+        <rect x="52" width="4" height="108" fill="#fff"/><rect y="52" width="108" height="4" fill="#fff"/>
+        <rect x="50.5" y="31" width="7" height="8" transform="rotate(42 54 58)"/><rect x="51" y="29" width="6" height="8"/>
+        <rect x="44.5" y="24" width="19" height="6" rx="2"/>
+        <circle cx="54" cy="58" r="24"/><circle cx="54" cy="58" r="19" fill="#fff"/>
+        <path d="M54,42v4M54,70v4M38,58h4M66,58h4" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M54,58L61,45.5" stroke="#E53935" stroke-width="3" stroke-linecap="round"/><circle cx="54" cy="58" r="3"/>
+      </g>
+      <rect x="18.75" y="18.75" width="70.5" height="70.5" rx="16.5" fill="none" stroke="#fff" stroke-width="1.5"/>
+    </svg>
+    <div class="name">Multi<br>Laps</div>
+    <div class="line">Four stopwatches.<br>One screen.<br>Every lap.</div>
+  </div>
+  <div class="kit">Marketing kit, version 0.1.0</div>
+  <img class="phone hero" src="../screenshots/2-race.png" alt="MultiLaps timing four runners">
+</section>
+
+<!-- 2 Positioning -->
+<section class="page tight roomy">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Positioning</h1>
+  <p class="lede">MultiLaps is a lap timer for the person standing at the trackside with more than one runner to watch. It puts four stopwatches on one screen, each in its runner's colour, so nobody's lap gets missed while you fumble between timers.</p>
+
+  <table>
+    <tr><th>Best for</th><td>A parent or volunteer coach timing two to four children by hand at a running track, where the runners set off at different moments and each lap matters to them. Also swimming lengths, cycling laps and school sports days.<br><span class="quiet">Not for: races with timing chips, groups larger than four, or anyone who needs results exported today.</span></td></tr>
+    <tr><th>Category</th><td>A multi-runner lap stopwatch for Android. People will look for it as "multiple stopwatch" or "lap timer".</td></tr>
+    <tr><th>What people use now</th><td>
+      <ul>
+        <li>The phone's built-in clock app, which times one runner. The second child gets timed by guesswork.</li>
+        <li>Two phones, or a phone and a wristwatch, one in each hand.</li>
+        <li>A handheld sports stopwatch, one per runner, and a clipboard.</li>
+        <li>General "multi timer" apps built for cooking or workouts: long lists, small buttons, adverts between you and the Lap button.</li>
+      </ul>
+    </td></tr>
+    <tr><th>Why they fall short</th><td>They are built for one thing being timed, or for timers you set and walk away from. At the track you are watching children, not a screen, and you have about a second to press the right button for the right child.</td></tr>
+    <tr><th>What is different</th><td>
+      <ul>
+        <li><b>Four at once, always visible.</b> No list to scroll and no switching. Turn the phone on its side and they sit in a row.</li>
+        <li><b>Found by colour.</b> Each stopwatch is a solid block in its runner's colour, with their name on it.</li>
+        <li><b>Built around the Lap press.</b> Lap is the big button. Stop is small and off to the side. A double press is ignored instead of recording a bogus lap.</li>
+        <li><b>Hard to lose a time.</b> A reset can be undone for five seconds. Timing carries on if the screen locks, a call comes in or the app is closed.</li>
+        <li><b>Nothing in the way.</b> No adverts, no account, no internet connection.</li>
+      </ul>
+    </td></tr>
+    <tr><th>Proof you can state today</th><td>
+      <ul>
+        <li>The app asks for one permission: to vibrate. It cannot reach the internet.</li>
+        <li>Every behaviour above is covered by an automated test; the suite has 269.</li>
+        <li>Text meets the contrast level set for small print on all eight colours.</li>
+      </ul>
+      <span class="quiet">There are no user reviews or usage numbers yet. Do not invent any.</span>
+    </td></tr>
+  </table>
+
+  <div class="copybox">
+    <div class="label">Positioning in one sentence</div>
+    <p>For parents and coaches who time several runners by hand, MultiLaps is a lap stopwatch that shows four runners at once, each in their own colour. Unlike the clock app on your phone, it never makes you choose which child to time.</p>
+  </div>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>2</span></div>
+</section>
+
+<!-- 3 Messaging -->
+<section class="page tight roomy">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Messaging</h1>
+  <p class="lede">Say what it does in the words a parent at a track would use. The product is simple; the copy should be too.</p>
+
+  <h2>Taglines</h2>
+  <div class="copybox">
+    <div class="label">Recommended</div>
+    <p class="tagline">Four stopwatches. One screen. Every lap.</p>
+    <p class="small quiet">States the whole product in six words and promises the outcome that matters: no missed laps.</p>
+  </div>
+  <div class="cols">
+    <div class="copybox">
+      <div class="label">Alternative, for parents</div>
+      <p class="tagline">Time all your runners at once.</p>
+      <p class="small quiet">The plainest version. Use where there is room for only one line.</p>
+    </div>
+    <div class="copybox">
+      <div class="label">Alternative, the problem</div>
+      <p class="tagline">Two kids. One stopwatch. Sound familiar?</p>
+      <p class="small quiet">Names the moment the app exists for. Good for a social post, too knowing for a store title.</p>
+    </div>
+  </div>
+
+  <h2>Three things to say, in this order</h2>
+  <table>
+    <tr><th>1. Everyone at once</th><td>Four stopwatches side by side. Start each runner when they actually set off, or start them all together.</td></tr>
+    <tr><th>2. Laps without looking</th><td>One big Lap button per runner, a different vibration for lap and stop, and each runner's current, last and best lap on their tile.</td></tr>
+    <tr><th>3. Nothing gets lost</th><td>Undo a reset. Lock the screen, take a call, close the app: the timing is still running when you come back.</td></tr>
+  </table>
+
+  <h2>Voice</h2>
+  <div class="cols">
+    <div>
+      <h3>Do</h3>
+      <ul>
+        <li>Write the way one parent tells another about a useful app.</li>
+        <li>Use the track's words: lap, runner, start, stop, best lap.</li>
+        <li>Be specific. "Four runners", "five seconds to undo", "one permission".</li>
+        <li>Say what it does not do, plainly. It builds trust.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Avoid</h3>
+      <ul>
+        <li>Performance talk: "elite", "pro", "train smarter", "unlock your potential". This is for children having a run.</li>
+        <li>Calling it accurate to a hundredth. It shows hundredths, but a thumb decides the time.</li>
+        <li>Exclamation marks, and any claim about how many people use it.</li>
+        <li>"Timer" for the product. A timer counts down; this is a stopwatch.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>3</span></div>
+</section>
+
+<!-- 4 Store listing -->
+<section class="page tight">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Google Play listing</h1>
+  <p class="lede">Ready to paste. Character counts are against Google Play's limits.</p>
+
+  <div class="copybox">
+    <div class="label">App name <span class="count">(28 of 30 characters)</span></div>
+    <p><b>MultiLaps: 4 Lap Stopwatches</b></p>
+  </div>
+  <div class="copybox">
+    <div class="label">Short description <span class="count">(74 of 80 characters)</span></div>
+    <p><b>Time four runners at once. Big lap buttons, best laps, no ads, no account.</b></p>
+  </div>
+  <div class="copybox">
+    <div class="label">Full description <span class="count">(1,555 of 4,000 characters)</span></div>
+    <p>Two kids on the track and one stopwatch on your phone. You time one of them properly and guess the other.</p>
+    <p>MultiLaps puts four stopwatches on one screen, so every runner gets their own.</p>
+    <p><b>Everyone at once</b><br>Four stopwatches, each a solid block of colour with the runner's name on it. Start each one when that runner sets off, or press Start all when they go together. Turn the phone on its side and they line up in a row.</p>
+    <p><b>Made for the Lap press</b><br>Lap is the big button on every stopwatch. Stop is small and out of the way, so you do not hit it by mistake at the line. Each press gives a short vibration, different for a lap and a stop, so you can keep your eyes on the track. A double press is ignored instead of recording a lap that never happened.</p>
+    <p><b>The numbers that matter</b><br>Each stopwatch shows the lap in progress in large digits, with the last lap, best lap, total time and lap count beneath. Tap a name to see every lap, with the best one marked.</p>
+    <p><b>Hard to lose a time</b><br>Reset by mistake? Undo it within five seconds. Screen locked, call came in, app closed? The stopwatches are still running when you come back. The screen stays on while anything is being timed.</p>
+    <p><b>Yours to set up</b><br>Name each stopwatch and pick its colour from eight. They stay as you set them. Light and dark themes follow your phone.</p>
+    <p><b>Nothing in the way</b><br>No ads. No account. No internet connection: the app cannot go online, and nothing you time leaves your phone.</p>
+    <p>MultiLaps times up to four runners and keeps their laps until you reset. It does not yet save past sessions or export results.</p>
+  </div>
+
+  <table>
+    <tr><th>Category</th><td>Sports <span class="quiet">(second choice: Health &amp; Fitness)</span></td></tr>
+    <tr><th>Tags to choose</th><td>Stopwatch, Running, Sports coaching</td></tr>
+    <tr><th>Search phrases to work in</th><td>multiple stopwatch, lap timer, lap stopwatch, track stopwatch, split timer for runners, coach stopwatch, sports day timer</td></tr>
+    <tr><th>What's new, first release</th><td>First release. Four stopwatches on one screen, each with its own laps, name and colour.</td></tr>
+  </table>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>4</span></div>
+</section>
+
+<!-- 5 Screenshots 1 -->
+<section class="page">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Screenshots</h1>
+  <p class="lede">Six store screenshots, in the order to upload them, each with the caption to set above it. All are taken from the app itself on a Pixel emulator, with invented runners.</p>
+  <div class="shots3">
+    <div>
+      <img class="phone" src="../screenshots/2-race.png" alt="">
+      <div class="cap">1. Time four runners at once</div>
+      <p class="capsub">Lead with this one. Two running, one finished, one waiting: the whole idea in a glance.</p>
+    </div>
+    <div>
+      <img class="phone" src="../screenshots/1-ready.png" alt="">
+      <div class="cap">2. Start each runner, or all together</div>
+      <p class="capsub">Names and colours set, nothing started. Start all is at the top left.</p>
+    </div>
+    <div>
+      <img class="phone" src="../screenshots/5-laps.png" alt="">
+      <div class="cap">3. Every lap, with the best one marked</div>
+      <p class="capsub">Tap a name for the lap list. The name and colour are changed here too.</p>
+    </div>
+  </div>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>5</span></div>
+</section>
+
+<!-- 6 Screenshots 2 -->
+<section class="page">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Screenshots, continued</h1>
+  <div class="shots3">
+    <div>
+      <img class="phone" src="../screenshots/6-undo.png" alt="">
+      <div class="cap">4. Reset by mistake? Undo it</div>
+      <p class="capsub">After a reset the button reads Undo, with a bar that runs down over five seconds.</p>
+    </div>
+    <div>
+      <img class="phone" src="../screenshots/4-race-dark.png" alt="">
+      <div class="cap">5. Bright in the sun, dark at dusk</div>
+      <p class="capsub">Follows the phone's light or dark setting. The colours stay the same.</p>
+    </div>
+    <div style="align-self: center;">
+      <div class="cap">Caption style</div>
+      <p class="capsub">Set captions in Barlow Condensed SemiBold, black on white or white on black, above the phone. Sentence case, no full stop, no more than seven words.</p>
+      <div class="cap" style="margin-top:6mm;">Sizes</div>
+      <p class="capsub">Portrait captures are 1280 × 2856 px. Google Play wants each side between 320 and 3840 px and no more than twice as long as it is wide, so crop the height to 2560 px or place the capture on a 9:16 canvas with the caption.</p>
+    </div>
+  </div>
+  <img class="phone wide" src="../screenshots/3-race-landscape.png" alt="">
+  <div class="cap">6. Turn it sideways for a row of four</div>
+  <p class="capsub">On its side the four stopwatches line up, with Start all and Reset all in a column at the left.</p>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>6</span></div>
+</section>
+
+<!-- 7 Features -->
+<section class="page">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Feature copy</h1>
+  <p class="lede">Short blocks for a web page, a flyer for the club noticeboard, or the body of a post. Each leads with what the person gets.</p>
+
+  <div class="cols feature">
+    <div>
+      <h3><span class="chip b1"></span>Nobody waits their turn</h3>
+      <p>Four stopwatches share the screen. Start each runner when they set off, even if that is ten seconds apart, or press Start all when they go together.</p>
+      <h3><span class="chip b2"></span>Find your runner by colour</h3>
+      <p>Every stopwatch is a solid block of colour with a name on it. You look for blue, not for a line of small print.</p>
+      <h3><span class="chip b3"></span>A Lap button you cannot miss</h3>
+      <p>Lap takes up most of the bottom of each stopwatch. Stop is the small one beside it, so a hurried thumb records a lap instead of ending the run.</p>
+      <h3><span class="chip b4"></span>Feel it, do not look for it</h3>
+      <p>One short buzz for a lap, two for a stop. You know the press counted without taking your eyes off the track.</p>
+      <h3><span class="chip b1"></span>Current, last and best</h3>
+      <p>The lap in progress is the biggest thing on the tile. The last lap and the best lap sit right under it, ready for the question every child asks at the line.</p>
+    </div>
+    <div>
+      <h3><span class="chip b2"></span>Mistakes do not cost a time</h3>
+      <p>A second press too soon is ignored. A reset can be taken back for five seconds, and so can Reset all.</p>
+      <h3><span class="chip b3"></span>Keeps going when your phone does not</h3>
+      <p>Lock the screen, answer a call or close the app. The stopwatches carry on, and they are right where they should be when you return.</p>
+      <h3><span class="chip b4"></span>Sideways for a row of four</h3>
+      <p>Turn the phone on its side and the stopwatches line up left to right, like lanes.</p>
+      <h3><span class="chip b1"></span>Set up once</h3>
+      <p>Give each stopwatch a name and one of eight colours. They are still there next week.</p>
+      <h3><span class="chip b2"></span>No ads, no account, no internet</h3>
+      <p>The app asks for one permission, to vibrate. It has no way to go online, so nothing you time leaves your phone.</p>
+    </div>
+  </div>
+
+  <h2 style="margin-top:6mm;">Feature graphic</h2>
+  <p class="small quiet">A layout for the 1024 × 500 px banner Google Play requires, shown at reduced size. It needs rebuilding at full size before upload.</p>
+  <div class="graphic">
+    <div class="t"><div class="n">MultiLaps</div><div class="l">Four stopwatches.<br>One screen.<br>Every lap.</div></div>
+    <img src="../screenshots/3-race-landscape.png" alt="">
+    <div class="strip"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  </div>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>7</span></div>
+</section>
+
+<!-- 8 Launch -->
+<section class="page tight roomy">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Launch copy</h1>
+  <p class="lede">Announcements at three lengths. Each ends with one thing to do: get the app. Add the store link where it says [link].</p>
+
+  <div class="copybox">
+    <div class="label">One line, for a bio or a message to another parent</div>
+    <p>MultiLaps: four lap stopwatches on one screen, so you can time all your runners at once. [link]</p>
+  </div>
+
+  <div class="copybox">
+    <div class="label">Short post, for social media or a club group chat</div>
+    <p>Two kids on the track, one stopwatch on my phone. I got tired of timing one and guessing the other, so I built MultiLaps.</p>
+    <p>Four stopwatches on one screen, each in its own colour. A big Lap button for every runner. Their current, last and best lap right there. No ads, no account.</p>
+    <p>It is on Android now. Get MultiLaps: [link]</p>
+  </div>
+
+  <div class="copybox">
+    <div class="label">Longer post, for a blog, a newsletter or a club email</div>
+    <p><b>Subject: An app for timing more than one runner</b></p>
+    <p>If you have ever stood at the side of a track with two children running and one stopwatch, you know the problem. You time one of them. The other one asks for their lap time and you make something up.</p>
+    <p>I built MultiLaps to fix that. It shows four stopwatches at once, each a block of colour with a runner's name on it. You start each one when that runner sets off, press their Lap button each time they come round, and the app keeps their current, last and best lap in view.</p>
+    <p>A few things I cared about because of how it gets used:</p>
+    <ul>
+      <li>Lap is the big button and Stop is the small one, because the wrong press at the line is the one you cannot take back.</li>
+      <li>Each press buzzes, differently for a lap and a stop, so you can watch the runners and not the phone.</li>
+      <li>If you reset by mistake you have five seconds to undo it.</li>
+      <li>It keeps timing if the screen locks or the app closes.</li>
+      <li>There are no ads and no account, and it does not use the internet.</li>
+    </ul>
+    <p>It times up to four runners. It does not save past sessions yet; that is next.</p>
+    <p>MultiLaps is on Android. Get it here: [link]</p>
+  </div>
+
+  <h2>Store button and link text</h2>
+  <table>
+    <tr><th>Use</th><td>"Get MultiLaps", or "Get it on Google Play", which is Google's own badge wording</td></tr>
+    <tr><th>Avoid</th><td>"Download now", "Learn more", "Sign up". There is nothing to sign up for.</td></tr>
+  </table>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>8</span></div>
+</section>
+
+<!-- 9 Questions + facts -->
+<section class="page tight">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Questions and facts</h1>
+  <p class="lede">Answers to what people will ask before they install, and the facts to check any copy against.</p>
+
+  <h2>Questions people will ask</h2>
+  <table>
+    <tr><th>Can I time more than four?</th><td>No. Four is what fits on a phone screen with buttons big enough to press in a hurry.</td></tr>
+    <tr><th>Do they all have to start together?</th><td>No. Each stopwatch starts on its own. Start all is there for when they do go together; it starts every stopwatch that has not been started and leaves the rest alone.</td></tr>
+    <tr><th>What if I press the wrong thing?</th><td>A second press within a second is ignored. A reset, or Reset all, can be undone for five seconds.</td></tr>
+    <tr><th>What if my phone locks or the app closes?</th><td>The stopwatches keep running. They also carry on through a phone restart, to the nearest the phone's own clock allows.</td></tr>
+    <tr><th>Does it save past sessions?</th><td>Not yet. Laps stay until you reset. Saved history is the next thing planned.</td></tr>
+    <tr><th>Does it need the internet or an account?</th><td>No. The app cannot go online and there is nothing to sign in to.</td></tr>
+    <tr><th>Why does it ask to vibrate?</th><td>So you can feel each press. It is the only permission the app asks for.</td></tr>
+    <tr><th>I felt no vibration.</th><td>The buzz follows the phone's main vibration switch and its alarm vibration level. It is also silenced by Do Not Disturb when that is set to total silence.</td></tr>
+  </table>
+
+  <h2>Fact sheet</h2>
+  <table>
+    <tr><th>Name</th><td>MultiLaps</td></tr>
+    <tr><th>Platform</th><td>Android 8.0 and later, phones. Tablets get the same layout.</td></tr>
+    <tr><th>Version</th><td>0.1.0</td></tr>
+    <tr><th>Package</th><td>com.swetw.multilaps</td></tr>
+    <tr><th>Stopwatches</th><td>Four, each with a name (up to 20 characters) and one of eight colours</td></tr>
+    <tr><th>Times shown</th><td>To a hundredth of a second; hours appear past 59:59.99</td></tr>
+    <tr><th>Permissions</th><td>Vibrate. Nothing else; no internet access.</td></tr>
+    <tr><th>Data</th><td>Names, colours and timing are kept on the phone only. Not backed up and not sent anywhere.</td></tr>
+    <tr><th>Language</th><td>English</td></tr>
+    <tr><th>Typeface</th><td>Barlow Condensed, under the SIL Open Font License</td></tr>
+    <tr><th>Price</th><td class="quiet">Not decided. Do not print "free" until it is.</td></tr>
+    <tr><th>Publisher name</th><td class="quiet">Not decided.</td></tr>
+  </table>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>9</span></div>
+</section>
+
+<!-- 10 Before you publish -->
+<section class="page tight roomy">
+  <div class="band"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+  <h1>Before you publish</h1>
+  <p class="lede">What this kit does not settle. The copy is written to be true of the app as it stands; these are the places where a claim needs checking or a piece is still missing.</p>
+
+  <h2>Claims to confirm on a real phone</h2>
+  <table class="todo">
+    <tr><td>1</td><td><b>"Feel every press."</b> The lap vibration was fixed after it failed on a Pixel 10 with touch feedback off, and has not been re-confirmed there. Confirm before using the vibration lines.</td></tr>
+    <tr><td>2</td><td><b>"Bright in the sun."</b> The contrast is measured, but nobody has yet read the screen at arm's length in sunlight. Soften the caption or test it.</td></tr>
+    <tr><td>3</td><td><b>"Carries on through a restart."</b> Covered by tests only; never tried by restarting a phone mid-timing. The copy says "to the nearest the phone's own clock allows" for that reason.</td></tr>
+    <tr><td>4</td><td><b>Android 9 and 10.</b> On those versions a phone with touch feedback off will not vibrate. The listing does not promise otherwise, but a reviewer may notice.</td></tr>
+  </table>
+
+  <h2>Decisions the copy is waiting on</h2>
+  <table class="todo">
+    <tr><td>1</td><td><b>Price.</b> No line in this kit says "free". Add it once decided; it belongs in the short description.</td></tr>
+    <tr><td>2</td><td><b>Publisher name and contact email</b>, both required by Google Play.</td></tr>
+    <tr><td>3</td><td><b>The package name</b> com.swetw.multilaps is permanent once published. Convention expects you to control swetw.com.</td></tr>
+    <tr><td>4</td><td><b>Privacy policy.</b> Google Play asks for a link even from apps that collect nothing. One paragraph will do: the app has no internet access and stores names, colours and timing on the device only.</td></tr>
+  </table>
+
+  <h2>Assets still to make</h2>
+  <table class="todo">
+    <tr><td>1</td><td><b>Feature graphic</b>, 1024 × 500 px, from the layout on page 7.</td></tr>
+    <tr><td>2</td><td><b>Store icon</b>, 512 × 512 px, exported from the app's launcher icon.</td></tr>
+    <tr><td>3</td><td><b>Captioned screenshots</b>, each capture placed on a 9:16 canvas with its caption from pages 5 and 6.</td></tr>
+    <tr><td>4</td><td><b>A signed release build.</b> The app exists only as a debug build so far.</td></tr>
+    <tr><td>5</td><td><b>A short video</b>, optional: fifteen seconds of four runners being lapped would show the idea faster than any caption.</td></tr>
+  </table>
+
+  <h2>What not to say</h2>
+  <ul>
+    <li>No testimonials, ratings, download counts or "trusted by" lines until they exist.</li>
+    <li>Nothing about saving, sharing or exporting results. The app does none of these yet.</li>
+    <li>No claim of precision beyond "shows hundredths". The time is taken by hand.</li>
+  </ul>
+  <div class="folio"><span>MultiLaps marketing kit</span><span>10</span></div>
+</section>
+
+</body>
+</html>

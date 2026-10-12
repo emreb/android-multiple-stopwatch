@@ -1,0 +1,23 @@
+Two kids on the track and one stopwatch on your phone. You time one of them properly and guess the other.
+
+MultiLaps puts four stopwatches on one screen, so every runner gets their own.
+
+Everyone at once
+Four stopwatches, each a solid block of colour with the runner's name on it. Start each one when that runner sets off, or press Start all when they go together. Turn the phone on its side and they line up in a row.
+
+Made for the Lap press
+Lap is the big button on every stopwatch. Stop is small and out of the way, so you do not hit it by mistake at the line. Each press gives a short vibration, different for a lap and a stop, so you can keep your eyes on the track. A double press is ignored instead of recording a lap that never happened.
+
+The numbers that matter
+Each stopwatch shows the lap in progress in large digits, with the last lap, best lap, total time and lap count beneath. Tap a name to see every lap, with the best one marked.
+
+Hard to lose a time
+Reset by mistake? Undo it within five seconds. Screen locked, call came in, app closed? The stopwatches are still running when you come back. The screen stays on while anything is being timed.
+
+Yours to set up
+Name each stopwatch and pick its colour from eight. They stay as you set them. Light and dark themes follow your phone.
+
+Nothing in the way
+No ads. No account. No internet connection: the app cannot go online, and nothing you time leaves your phone.
+
+MultiLaps times up to four runners and keeps their laps until you reset. It does not yet save past sessions or export results.
