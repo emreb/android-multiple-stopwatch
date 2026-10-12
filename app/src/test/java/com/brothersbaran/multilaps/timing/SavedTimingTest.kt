@@ -93,4 +93,16 @@ class SavedTimingTest {
         assertEquals(Duration.ZERO, restored.currentLap(clock.now()))
         assertEquals(35.seconds, restored.totalTime(clock.now() + 5.seconds))
     }
+
+    @Test
+    fun `a restart the device failed to count is still recognised by its impossible reading`() {
+        val saved = SavedTiming.of(listOf(runningWithOneLap()), clock)
+
+        clock.advanceBy(2.minutes)
+        clock.restart(downtime = 5.minutes, uptime = 40.seconds, countsBoot = false)
+
+        val restored = saved.restoredAt(clock).single()
+        val away = 2.minutes + 5.minutes + 40.seconds
+        assertEquals(30.seconds + away, restored.totalTime(clock.now()))
+    }
 }

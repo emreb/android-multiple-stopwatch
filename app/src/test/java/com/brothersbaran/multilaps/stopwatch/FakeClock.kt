@@ -27,9 +27,12 @@ class FakeClock(
         wallNow += duration
     }
 
-    /** Switches the device off for [downtime], then lets it run for [uptime] before the app returns. */
-    fun restart(downtime: Duration, uptime: Duration = 30.seconds) {
-        bootCount++
+    /**
+     * Switches the device off for [downtime], then lets it run for [uptime] before the app returns.
+     * [countsBoot] is false for a device that fails to report the new boot.
+     */
+    fun restart(downtime: Duration, uptime: Duration = 30.seconds, countsBoot: Boolean = true) {
+        if (countsBoot) bootCount++
         now = uptime
         wallNow += downtime + uptime
     }

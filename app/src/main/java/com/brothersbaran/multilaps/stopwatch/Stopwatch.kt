@@ -9,7 +9,8 @@ enum class StopwatchState { Idle, Running, Stopped }
  * @property laps the completed laps, oldest first.
  * @property accumulated total time gathered before [countingFrom], or all of it when not running.
  * @property countingFrom the clock reading of the press that last started, resumed or lapped this
- *   stopwatch; set only while running.
+ *   stopwatch; set only while running. It can be negative once carried over a restart, standing
+ *   for a press made before the device booted.
  */
 data class Stopwatch(
     val state: StopwatchState = StopwatchState.Idle,

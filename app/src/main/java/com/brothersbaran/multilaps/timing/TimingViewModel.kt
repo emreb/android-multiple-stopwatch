@@ -53,7 +53,7 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
         val restored = saved.restoredAt(clock)
         // Readings carried over from an earlier boot are saved as they now stand, so that
         // returning again within this boot does not carry them over a second time.
-        if (saved.bootCount != clock.bootCount) save(restored)
+        if (restored != saved.stopwatches) save(restored)
         return restored
     }
 
@@ -68,7 +68,7 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
                 TimingViewModel(
                     clock = DeviceClock(application.contentResolver),
                     store = PreferencesTimingStore(
-                        application.getSharedPreferences("timing", Context.MODE_PRIVATE),
+                        application.getSharedPreferences(PreferencesTimingStore.FILE_NAME, Context.MODE_PRIVATE),
                     ),
                 )
             }

@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.brothersbaran.multilaps.stopwatch.FakeClock
 import com.brothersbaran.multilaps.stopwatch.Stopwatch
+import com.brothersbaran.multilaps.stopwatch.StopwatchState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -39,6 +40,22 @@ class PreferencesTimingStoreTest {
         store.save(timing)
 
         assertEquals(timing, PreferencesTimingStore(preferences).load())
+    }
+
+    @Test
+    fun `readings too large for a floating point number, and negative ones, come back exactly`() {
+        val huge = (Long.MAX_VALUE / 3 + 1).nanoseconds
+        val carriedOver = Stopwatch(
+            state = StopwatchState.Running,
+            laps = listOf(30.seconds + 1.nanoseconds),
+            accumulated = 30.seconds + 1.nanoseconds,
+            countingFrom = (-987_654_321_987_654_321).nanoseconds,
+        )
+        val timing = SavedTiming(listOf(carriedOver), bootCount = 7, bootedAt = huge)
+
+        store.save(timing)
+
+        assertEquals(timing, store.load())
     }
 
     @Test

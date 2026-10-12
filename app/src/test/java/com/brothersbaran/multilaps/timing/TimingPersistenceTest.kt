@@ -86,6 +86,31 @@ class TimingPersistenceTest {
     }
 
     @Test
+    fun `a restart the device failed to count is carried over once, not on every return`() {
+        val before = reopened()
+        before.onStartPressed(2)
+        clock.advanceBy(1.minutes)
+
+        clock.restart(downtime = 3.minutes, uptime = 20.seconds, countsBoot = false)
+        assertEquals(4.minutes + 20.seconds, reopened().stopwatches.value[2].totalTime(clock.now()))
+
+        clock.advanceBy(40.seconds)
+        assertEquals(5.minutes, reopened().stopwatches.value[2].totalTime(clock.now()))
+    }
+
+    @Test
+    fun `returning within the same boot saves nothing`() {
+        val before = reopened()
+        before.onStartPressed(0)
+        val savesSoFar = store.saveCount
+
+        clock.advanceBy(1.minutes)
+        reopened()
+
+        assertEquals(savesSoFar, store.saveCount)
+    }
+
+    @Test
     fun `saved data for a different number of stopwatches is ignored`() {
         store.saved = SavedTiming.of(List(3) { Stopwatch() }, clock)
 

@@ -1,6 +1,7 @@
 package com.brothersbaran.multilaps.timing
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.brothersbaran.multilaps.stopwatch.Stopwatch
 import com.brothersbaran.multilaps.stopwatch.StopwatchState
 import org.json.JSONArray
@@ -28,7 +29,7 @@ class PreferencesTimingStore(private val preferences: SharedPreferences) : Timin
     }
 
     override fun save(timing: SavedTiming) {
-        preferences.edit().putString(KEY, encode(timing).toString()).apply()
+        preferences.edit { putString(KEY, encode(timing).toString()) }
     }
 
     private fun encode(timing: SavedTiming) = JSONObject()
@@ -64,6 +65,7 @@ class PreferencesTimingStore(private val preferences: SharedPreferences) : Timin
     }
 
     companion object {
+        const val FILE_NAME = "timing"
         const val KEY = "timing"
 
         private const val CURRENT_VERSION = 1

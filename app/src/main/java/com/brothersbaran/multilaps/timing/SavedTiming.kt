@@ -26,8 +26,18 @@ data class SavedTiming(
      */
     fun restoredAt(clock: Clock): List<Stopwatch> {
         val now = clock.now()
-        val shift = if (clock.bootCount == bootCount) Duration.ZERO else bootedAt - bootedAt(clock)
+        val shift = if (isFromThisBoot(clock)) Duration.ZERO else bootedAt - bootedAt(clock)
         return stopwatches.map { it.rebased(shift, now) }
+    }
+
+    /**
+     * A reading from the future can only belong to an earlier boot, whatever the boot count says;
+     * some devices do not report it.
+     */
+    private fun isFromThisBoot(clock: Clock): Boolean {
+        val now = clock.now()
+        return clock.bootCount == bootCount &&
+            stopwatches.none { stopwatch -> stopwatch.countingFrom?.let { it > now } ?: false }
     }
 
     companion object {
