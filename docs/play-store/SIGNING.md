@@ -63,7 +63,7 @@ keytool -list -v -keystore ~/.multilaps-signing/multilaps-upload.jks -alias mult
 Who signed a bundle:
 
 ```
-jarsigner -verify -verbose -certs docs/play-store/MultiLaps-0.1.0-release.aab | grep "CN="
+jarsigner -verify -verbose -certs docs/play-store/MultiLaps-0.2.0-release.aab | grep "CN="
 ```
 
 It should name `CN=MultiLaps upload key`.

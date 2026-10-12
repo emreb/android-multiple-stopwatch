@@ -31,8 +31,16 @@ The running time accumulated on a stopwatch since its last reset, excluding time
 _Avoid_: Elapsed, duration
 
 **Reset**:
-Returning a stopwatch to idle, discarding its laps. Name and colour are kept.
+Returning a stopwatch to idle, clearing its laps from it. Name and colour are kept. If it had at least one lap, what it had timed is kept as a result.
 _Avoid_: Clear
+
+**Result**:
+The record of what one stopwatch had timed when it was reset: its name and colour at that moment, its laps, best lap, total time, and the date and time. A stopwatch reset without a completed lap leaves none. A result never changes afterwards; it can only be deleted.
+_Avoid_: Session, race, run, saved timing
+
+**History**:
+All the results kept on the phone, looked at by day with the most recent first.
+_Avoid_: Log, archive
 
 **Start all**:
 Starting every idle stopwatch at the same instant. Running and stopped stopwatches are left as they are.
@@ -43,7 +51,7 @@ Resetting every stopped stopwatch at once, possible only while none is running.
 _Avoid_: Clear all, new race
 
 **Undo**:
-Taking back a reset within a few seconds of it, restoring each stopwatch exactly as it was.
+Taking back a reset within a few seconds of it, restoring each stopwatch exactly as it was and leaving no result of it.
 _Avoid_: Restore, revert
 
 ## Stopwatch states

@@ -186,7 +186,7 @@ private fun Swatch(
 }
 
 @Composable
-private fun LapRow(entry: LapEntry) {
+internal fun LapRow(entry: LapEntry) {
     val time = formatTime(entry.time)
     val totalTime = formatTime(entry.totalTimeAtCompletion)
     val spoken = stringResource(
@@ -209,7 +209,7 @@ private fun LapRow(entry: LapEntry) {
 
 /** One line of the lap list, its columns shared by the heading and every lap. */
 @Composable
-private fun LapColumns(
+internal fun LapColumns(
     number: String,
     time: String,
     totalTime: String,

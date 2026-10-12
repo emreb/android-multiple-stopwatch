@@ -1,5 +1,6 @@
 package com.swetw.multilaps.timing
 
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.stopwatch.Stopwatch
 import org.junit.Assert.assertEquals
@@ -14,7 +15,7 @@ class LabelsTest {
     private val labelStore = FakeLabelStore()
     private val viewModel = reopened()
 
-    private fun reopened() = TimingViewModel(clock, timingStore, labelStore)
+    private fun reopened() = TimingViewModel(clock, timingStore, labelStore, FakeHistoryStore())
 
     private val labels get() = viewModel.labels.value
 
@@ -30,7 +31,7 @@ class LabelsTest {
             listOf(StopwatchColour.Blue, StopwatchColour.Red, StopwatchColour.Green, StopwatchColour.Orange),
             labels.map { it.colour },
         )
-        assertEquals(labels, TimingViewModel(clock, FakeTimingStore(), FakeLabelStore()).labels.value)
+        assertEquals(labels, TimingViewModel(clock, FakeTimingStore(), FakeLabelStore(), FakeHistoryStore()).labels.value)
     }
 
     @Test
