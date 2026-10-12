@@ -65,7 +65,7 @@ class ResetTest {
         viewModel.onStopPressed(1)
 
         assertEquals(mapOf(1 to stopped), offer?.stopwatches)
-        assertFalse(offer!!.coversAll)
+        assertFalse(offer!!.fromResetAll)
     }
 
     @Test
@@ -86,11 +86,21 @@ class ResetTest {
     fun `an undo press within a second of the reset is ignored`() {
         timeAndStop(1)
         viewModel.onStopPressed(1)
-        clock.advanceBy(300.milliseconds)
+        clock.advanceBy(999.milliseconds)
         viewModel.onUndoPressed()
 
         assertEquals(Stopwatch(), stopwatches[1])
         assertTrue(offer != null)
+    }
+
+    @Test
+    fun `an undo press a full second after the reset counts`() {
+        val stopped = timeAndStop(1)
+        viewModel.onStopPressed(1)
+        clock.advanceBy(1.seconds)
+        viewModel.onUndoPressed()
+
+        assertEquals(stopped, stopwatches[1])
     }
 
     @Test
@@ -99,10 +109,23 @@ class ResetTest {
         viewModel.onStopPressed(1)
         clock.advanceBy(2.seconds)
         viewModel.onUndoPressed()
-        clock.advanceBy(300.milliseconds)
+        clock.advanceBy(999.milliseconds)
         viewModel.onStopPressed(1)
 
         assertEquals(stopped, stopwatches[1])
+    }
+
+    @Test
+    fun `a reset press a full second after an undo resets again, and can be undone again`() {
+        val stopped = timeAndStop(1)
+        viewModel.onStopPressed(1)
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+        clock.advanceBy(1.seconds)
+        viewModel.onStopPressed(1)
+
+        assertEquals(Stopwatch(), stopwatches[1])
+        assertEquals(mapOf(1 to stopped), offer?.stopwatches)
     }
 
     @Test
@@ -129,6 +152,40 @@ class ResetTest {
         clock.advanceBy(2.seconds)
         viewModel.onUndoPressed()
         assertEquals(Stopwatch(), stopwatches[1])
+    }
+
+    @Test
+    fun `an undo press after the window has closed does nothing, whether or not expiry was reported`() {
+        timeAndStop(1)
+        viewModel.onStopPressed(1)
+        clock.advanceBy(5.seconds)
+        viewModel.onUndoPressed()
+
+        assertEquals(Stopwatch(), stopwatches[1])
+        assertNull(offer)
+    }
+
+    @Test
+    fun `an undo press just inside the window still works`() {
+        val stopped = timeAndStop(1)
+        viewModel.onStopPressed(1)
+        clock.advanceBy(4999.milliseconds)
+        viewModel.onUndoPressed()
+
+        assertEquals(stopped, stopwatches[1])
+    }
+
+    @Test
+    fun `the time left on an offer counts down from the reset, not from when it is asked`() {
+        timeAndStop(1)
+        viewModel.onStopPressed(1)
+        assertEquals(5.seconds, viewModel.undoTimeLeft(offer!!))
+
+        clock.advanceBy(3.seconds)
+        assertEquals(2.seconds, viewModel.undoTimeLeft(offer!!))
+
+        clock.advanceBy(10.seconds)
+        assertEquals(Duration.ZERO, viewModel.undoTimeLeft(offer!!))
     }
 
     @Test
@@ -183,7 +240,11 @@ class ResetTest {
 
     @Test
     fun `a stopwatch that came back stopped after the app was killed can be reset straight away`() {
-        timeAndStop(1)
+        viewModel.onStartPressed(1)
+        clock.advanceBy(30.seconds)
+        viewModel.onStopPressed(1)
+
+        // No time passes: within this run of the app the same press would be taken for a bounce.
         val reopened = TimingViewModel(clock, store)
         reopened.onStopPressed(1)
 
@@ -198,7 +259,7 @@ class ResetTest {
 
         assertEquals(List(4) { Stopwatch() }, stopwatches)
         assertEquals(mapOf(0 to first, 2 to third), offer?.stopwatches)
-        assertTrue(offer!!.coversAll)
+        assertTrue(offer!!.fromResetAll)
     }
 
     @Test
@@ -232,7 +293,7 @@ class ResetTest {
         assertEquals(stopped, stopwatches[0])
         assertEquals(StopwatchState.Running, stopwatches[3].state)
         assertNull(offer)
-        assertFalse(viewModel.canResetAll(stopwatches))
+        assertFalse(canResetAll(stopwatches))
     }
 
     @Test
@@ -241,24 +302,66 @@ class ResetTest {
 
         assertNull(offer)
         assertEquals(0, store.saveCount)
-        assertFalse(viewModel.canResetAll(stopwatches))
+        assertFalse(canResetAll(stopwatches))
     }
 
     @Test
     fun `reset all is possible once nothing is running and something is stopped`() {
         timeAndStop(0)
 
-        assertTrue(viewModel.canResetAll(stopwatches))
+        assertTrue(canResetAll(stopwatches))
     }
 
     @Test
-    fun `starting any stopwatch after reset all withdraws the offer`() {
-        timeAndStop(0)
+    fun `a reset all press within a second of an undo is ignored`() {
+        val first = timeAndStop(0)
+        viewModel.onResetAllPressed()
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+        clock.advanceBy(999.milliseconds)
+        viewModel.onResetAllPressed()
+
+        assertEquals(first, stopwatches[0])
+        assertNull(offer)
+
+        clock.advanceBy(1.milliseconds)
+        viewModel.onResetAllPressed()
+        assertEquals(Stopwatch(), stopwatches[0])
+    }
+
+    @Test
+    fun `starting one stopwatch after reset all keeps the undo for the others`() {
+        val first = timeAndStop(0)
         timeAndStop(2)
         viewModel.onResetAllPressed()
         viewModel.onStartPressed(2)
 
+        assertEquals(mapOf(0 to first), offer?.stopwatches)
+
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+        assertEquals(first, stopwatches[0])
+        assertEquals(StopwatchState.Running, stopwatches[2].state)
+        assertEquals(2.seconds, stopwatches[2].totalTime(clock.now()))
+    }
+
+    @Test
+    fun `starting the last stopwatch an offer covers closes it`() {
+        timeAndStop(0)
+        timeAndStop(2)
+        viewModel.onResetAllPressed()
+        viewModel.onStartPressed(2)
+        viewModel.onStartPressed(0)
+
         assertNull(offer)
-        assertEquals(Duration.ZERO, stopwatches[0].totalTime(clock.now()))
+    }
+
+    @Test
+    fun `starting a stopwatch that reset all did not touch keeps the whole offer`() {
+        val first = timeAndStop(0)
+        viewModel.onResetAllPressed()
+        viewModel.onStartPressed(3)
+
+        assertEquals(mapOf(0 to first), offer?.stopwatches)
     }
 }

@@ -27,6 +27,7 @@ import com.brothersbaran.multilaps.R
 import com.brothersbaran.multilaps.stopwatch.Stopwatch
 import com.brothersbaran.multilaps.stopwatch.StopwatchState
 import kotlinx.coroutines.delay
+import kotlin.time.Duration
 
 private const val UPRIGHT_COLUMNS = 2
 private const val SIDEWAYS_COLUMNS = 4
@@ -41,13 +42,13 @@ fun TimingScreen(viewModel: TimingViewModel) {
     val stopwatches by viewModel.stopwatches.collectAsStateWithLifecycle()
     val undoOffer by viewModel.undoOffer.collectAsStateWithLifecycle()
     KeepScreenOn(stopwatches.any { it.state == StopwatchState.Running })
-    ExpireUndoOffer(undoOffer, viewModel::onUndoExpired)
+    ExpireUndoOffer(undoOffer, viewModel::undoTimeLeft, viewModel::onUndoExpired)
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
             ResetAllButton(
-                undoOffered = undoOffer?.coversAll == true,
-                enabled = viewModel.canResetAll(stopwatches),
+                undoOffered = undoOffer?.fromResetAll == true,
+                enabled = canResetAll(stopwatches),
                 onResetAllPressed = viewModel::onResetAllPressed,
                 onUndoPressed = viewModel::onUndoPressed,
                 modifier = Modifier.align(Alignment.End),
@@ -89,7 +90,7 @@ private fun StopwatchGrid(
                                 onStartPressed = { viewModel.onStartPressed(index) },
                                 onStopPressed = { viewModel.onStopPressed(index) },
                                 onUndoPressed = viewModel::onUndoPressed,
-                                undoOffered = undoOffer?.coversAll == false &&
+                                undoOffered = undoOffer?.fromResetAll == false &&
                                     index in undoOffer.stopwatches,
                                 modifier = Modifier
                                     .weight(1f)
@@ -122,12 +123,19 @@ private fun ResetAllButton(
     }
 }
 
-/** Closes an offer to undo once it has been open for the undo window. */
+/**
+ * Closes an offer to undo when its time runs out. The wait is for the time the offer has left, so
+ * starting over, as after a rotation, does not give it longer.
+ */
 @Composable
-private fun ExpireUndoOffer(offer: UndoOffer?, onExpired: (id: Int) -> Unit) {
+private fun ExpireUndoOffer(
+    offer: UndoOffer?,
+    timeLeft: (UndoOffer) -> Duration,
+    onExpired: (id: Int) -> Unit,
+) {
     LaunchedEffect(offer?.id) {
         if (offer != null) {
-            delay(TimingViewModel.UNDO_WINDOW)
+            delay(timeLeft(offer))
             onExpired(offer.id)
         }
     }

@@ -27,6 +27,7 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
     /** When each stopwatch was last stopped, or brought back stopped, in this run of the app. */
     private val stoppedAt = arrayOfNulls<Duration>(STOPWATCH_COUNT)
     private var offersMade = 0
+    private var lastUndoAt: Duration? = null
 
     /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed(index: Int) {
@@ -35,8 +36,7 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
         when (stopwatch.state) {
             StopwatchState.Running -> replace(mapOf(index to stopwatch.lap(now)))
             StopwatchState.Idle, StopwatchState.Stopped -> {
-                // Undoing a reset must not overwrite a stopwatch that has since set off again.
-                if (_undoOffer.value?.stopwatches?.containsKey(index) == true) _undoOffer.value = null
+                withdrawFromUndoOffer(index)
                 replace(mapOf(index to stopwatch.start(now)))
             }
         }
@@ -55,51 +55,70 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
                 replace(mapOf(index to stopwatch.stop(now)))
             }
             StopwatchState.Stopped -> if (!isBounce(since = stoppedAt[index], now)) {
-                reset(listOf(index), coversAll = false, now)
+                reset(listOf(index), fromResetAll = false, now)
             }
             StopwatchState.Idle -> Unit
         }
     }
 
-    /** Whether there is anything for reset all to do, and nothing running that it would disturb. */
-    fun canResetAll(stopwatches: List<Stopwatch>): Boolean =
-        stopwatches.none { it.state == StopwatchState.Running } &&
-            stopwatches.any { it.state == StopwatchState.Stopped }
-
+    /**
+     * Resets every stopped stopwatch. The same control undoes, so a press sooner than
+     * [MIN_RESET_INTERVAL] after an undo is taken for a bounce and ignored.
+     */
     fun onResetAllPressed() {
         val stopwatches = _stopwatches.value
-        if (!canResetAll(stopwatches)) return
+        val now = clock.now()
+        if (!canResetAll(stopwatches) || isBounce(since = lastUndoAt, now)) return
         val stopped = stopwatches.indices.filter { stopwatches[it].state == StopwatchState.Stopped }
-        reset(stopped, coversAll = true, clock.now())
+        reset(stopped, fromResetAll = true, now)
     }
 
     /**
      * Takes back the reset on offer. A press sooner than [MIN_RESET_INTERVAL] after that reset is
-     * taken for a bounce and ignored.
+     * taken for a bounce and ignored, and so is one after the offer's time has run out.
      */
     fun onUndoPressed() {
         val offer = _undoOffer.value ?: return
         val now = clock.now()
         if (isBounce(since = offer.offeredAt, now)) return
+        if (undoTimeLeft(offer) == Duration.ZERO) {
+            _undoOffer.value = null
+            return
+        }
         offer.stopwatches.keys.forEach { stoppedAt[it] = now }
+        lastUndoAt = now
         _undoOffer.value = null
         replace(offer.stopwatches)
     }
+
+    /** How much longer [offer] stays open, measured from its reset whenever this is asked. */
+    fun undoTimeLeft(offer: UndoOffer): Duration =
+        (UNDO_WINDOW - (clock.now() - offer.offeredAt)).coerceAtLeast(Duration.ZERO)
 
     /** Closes the offer with this [id], unless a later reset has already replaced it. */
     fun onUndoExpired(id: Int) {
         if (_undoOffer.value?.id == id) _undoOffer.value = null
     }
 
-    private fun reset(indices: List<Int>, coversAll: Boolean, now: Duration) {
+    private fun reset(indices: List<Int>, fromResetAll: Boolean, now: Duration) {
         val stopwatches = _stopwatches.value
         _undoOffer.value = UndoOffer(
             id = ++offersMade,
             stopwatches = indices.associateWith { stopwatches[it] },
-            coversAll = coversAll,
+            fromResetAll = fromResetAll,
             offeredAt = now,
         )
         replace(indices.associateWith { stopwatches[it].reset() })
+    }
+
+    /**
+     * Undoing a reset must not overwrite a stopwatch that has since set off again, so the offer
+     * lets go of it, and closes once it covers nothing.
+     */
+    private fun withdrawFromUndoOffer(index: Int) {
+        val offer = _undoOffer.value ?: return
+        val remaining = offer.stopwatches - index
+        _undoOffer.value = if (remaining.isEmpty()) null else offer.copy(stopwatches = remaining)
     }
 
     private fun isBounce(since: Duration?, now: Duration): Boolean =
@@ -151,3 +170,8 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
         }
     }
 }
+
+/** Whether there is anything for reset all to do, and nothing running that it would disturb. */
+fun canResetAll(stopwatches: List<Stopwatch>): Boolean =
+    stopwatches.none { it.state == StopwatchState.Running } &&
+        stopwatches.any { it.state == StopwatchState.Stopped }

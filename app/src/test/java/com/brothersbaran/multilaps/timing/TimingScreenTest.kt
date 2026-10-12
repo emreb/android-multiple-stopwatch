@@ -357,6 +357,26 @@ class TimingScreenTest {
     }
 
     @Test
+    fun `a second reset gets its own few seconds, counted from that reset`() {
+        press("Start", tile = 1)
+        press("Start", tile = 2)
+        advance(20.seconds)
+        press("Stop", tile = 1)
+        press("Stop", tile = 2)
+        advance(1.seconds)
+        press("Reset", tile = 1)
+        advanceBoth(3.seconds)
+        press("Reset", tile = 2)
+
+        text("Undo", tile = 1).assertDoesNotExist()
+        advanceBoth(3.seconds)
+        text("Undo", tile = 2).assertIsEnabled()
+
+        advanceBoth(2500.milliseconds)
+        text("Undo", tile = 2).assertDoesNotExist()
+    }
+
+    @Test
     fun `only the stopwatch that was reset offers undo`() {
         press("Start", tile = 2)
         advance(20.seconds)
@@ -424,6 +444,12 @@ class TimingScreenTest {
     @Config(qualifiers = LANDSCAPE_PHONE)
     fun `reset all is on screen in landscape too`() {
         resetAll().assertIsDisplayed()
+    }
+
+    /** Moves the stopwatches' clock and the screen's own timers on together. */
+    private fun advanceBoth(duration: Duration) {
+        clock.advanceBy(duration)
+        composeRule.mainClock.advanceTimeBy(duration.inWholeMilliseconds)
     }
 
     private fun resetAll() = composeRule.onNodeWithTag("reset-all")
