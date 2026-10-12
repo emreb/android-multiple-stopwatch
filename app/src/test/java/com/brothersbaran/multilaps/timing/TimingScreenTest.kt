@@ -11,6 +11,8 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -24,6 +26,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -56,7 +60,7 @@ class TimingScreenTest {
     val composeRule = createComposeRule()
 
     private val clock = FakeClock()
-    private val viewModel = TimingViewModel(clock, FakeTimingStore())
+    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore())
 
     @Before
     fun setUp() {
@@ -469,7 +473,7 @@ class TimingScreenTest {
         openLapSheet(tile = 2)
 
         lapSheet().assertIsDisplayed()
-        inSheet(hasText("Stopwatch 2")).assertIsDisplayed()
+        nameField().assertTextContains("2")
     }
 
     @Test
@@ -583,7 +587,8 @@ class TimingScreenTest {
         composeRule.mainClock.advanceTimeByFrame()
         openLapSheet(tile = 1)
 
-        composeRule.onNodeWithTag("lap-list").performScrollToIndex(39)
+        // Scrolled by position: scrolling to a node waits for frames the test is holding back.
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(LAST_OF_FORTY_LAPS)
         letSheetSettle()
 
         inSheet(hasContentDescription("Lap 1, 0:30.00, total time 0:30.00, best lap")).assertIsDisplayed()
@@ -664,6 +669,173 @@ class TimingScreenTest {
             assertTrue(bounds.width >= 48.dp)
         }
     }
+
+    @Test
+    fun `tiles show their default names and each its own colour`() {
+        val colours = (1..4).map { tileColour(it) }
+
+        assertEquals(
+            listOf(StopwatchColour.Blue, StopwatchColour.Red, StopwatchColour.Green, StopwatchColour.Orange),
+            colours,
+        )
+        for (tile in 1..4) text(tile.toString(), tile).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a name typed in the lap sheet shows on the tile`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Ada")
+        letSheetSettle()
+
+        text("Ada", tile = 2).assertExists()
+        nameField().assertTextContains("Ada")
+        text("1", tile = 1).assertExists()
+    }
+
+    @Test
+    fun `clearing the name puts the stopwatch's number back on the tile, leaving the field empty to type in`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Ada")
+        nameField().performTextReplacement("")
+        letSheetSettle()
+
+        text("2", tile = 2).assertExists()
+        nameField().assert(
+            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
+        )
+    }
+
+    @Test
+    fun `the name field takes no more than twenty characters`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Bartholomew the Third of Somewhere")
+        letSheetSettle()
+
+        nameField().assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.EditableText,
+                AnnotatedString("Bartholomew the Thir"),
+            ),
+        )
+        text("Bartholomew the Thir", tile = 2).assertExists()
+    }
+
+    @Test
+    fun `the lap sheet announces whose it is`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Ada")
+        letSheetSettle()
+
+        lapSheet().assert(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "Stopwatch Ada"))
+    }
+
+    @Test
+    fun `the name, close and the column headings stay put while a long lap list scrolls`() {
+        viewModel.onStartPressed(0)
+        repeat(40) {
+            clock.advanceBy(30.seconds)
+            viewModel.onStartPressed(0)
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+        openLapSheet(tile = 1)
+
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(LAST_OF_FORTY_LAPS)
+        letSheetSettle()
+
+        nameField().assertIsDisplayed()
+        inSheet(hasText("Close")).assertIsDisplayed()
+        inSheet(hasText("Time")).assertIsDisplayed()
+        inSheet(hasText("Total")).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
+    fun `on a small phone turned sideways the laps can still be reached`() {
+        viewModel.onStartPressed(0)
+        repeat(3) {
+            clock.advanceBy(30.seconds)
+            viewModel.onStartPressed(0)
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+        openLapSheet(tile = 1)
+
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(FIRST_LAP_ITEM + 2)
+        letSheetSettle()
+
+        inSheet(hasContentDescription("Lap 1, 0:30.00, total time 0:30.00, best lap")).assertIsDisplayed()
+        nameField().assertIsDisplayed()
+    }
+
+    @Test
+    fun `the lap sheet offers the eight colours with the stopwatch's own selected`() {
+        openLapSheet(tile = 2)
+
+        swatches().assertCountEquals(8)
+        swatch("Red").assertIsSelected()
+        swatch("Blue").assertIsNotSelected()
+    }
+
+    @Test
+    fun `a colour chosen in the lap sheet shows on the tile`() {
+        openLapSheet(tile = 2)
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(PALETTE_ITEM)
+        swatch("Purple").performClick()
+        letSheetSettle()
+
+        swatch("Purple").assertIsSelected()
+        swatch("Red").assertIsNotSelected()
+        assertEquals(StopwatchColour.Purple, tileColour(2))
+        assertEquals(StopwatchColour.Blue, tileColour(1))
+    }
+
+    @Test
+    fun `colour swatches are large enough to hit`() {
+        openLapSheet(tile = 1)
+
+        for (index in 0 until 8) {
+            val bounds = swatches()[index].getUnclippedBoundsInRoot()
+            assertTrue(bounds.width >= 48.dp && bounds.height >= 48.dp)
+        }
+    }
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `name and colour can be changed in landscape`() {
+        openLapSheet(tile = 3)
+        nameField().performTextReplacement("Grace")
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(PALETTE_ITEM)
+        swatch("Teal").performClick()
+        letSheetSettle()
+
+        text("Grace", tile = 3).assertExists()
+        assertEquals(StopwatchColour.Teal, tileColour(3))
+    }
+
+    @Test
+    fun `buttons and the name are announced with the stopwatch's name`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Ada")
+        inSheet(hasText("Close")).performClick()
+        letSheetSettle()
+
+        described("Start, stopwatch Ada", tile = 2).assertIsEnabled()
+        described("Stop, stopwatch Ada", tile = 2).assertIsNotEnabled()
+        name(tile = 2).assertContentDescriptionEquals("Stopwatch Ada")
+        described("Start, stopwatch 1", tile = 1).assertIsEnabled()
+
+        press("Start", tile = 2)
+        described("Lap, stopwatch Ada", tile = 2).assertIsEnabled()
+    }
+
+    private fun nameField() = composeRule.onNodeWithTag("name-field")
+
+    private fun swatches() = composeRule.onAllNodesWithTag("colour-swatch")
+
+    private fun swatch(colour: String) =
+        composeRule.onNode(hasTestTag("colour-swatch") and hasContentDescription(colour))
+
+    private fun tileColour(tile: Int): StopwatchColour =
+        composeRule.onNodeWithTag("stopwatch-$tile").fetchSemanticsNode().config[StopwatchColourKey]
 
     private fun name(tile: Int) = composeRule.onNode(hasTestTag("stopwatch-name") and inTile(tile))
 
@@ -814,3 +986,8 @@ class TimingScreenTest {
 }
 
 private const val SHEET_SETTLE_FRAMES = 60
+
+/** Where things sit in the sheet's list: the palette, the column headings, then the laps. */
+private const val PALETTE_ITEM = 0
+private const val FIRST_LAP_ITEM = 2
+private const val LAST_OF_FORTY_LAPS = FIRST_LAP_ITEM + 39

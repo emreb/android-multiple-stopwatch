@@ -14,7 +14,7 @@ class TimingPersistenceTest {
     private val clock = FakeClock()
     private val store = FakeTimingStore()
 
-    private fun reopened() = TimingViewModel(clock, store)
+    private fun reopened() = TimingViewModel(clock, store, FakeLabelStore())
 
     @Test
     fun `with nothing saved there are four idle stopwatches`() {

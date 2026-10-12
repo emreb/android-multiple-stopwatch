@@ -4,10 +4,11 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.brothersbaran.multilaps.Devices.PORTRAIT_PHONE
@@ -26,7 +27,7 @@ class LapSheetRestorationTest {
     val composeRule = createComposeRule()
 
     private val clock = FakeClock()
-    private val viewModel = TimingViewModel(clock, FakeTimingStore())
+    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore())
 
     @Test
     fun `the open lap sheet comes back after the screen is recreated, as on rotation`() {
@@ -46,8 +47,7 @@ class LapSheetRestorationTest {
         restorationTester.emulateSavedInstanceStateRestore()
         settle()
 
-        composeRule.onNode(hasText("Stopwatch 3") and hasAnyAncestor(hasTestTag("lap-sheet")))
-            .assertIsDisplayed()
+        composeRule.onNodeWithTag("name-field").assertIsDisplayed().assertTextContains("3")
         composeRule.onAllNodesWithTag("lap-row").assertCountEquals(2)
     }
 

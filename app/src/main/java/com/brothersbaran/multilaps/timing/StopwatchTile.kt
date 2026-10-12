@@ -16,8 +16,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -42,10 +45,10 @@ import com.brothersbaran.multilaps.stopwatch.StopwatchState
 import com.brothersbaran.multilaps.stopwatch.formatTime
 import kotlin.time.Duration
 
-/** One stopwatch: its name, its figures, and its two buttons along the bottom edge. */
+/** One stopwatch in its colour: its name, its figures, and its two buttons along the bottom edge. */
 @Composable
 fun StopwatchTile(
-    name: String,
+    label: StopwatchLabel,
     stopwatch: Stopwatch,
     clock: Clock,
     onNamePressed: () -> Unit,
@@ -55,7 +58,14 @@ fun StopwatchTile(
     undoOffered: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedCard(modifier = modifier) {
+    val colour = label.colour
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = colour.color,
+            contentColor = colour.contentColor,
+        ),
+        modifier = modifier.semantics { this[StopwatchColourKey] = colour },
+    ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -65,7 +75,7 @@ fun StopwatchTile(
                 modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                TileName(name, onNamePressed)
+                TileName(label.name, onNamePressed)
                 LiveTimes(stopwatch, clock)
                 CompletedLaps(stopwatch)
             }
@@ -73,6 +83,8 @@ fun StopwatchTile(
                 // The button that reset the stopwatch is, for a short while, the one that undoes it.
                 val undoes = undoOffered && stopwatch.state == StopwatchState.Idle
                 TileButton(
+                    stopwatchName = label.name,
+                    colour = colour,
                     label = when {
                         undoes -> R.string.action_undo
                         stopwatch.state == StopwatchState.Stopped -> R.string.action_reset
@@ -83,6 +95,8 @@ fun StopwatchTile(
                     modifier = Modifier.weight(1f),
                 )
                 TileButton(
+                    stopwatchName = label.name,
+                    colour = colour,
                     label = when (stopwatch.state) {
                         StopwatchState.Running -> R.string.action_lap
                         StopwatchState.Idle, StopwatchState.Stopped -> R.string.action_start
@@ -112,24 +126,41 @@ private fun TileName(name: String, onPressed: () -> Unit) {
             .semantics { contentDescription = spoken }
             .testTag("stopwatch-name"),
     ) {
-        Text(name, style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = name,
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
+/** A button in the reverse of its tile's colours, announced along with whose stopwatch it is. */
 @Composable
 private fun TileButton(
+    stopwatchName: String,
+    colour: StopwatchColour,
     @StringRes label: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val action = stringResource(label)
+    val spoken = stringResource(R.string.button_description, action, stopwatchName)
     Button(
         onClick = onClick,
         enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = colour.contentColor,
+            contentColor = colour.color,
+            // Faded from the tile's own text colour, so a disabled button still shows on any colour.
+            disabledContainerColor = colour.contentColor.copy(alpha = 0.12f),
+            disabledContentColor = colour.contentColor.copy(alpha = 0.38f),
+        ),
         contentPadding = PaddingValues(horizontal = 4.dp),
-        modifier = modifier.height(64.dp),
+        modifier = modifier.height(64.dp).semantics { contentDescription = spoken },
     ) {
-        Text(stringResource(label), maxLines = 1)
+        Text(action, maxLines = 1)
     }
 }
 

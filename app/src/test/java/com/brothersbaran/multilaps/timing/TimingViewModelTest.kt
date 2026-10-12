@@ -13,7 +13,7 @@ import kotlin.time.Duration.Companion.seconds
 class TimingViewModelTest {
 
     private val clock = FakeClock()
-    private val viewModel = TimingViewModel(clock, FakeTimingStore())
+    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore())
 
     private val stopwatches get() = viewModel.stopwatches.value
     /** The first stopwatch, for the tests that need only one. */

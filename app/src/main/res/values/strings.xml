@@ -13,7 +13,16 @@
     <string name="last_lap_label">Last</string>
     <string name="best_lap_label">Best</string>
     <string name="lap_count_label">Laps</string>
-    <string name="stopwatch_title">Stopwatch %1$s</string>
+    <string name="name_field_label">Name</string>
+    <string name="colour_group_label">Colour</string>
+    <string name="colour_red">Red</string>
+    <string name="colour_orange">Orange</string>
+    <string name="colour_yellow">Yellow</string>
+    <string name="colour_green">Green</string>
+    <string name="colour_teal">Teal</string>
+    <string name="colour_blue">Blue</string>
+    <string name="colour_purple">Purple</string>
+    <string name="colour_pink">Pink</string>
     <string name="lap_column">Lap</string>
     <string name="lap_time_column">Time</string>
     <string name="no_laps_yet">No laps yet</string>
@@ -26,6 +35,10 @@
     <string name="best_lap_description">Best lap %1$s</string>
     <string name="lap_count_description">Laps %1$s</string>
     <string name="no_lap_description">none</string>
+    <!-- A stopwatch's name as spoken; the placeholder is its name or number. -->
+    <string name="stopwatch_title">Stopwatch %1$s</string>
+    <!-- A tile's button as spoken: what it does, then whose stopwatch it is. -->
+    <string name="button_description">%1$s, stopwatch %2$s</string>
     <!-- What tapping a stopwatch's name does, spoken after "double tap to". -->
     <string name="show_laps">show laps</string>
     <!-- A row of the lap list: lap number, lap time, total time when the lap was completed. -->
