@@ -2,16 +2,19 @@ package com.swetw.multilaps
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
@@ -94,6 +97,42 @@ class AppLifecycleTest {
             composeRule.onNodeWithTag("stopwatch-2").fetchSemanticsNode().config[StopwatchColourKey],
         )
         text("1", tile = 1).assertExists()
+    }
+
+    @Test
+    fun `closing and reopening the app keeps what was timed and reset`() {
+        press("Start", tile = 2)
+        advance(seconds = 20)
+        press("Lap", tile = 2)
+        advance(seconds = 5)
+        press("Stop", tile = 2)
+        advance(seconds = 2)
+        press("Reset", tile = 2)
+
+        // While undo is still on offer, which does not outlive the app.
+        scenario.close()
+        scenario = ActivityScenario.launch(MainActivity::class.java)
+        settle()
+        composeRule.onNodeWithTag("open-history").performClick()
+        settle()
+
+        composeRule.onAllNodesWithTag("result-row").assertCountEquals(1)
+        composeRule.onNode(hasTestTag("result-row") and hasContentDescription("1 lap, best lap 0:20.", substring = true))
+            .assertExists()
+    }
+
+    @Test
+    fun `the phone's back button leaves history for the stopwatches, not the app`() {
+        composeRule.onNodeWithTag("open-history").performClick()
+        settle()
+        composeRule.onNodeWithTag("history").assertExists()
+
+        scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        settle()
+
+        composeRule.onNodeWithTag("history").assertDoesNotExist()
+        composeRule.onNodeWithTag("stopwatch-1").assertExists()
+        assertEquals(Lifecycle.State.RESUMED, scenario.state)
     }
 
     private fun settle() {

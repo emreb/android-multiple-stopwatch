@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import org.junit.Test
 import org.junit.Rule
@@ -27,7 +28,7 @@ class LapSheetRestorationTest {
     val composeRule = createComposeRule()
 
     private val clock = FakeClock()
-    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore())
+    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore(), FakeHistoryStore())
 
     @Test
     fun `the open lap sheet comes back after the screen is recreated, as on rotation`() {

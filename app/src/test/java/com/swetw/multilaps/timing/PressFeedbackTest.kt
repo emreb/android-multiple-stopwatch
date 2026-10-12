@@ -1,5 +1,6 @@
 package com.swetw.multilaps.timing
 
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -11,7 +12,7 @@ class PressFeedbackTest {
     private val clock = FakeClock()
     private val felt = mutableListOf<Feedback>()
     private val viewModel =
-        TimingViewModel(clock, FakeTimingStore(), FakeLabelStore(), haptics = { felt += it })
+        TimingViewModel(clock, FakeTimingStore(), FakeLabelStore(), FakeHistoryStore(), haptics = { felt += it })
 
     @Test
     fun `nothing is felt until something is pressed`() {

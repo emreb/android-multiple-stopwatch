@@ -16,7 +16,10 @@ data class LapEntry(
 )
 
 /** The completed laps, newest first. When laps tie for best, the earliest is the one marked. */
-fun Stopwatch.lapEntries(): List<LapEntry> {
+fun Stopwatch.lapEntries(): List<LapEntry> = lapEntriesOf(laps)
+
+/** [laps], given oldest first, as entries newest first. */
+fun lapEntriesOf(laps: List<Duration>): List<LapEntry> {
     val best = laps.indices.minByOrNull { laps[it] }
     var totalTime = Duration.ZERO
     return laps.mapIndexed { index, lap ->

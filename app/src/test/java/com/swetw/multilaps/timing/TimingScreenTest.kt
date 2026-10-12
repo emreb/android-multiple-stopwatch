@@ -48,6 +48,7 @@ import com.swetw.multilaps.Devices.SMALL_PHONE_LANDSCAPE
 import com.swetw.multilaps.Devices.SPLIT_SCREEN
 import com.swetw.multilaps.Devices.TABLET_LANDSCAPE
 import com.swetw.multilaps.Devices.TABLET_PORTRAIT
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.theme.MultiLapsTheme
 import org.junit.Assert.assertEquals
@@ -69,7 +70,7 @@ class TimingScreenTest {
     val composeRule = createComposeRule()
 
     private val clock = FakeClock()
-    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore())
+    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore(), FakeHistoryStore())
 
     @Before
     fun setUp() {

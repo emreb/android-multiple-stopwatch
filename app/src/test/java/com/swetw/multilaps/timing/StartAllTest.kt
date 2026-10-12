@@ -1,5 +1,6 @@
 package com.swetw.multilaps.timing
 
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.stopwatch.Stopwatch
 import com.swetw.multilaps.stopwatch.StopwatchState
@@ -17,7 +18,7 @@ class StartAllTest {
     private val clock = FakeClock()
     private val store = FakeTimingStore()
     private val felt = mutableListOf<Feedback>()
-    private val viewModel = TimingViewModel(clock, store, FakeLabelStore(), haptics = { felt += it })
+    private val viewModel = TimingViewModel(clock, store, FakeLabelStore(), FakeHistoryStore(), haptics = { felt += it })
 
     private val stopwatches get() = viewModel.stopwatches.value
 

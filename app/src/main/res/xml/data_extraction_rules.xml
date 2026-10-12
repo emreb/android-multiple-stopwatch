@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Timing is tied to this device's clock, so it is neither backed up nor copied to a new device. -->
+<!-- Timing is tied to this device's clock, and the privacy policy promises that nothing kept by the
+     app leaves the device, so neither it, the labels nor the history is backed up or copied to a
+     new device. All three are kept in shared preferences. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="." />

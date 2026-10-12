@@ -1,5 +1,6 @@
 package com.swetw.multilaps.timing
 
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.stopwatch.Stopwatch
 import com.swetw.multilaps.stopwatch.StopwatchState
@@ -13,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 class TimingViewModelTest {
 
     private val clock = FakeClock()
-    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore())
+    private val viewModel = TimingViewModel(clock, FakeTimingStore(), FakeLabelStore(), FakeHistoryStore())
 
     private val stopwatches get() = viewModel.stopwatches.value
     /** The first stopwatch, for the tests that need only one. */

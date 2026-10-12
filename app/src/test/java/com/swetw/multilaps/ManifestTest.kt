@@ -7,11 +7,14 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.swetw.multilaps.history.PreferencesHistoryStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.xmlpull.v1.XmlPullParser
+import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class ManifestTest {
@@ -64,6 +67,30 @@ class ManifestTest {
             .filterNot { it.endsWith(".DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION") }
 
         assertEquals(listOf(Manifest.permission.VIBRATE), requested)
+    }
+
+    @Test
+    fun `nothing kept in preferences, history included, is backed up or copied to a new device`() {
+        val excluded = mutableMapOf<String, MutableList<String>>()
+        val rules = context.resources.getXml(R.xml.data_extraction_rules)
+        var section = ""
+        while (rules.next() != XmlPullParser.END_DOCUMENT) {
+            if (rules.eventType != XmlPullParser.START_TAG) continue
+            when (rules.name) {
+                "cloud-backup", "device-transfer" -> section = rules.name
+                "exclude" -> excluded.getOrPut(section) { mutableListOf() } +=
+                    rules.getAttributeValue(null, "domain") + ":" + rules.getAttributeValue(null, "path")
+            }
+        }
+
+        assertEquals(
+            mapOf("cloud-backup" to listOf("sharedpref:."), "device-transfer" to listOf("sharedpref:.")),
+            excluded,
+        )
+        // History is kept where that rule reaches: in a preferences file of its own.
+        context.getSharedPreferences(PreferencesHistoryStore.FILE_NAME, Context.MODE_PRIVATE)
+            .edit().putString(PreferencesHistoryStore.KEY, "{}").commit()
+        assertTrue(File(context.dataDir, "shared_prefs/${PreferencesHistoryStore.FILE_NAME}.xml").exists())
     }
 
     @Test

@@ -20,4 +20,5 @@ Name each stopwatch and pick its colour from eight. They stay as you set them. L
 Nothing in the way
 No ads. No account. No internet connection: the app cannot go online, and nothing you time leaves your phone.
 
-MultiLaps times up to four runners and keeps their laps until you reset. It does not yet save past sessions or export results.
+Look back later
+Reset a stopwatch and what it timed is kept in History, by day. Open a result to see every lap, or share a day's times as text. Results stay on your phone until you delete them.

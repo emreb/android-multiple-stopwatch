@@ -1,5 +1,6 @@
 package com.swetw.multilaps.timing
 
+import com.swetw.multilaps.history.FakeHistoryStore
 import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.stopwatch.Stopwatch
 import com.swetw.multilaps.stopwatch.StopwatchState
@@ -14,7 +15,7 @@ class TimingPersistenceTest {
     private val clock = FakeClock()
     private val store = FakeTimingStore()
 
-    private fun reopened() = TimingViewModel(clock, store, FakeLabelStore())
+    private fun reopened() = TimingViewModel(clock, store, FakeLabelStore(), FakeHistoryStore())
 
     @Test
     fun `with nothing saved there are four idle stopwatches`() {

@@ -6,6 +6,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.swetw.multilaps.history.HistoryStore
+import com.swetw.multilaps.history.PreferencesHistoryStore
+import com.swetw.multilaps.history.Result
 import com.swetw.multilaps.stopwatch.Clock
 import com.swetw.multilaps.stopwatch.DeviceClock
 import com.swetw.multilaps.stopwatch.Stopwatch
@@ -20,6 +23,7 @@ class TimingViewModel(
     val clock: Clock,
     private val store: TimingStore,
     private val labelStore: LabelStore,
+    private val historyStore: HistoryStore,
     private val haptics: Haptics = Haptics.None,
 ) : ViewModel() {
 
@@ -36,10 +40,21 @@ class TimingViewModel(
     private val _undoOffer = MutableStateFlow<UndoOffer?>(null)
     val undoOffer: StateFlow<UndoOffer?> = _undoOffer.asStateFlow()
 
+    private val _results = MutableStateFlow(historyStore.load().sortedWith(MOST_RECENT_FIRST))
+
+    /** What has been timed and reset, most recently reset first. */
+    val results: StateFlow<List<Result>> = _results.asStateFlow()
+
     /** When each stopwatch was last stopped, or brought back stopped, in this run of the app. */
     private val stoppedAt = arrayOfNulls<Duration>(STOPWATCH_COUNT)
     private var offersMade = 0
+
+    /** The results the reset on offer gave rise to, by stopwatch, so that undoing it can take them back. */
+    private var resultsOnOffer = emptyMap<Int, Long>()
     private var lastUndoAt: Duration? = null
+
+    /** The highest identifier given out in this run of the app, so one is not given out twice. */
+    private var lastResultId = 0L
 
     /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed(index: Int) {
@@ -111,6 +126,8 @@ class TimingViewModel(
         }
         offer.stopwatches.keys.forEach { stoppedAt[it] = now }
         lastUndoAt = now
+        val taken = offer.stopwatches.keys.mapNotNull { resultsOnOffer[it] }.toSet()
+        keepResults(_results.value.filterNot { it.id in taken })
         _undoOffer.value = null
         replace(offer.stopwatches, Feedback.Undo)
     }
@@ -129,6 +146,11 @@ class TimingViewModel(
 
     fun onColourChosen(index: Int, colour: StopwatchColour) = relabel(index) { it.copy(colour = colour) }
 
+    /** Deletes the result with this [id] for good; there is no undo for it. */
+    fun onResultDeleted(id: Long) = keepResults(_results.value.filterNot { it.id == id })
+
+    fun onAllResultsDeleted() = keepResults(emptyList())
+
     private fun relabel(index: Int, change: (StopwatchLabel) -> StopwatchLabel) {
         val before = _labels.value
         require(index in before.indices) { "There is no stopwatch $index" }
@@ -140,6 +162,7 @@ class TimingViewModel(
 
     private fun reset(indices: List<Int>, fromResetAll: Boolean, now: Duration) {
         val stopwatches = _stopwatches.value
+        resultsOnOffer = record(indices.filter { stopwatches[it].laps.isNotEmpty() })
         _undoOffer.value = UndoOffer(
             id = ++offersMade,
             stopwatches = indices.associateWith { stopwatches[it] },
@@ -147,6 +170,39 @@ class TimingViewModel(
             offeredAt = now,
         )
         replace(indices.associateWith { stopwatches[it].reset() }, Feedback.Reset)
+    }
+
+    /**
+     * Keeps a result for each of the stopwatches at [indices], which are about to be reset. They
+     * are kept at the reset and taken back by an undo, not kept once the undo runs out: an offer
+     * to undo does not outlive the app's process, and the result must.
+     */
+    private fun record(indices: List<Int>): Map<Int, Long> {
+        if (indices.isEmpty()) return emptyMap()
+        val resetAt = clock.wallNow()
+        val firstId = maxOf(_results.value.maxOfOrNull { it.id } ?: 0L, lastResultId) + 1
+        val recorded = indices.mapIndexed { place, index ->
+            val stopwatch = _stopwatches.value[index]
+            val label = _labels.value[index]
+            index to Result(
+                id = firstId + place,
+                name = label.name,
+                colour = label.colour,
+                laps = stopwatch.laps,
+                totalTime = stopwatch.accumulated,
+                resetAt = resetAt,
+            )
+        }
+        lastResultId = firstId + indices.size - 1
+        keepResults(_results.value + recorded.map { it.second })
+        return recorded.associate { (index, result) -> index to result.id }
+    }
+
+    /** Results are only ever added or removed, so the same number of them means nothing changed. */
+    private fun keepResults(results: List<Result>) {
+        if (results.size == _results.value.size) return
+        _results.value = results.sortedWith(MOST_RECENT_FIRST)
+        historyStore.save(_results.value)
     }
 
     /**
@@ -196,6 +252,9 @@ class TimingViewModel(
         const val STOPWATCH_COUNT = 4
         val MIN_RESET_INTERVAL: Duration = 1.seconds
 
+        /** Results reset at the same moment stay in the order of their stopwatches. */
+        private val MOST_RECENT_FIRST = compareByDescending<Result> { it.resetAt }.thenBy { it.id }
+
         /** How long an offer to undo a reset stays open. */
         val UNDO_WINDOW: Duration = 5.seconds
 
@@ -209,6 +268,9 @@ class TimingViewModel(
                     ),
                     labelStore = PreferencesLabelStore(
                         application.getSharedPreferences(PreferencesLabelStore.FILE_NAME, Context.MODE_PRIVATE),
+                    ),
+                    historyStore = PreferencesHistoryStore(
+                        application.getSharedPreferences(PreferencesHistoryStore.FILE_NAME, Context.MODE_PRIVATE),
                     ),
                     haptics = VibratorHaptics.from(application),
                 )

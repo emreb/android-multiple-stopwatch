@@ -6,15 +6,21 @@ MultiLaps is a stopwatch app for timing up to four runners at once. This policy 
 
 ## What the app stores
 
-MultiLaps keeps three things, and only on your device:
+MultiLaps keeps four things, and only on your device:
 
 - The names you give the stopwatches.
 - The colours you choose for them.
 - The current timing: whether each stopwatch is running, and its lap times. Alongside it the app notes when your device was last switched on, which is how a running stopwatch keeps the right time after a restart.
 
-This is kept so that your stopwatches are still there when you reopen the app.
+- Your history: each time you reset a stopwatch that has laps, its name, colour, lap times and total time are kept as a result, with the date and time of the reset.
 
-Resetting a stopwatch deletes its timing and lap times, but keeps its name and colour. A name or colour stays until you change it. Clearing the app's data, or uninstalling the app, deletes all of it.
+This is kept so that your stopwatches are still there when you reopen the app, and so that you can look back at earlier times.
+
+Resetting a stopwatch clears its timing and lap times from the stopwatch, and keeps its name and colour. A name or colour stays until you change it. A result stays in History until you delete it there, one at a time or all at once. Clearing the app's data, or uninstalling the app, deletes all of it.
+
+## Sharing
+
+History has a Share button for each day. Pressing it hands that day's results, as plain text, to the app you then choose from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
 
 ## What the app does not do
 
@@ -22,7 +28,7 @@ Resetting a stopwatch deletes its timing and lap times, but keeps its name and c
 - It does not have access to the internet. It cannot send anything from your device.
 - It has no accounts and no sign-in.
 - It has no advertising and no analytics.
-- It does not share anything with anyone, because it has nothing to share and no way to send it.
+- It does not share anything with anyone on its own. The only way anything leaves the app is the Share button described above, when you press it.
 - It does not include its data in device backups or device-to-device transfers.
 
 ## Permissions

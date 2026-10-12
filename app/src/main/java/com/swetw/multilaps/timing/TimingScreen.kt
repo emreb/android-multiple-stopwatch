@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.swetw.multilaps.R
+import com.swetw.multilaps.history.HistoryScreen
 import com.swetw.multilaps.stopwatch.Stopwatch
 import com.swetw.multilaps.stopwatch.StopwatchState
 import kotlinx.coroutines.delay
@@ -67,11 +68,11 @@ private val WIDTH_FOR_CONTROLS = 104.dp
 private val MIN_TILE_WIDTH_BESIDE_CONTROLS = 144.dp
 
 /**
- * All the stopwatches at once, with the two controls that act on all of them. Upright, they sit
- * above the tiles, start all at the top left and reset all at the top right. On its side with
- * width to spare, where height is what the tiles are short of, they share one column at the left,
- * start all at its top and reset all at its foot: one column, because a second would leave the
- * tiles too narrow for a Lap button that outsizes Stop.
+ * All the stopwatches at once, with the two controls that act on all of them and the way into
+ * history between the two. Upright, they sit above the tiles, start all at the top left and reset
+ * all at the top right. On its side with width to spare, where height is what the tiles are short
+ * of, they share one column at the left, start all at its top and reset all at its foot: one
+ * column, because a second would leave the tiles too narrow for a Lap button that outsizes Stop.
  */
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
@@ -83,6 +84,19 @@ fun TimingScreen(viewModel: TimingViewModel) {
     val undoShareLeft = rememberUndoShareLeft(undoOffer, viewModel::undoTimeLeft)
     // Which stopwatch's laps are being looked at, by position; kept through a rotation.
     var lapSheetFor by rememberSaveable { mutableStateOf<Int?>(null) }
+    // History takes the place of the stopwatches, which go on being timed, and their offer to
+    // undo timed out, by what is above.
+    var showingHistory by rememberSaveable { mutableStateOf(false) }
+    if (showingHistory) {
+        val results by viewModel.results.collectAsStateWithLifecycle()
+        HistoryScreen(
+            results = results,
+            onResultDeleted = viewModel::onResultDeleted,
+            onAllResultsDeleted = viewModel::onAllResultsDeleted,
+            onBack = { showingHistory = false },
+        )
+        return
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         BoxWithConstraints(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
@@ -101,6 +115,15 @@ fun TimingScreen(viewModel: TimingViewModel) {
                     outlined = true,
                     onClick = viewModel::onStartAllPressed,
                     modifier = modifier.testTag("start-all"),
+                )
+            }
+            val history: @Composable (Modifier) -> Unit = { modifier ->
+                ScreenButton(
+                    label = R.string.action_history,
+                    enabled = true,
+                    outlined = false,
+                    onClick = { showingHistory = true },
+                    modifier = modifier.testTag("open-history"),
                 )
             }
             val resetAll: @Composable (Modifier) -> Unit = { modifier ->
@@ -133,18 +156,22 @@ fun TimingScreen(viewModel: TimingViewModel) {
                         modifier = Modifier.width(WIDTH_FOR_CONTROLS - GAP).fillMaxHeight(),
                     ) {
                         startAll(Modifier.fillMaxWidth())
+                        history(Modifier.fillMaxWidth())
                         resetAll(Modifier.fillMaxWidth())
                     }
                     grid(Modifier.weight(1f))
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
+                    // Each may take a third of the row and no more, its label shrinking to fit, so
+                    // that enlarged text on a narrow phone cannot push one of them off the screen.
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        startAll(Modifier)
-                        resetAll(Modifier)
+                        startAll(Modifier.weight(1f, fill = false))
+                        history(Modifier.weight(1f, fill = false))
+                        resetAll(Modifier.weight(1f, fill = false))
                     }
                     grid(Modifier.weight(1f))
                 }
@@ -230,7 +257,7 @@ private fun ResetAllButton(
  * out. With a [countdown] it is an undo whose time is running out.
  */
 @Composable
-private fun ScreenButton(
+internal fun ScreenButton(
     @StringRes label: Int,
     enabled: Boolean,
     outlined: Boolean,

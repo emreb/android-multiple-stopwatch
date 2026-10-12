@@ -49,4 +49,42 @@
     <!-- A row of the lap list: lap number, lap time, total time when the lap was completed. -->
     <string name="lap_row_description">Lap %1$d, %2$s, total time %3$s</string>
     <string name="best_lap_row_description">Lap %1$d, %2$s, total time %3$s, best lap</string>
+
+    <string name="action_history">History</string>
+    <string name="action_back">Back</string>
+    <string name="action_share">Share</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_delete_all">Delete all</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="history_title">History</string>
+    <string name="no_results_yet">No results yet. When you reset a stopwatch that has laps, its times are kept here.</string>
+    <!-- Asked before results are deleted; the placeholder is how many would go. -->
+    <plurals name="delete_question">
+        <item quantity="one">Delete %1$d result?</item>
+        <item quantity="other">Delete all %1$d results?</item>
+    </plurals>
+    <string name="delete_cannot_be_undone">This cannot be undone.</string>
+    <!-- A result's lap count, as on "3 laps". -->
+    <plurals name="lap_count">
+        <item quantity="one">%1$d lap</item>
+        <item quantity="other">%1$d laps</item>
+    </plurals>
+    <!-- Under a result's total time in the history list: its lap count, then its best lap. -->
+    <string name="result_laps_and_best">%1$s, best %2$s</string>
+    <!-- When a result was reset: the date, then the time of day. -->
+    <string name="date_and_time">%1$s, %2$s</string>
+    <!-- A result in the history list as spoken: name, time of day, total time, lap count, best lap. -->
+    <string name="result_description">%1$s, %2$s, total time %3$s, %4$s, best lap %5$s</string>
+    <!-- What tapping a result does, spoken after "double tap to". -->
+    <string name="show_result">show its laps</string>
+    <!-- The share button of a day as spoken; the placeholder is the date. -->
+    <string name="share_day_description">Share %1$s</string>
+    <!-- A day's results as shared text. The first placeholder of the title is the date. -->
+    <string name="share_title">MultiLaps, %1$s</string>
+    <!-- A result's heading in shared text: name, then time of day. -->
+    <string name="share_result_heading">%1$s, %2$s</string>
+    <!-- A result's figures in shared text: total time, lap count, best lap. -->
+    <string name="share_result_summary">Total %1$s, %2$s, best %3$s</string>
+    <!-- One lap in shared text: number, then time. -->
+    <string name="share_lap">Lap %1$d: %2$s</string>
 </resources>
