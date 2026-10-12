@@ -16,9 +16,25 @@ android {
         versionName = "0.1.0"
     }
 
+    // The upload key lives outside the repository. Its location and passwords come from Gradle
+    // properties, normally ~/.gradle/gradle.properties; without them a release build is left
+    // unsigned, which is all a machine that never uploads needs.
+    val uploadStoreFile = providers.gradleProperty("MULTILAPS_UPLOAD_STORE_FILE").orNull?.takeIf { it.isNotBlank() }
+    signingConfigs {
+        if (uploadStoreFile != null) {
+            create("upload") {
+                storeFile = file(uploadStoreFile)
+                storePassword = providers.gradleProperty("MULTILAPS_UPLOAD_STORE_PASSWORD").get()
+                keyAlias = providers.gradleProperty("MULTILAPS_UPLOAD_KEY_ALIAS").get()
+                keyPassword = providers.gradleProperty("MULTILAPS_UPLOAD_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("upload")
         }
     }
 
