@@ -8,11 +8,17 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.brothersbaran.multilaps.Devices.PORTRAIT_PHONE
+import com.brothersbaran.multilaps.timing.StopwatchColour
+import com.brothersbaran.multilaps.timing.StopwatchColourKey
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -65,6 +71,36 @@ class AppLifecycleTest {
         described("Last lap 0:20.", tile = 2).assertExists()
         described("Laps 1", tile = 2).assertExists()
         text("Start", tile = 3).assertIsEnabled()
+    }
+
+    @Test
+    fun `closing and reopening the app keeps names and colours`() {
+        composeRule.onNode(hasTestTag("stopwatch-name") and inTile(2)).performClick()
+        settle()
+        composeRule.onNodeWithTag("name-field").performTextReplacement("Ada")
+        composeRule.onNodeWithTag("lap-sheet").performScrollToIndex(1)
+        composeRule.onNode(hasTestTag("colour-swatch") and hasContentDescription("Pink")).performClick()
+        settle()
+        composeRule.onNode(hasText("Close")).performClick()
+        settle()
+
+        scenario.close()
+        scenario = ActivityScenario.launch(MainActivity::class.java)
+        settle()
+
+        text("Ada", tile = 2).assertExists()
+        assertEquals(
+            StopwatchColour.Pink,
+            composeRule.onNodeWithTag("stopwatch-2").fetchSemanticsNode().config[StopwatchColourKey],
+        )
+        text("1", tile = 1).assertExists()
+    }
+
+    private fun settle() {
+        repeat(60) {
+            composeRule.mainClock.advanceTimeByFrame()
+            composeRule.waitForIdle()
+        }
     }
 
     @Test

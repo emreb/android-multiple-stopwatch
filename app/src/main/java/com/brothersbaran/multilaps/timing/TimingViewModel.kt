@@ -16,10 +16,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewModel() {
+class TimingViewModel(
+    val clock: Clock,
+    private val store: TimingStore,
+    private val labelStore: LabelStore,
+) : ViewModel() {
 
     private val _stopwatches = MutableStateFlow(restored())
     val stopwatches: StateFlow<List<Stopwatch>> = _stopwatches.asStateFlow()
+
+    private val _labels = MutableStateFlow(
+        labelStore.load()?.takeIf { it.size == STOPWATCH_COUNT }
+            ?: List(STOPWATCH_COUNT) { StopwatchLabel.default(it) },
+    )
+    val labels: StateFlow<List<StopwatchLabel>> = _labels.asStateFlow()
 
     private val _undoOffer = MutableStateFlow<UndoOffer?>(null)
     val undoOffer: StateFlow<UndoOffer?> = _undoOffer.asStateFlow()
@@ -100,6 +110,20 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
         if (_undoOffer.value?.id == id) _undoOffer.value = null
     }
 
+    /** Names the stopwatch at [index]; with nothing typed it goes back to its number. */
+    fun onNameChanged(index: Int, name: String) = relabel(index) { it.renamed(name, index) }
+
+    fun onColourChosen(index: Int, colour: StopwatchColour) = relabel(index) { it.copy(colour = colour) }
+
+    private fun relabel(index: Int, change: (StopwatchLabel) -> StopwatchLabel) {
+        val before = _labels.value
+        require(index in before.indices) { "There is no stopwatch $index" }
+        val after = before.mapIndexed { i, label -> if (i == index) change(label) else label }
+        if (after == before) return
+        _labels.value = after
+        labelStore.save(after)
+    }
+
     private fun reset(indices: List<Int>, fromResetAll: Boolean, now: Duration) {
         val stopwatches = _stopwatches.value
         _undoOffer.value = UndoOffer(
@@ -164,6 +188,9 @@ class TimingViewModel(val clock: Clock, private val store: TimingStore) : ViewMo
                     clock = DeviceClock(application.contentResolver),
                     store = PreferencesTimingStore(
                         application.getSharedPreferences(PreferencesTimingStore.FILE_NAME, Context.MODE_PRIVATE),
+                    ),
+                    labelStore = PreferencesLabelStore(
+                        application.getSharedPreferences(PreferencesLabelStore.FILE_NAME, Context.MODE_PRIVATE),
                     ),
                 )
             }

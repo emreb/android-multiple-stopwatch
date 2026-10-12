@@ -43,6 +43,7 @@ private val GAP = 8.dp
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
     val stopwatches by viewModel.stopwatches.collectAsStateWithLifecycle()
+    val labels by viewModel.labels.collectAsStateWithLifecycle()
     val undoOffer by viewModel.undoOffer.collectAsStateWithLifecycle()
     KeepScreenOn(stopwatches.any { it.state == StopwatchState.Running })
     ExpireUndoOffer(undoOffer, viewModel::undoTimeLeft, viewModel::onUndoExpired)
@@ -60,6 +61,7 @@ fun TimingScreen(viewModel: TimingViewModel) {
             )
             StopwatchGrid(
                 stopwatches = stopwatches,
+                labels = labels,
                 undoOffer = undoOffer,
                 viewModel = viewModel,
                 onNamePressed = { lapSheetFor = it },
@@ -69,14 +71,14 @@ fun TimingScreen(viewModel: TimingViewModel) {
     }
     lapSheetFor?.let { index ->
         LapSheet(
-            name = stopwatchName(index),
+            label = labels[index],
             stopwatch = stopwatches[index],
+            onNameChanged = { viewModel.onNameChanged(index, it) },
+            onColourChosen = { viewModel.onColourChosen(index, it) },
             onDismiss = { lapSheetFor = null },
         )
     }
 }
-
-private fun stopwatchName(index: Int): String = (index + 1).toString()
 
 /**
  * Side by side when the space is wider than tall and wide enough for four tiles, otherwise two by
@@ -85,6 +87,7 @@ private fun stopwatchName(index: Int): String = (index + 1).toString()
 @Composable
 private fun StopwatchGrid(
     stopwatches: List<Stopwatch>,
+    labels: List<StopwatchLabel>,
     undoOffer: UndoOffer?,
     viewModel: TimingViewModel,
     onNamePressed: (index: Int) -> Unit,
@@ -105,7 +108,7 @@ private fun StopwatchGrid(
                         // Keyed so a tile keeps its own state when the grid changes shape.
                         key(index) {
                             StopwatchTile(
-                                name = stopwatchName(index),
+                                label = labels[index],
                                 onNamePressed = { onNamePressed(index) },
                                 stopwatch = stopwatches[index],
                                 clock = viewModel.clock,

@@ -16,7 +16,7 @@ class ResetTest {
 
     private val clock = FakeClock()
     private val store = FakeTimingStore()
-    private val viewModel = TimingViewModel(clock, store)
+    private val viewModel = TimingViewModel(clock, store, FakeLabelStore())
 
     private val stopwatches get() = viewModel.stopwatches.value
     private val offer get() = viewModel.undoOffer.value
@@ -245,7 +245,7 @@ class ResetTest {
         viewModel.onStopPressed(1)
 
         // No time passes: within this run of the app the same press would be taken for a bounce.
-        val reopened = TimingViewModel(clock, store)
+        val reopened = TimingViewModel(clock, store, FakeLabelStore())
         reopened.onStopPressed(1)
 
         assertEquals(Stopwatch(), reopened.stopwatches.value[1])
