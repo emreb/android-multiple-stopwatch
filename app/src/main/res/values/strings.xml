@@ -1,7 +1,22 @@
 <resources>
     <string name="app_name">MultiLaps</string>
+
     <string name="action_start">Start</string>
+    <string name="action_lap">Lap</string>
     <string name="action_stop">Stop</string>
     <string name="action_reset">Reset</string>
+
+    <string name="total_time_label">Total</string>
+    <string name="last_lap_label">Last</string>
+    <string name="best_lap_label">Best</string>
+    <string name="lap_count_label">Laps</string>
+    <string name="no_lap">–:––.––</string>
+
+    <!-- Spoken by screen readers; the placeholder is a time such as 1:23.45. -->
+    <string name="current_lap_description">Current lap %1$s</string>
     <string name="total_time_description">Total time %1$s</string>
+    <string name="last_lap_description">Last lap %1$s</string>
+    <string name="best_lap_description">Best lap %1$s</string>
+    <string name="lap_count_description">Laps %1$s</string>
+    <string name="no_lap_description">none</string>
 </resources>

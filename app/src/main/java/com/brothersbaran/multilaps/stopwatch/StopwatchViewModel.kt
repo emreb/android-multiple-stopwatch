@@ -8,15 +8,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlin.time.Duration
 
-class StopwatchViewModel(private val clock: Clock) : ViewModel() {
+class StopwatchViewModel(val clock: Clock) : ViewModel() {
 
     private val _stopwatch = MutableStateFlow(Stopwatch())
     val stopwatch: StateFlow<Stopwatch> = _stopwatch.asStateFlow()
 
+    /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed() {
-        _stopwatch.update { it.start(clock.now()) }
+        _stopwatch.update {
+            when (it.state) {
+                StopwatchState.Running -> it.lap(clock.now())
+                StopwatchState.Idle, StopwatchState.Stopped -> it.start(clock.now())
+            }
+        }
     }
 
     /** Stop holds a running stopwatch; pressed again while stopped, it resets. */
@@ -29,8 +34,6 @@ class StopwatchViewModel(private val clock: Clock) : ViewModel() {
             }
         }
     }
-
-    fun totalTime(): Duration = stopwatch.value.totalTime(clock.now())
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
