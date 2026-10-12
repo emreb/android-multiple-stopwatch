@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -137,10 +138,14 @@ class StartAllTest {
     fun `a lap press within a second of start all is taken for a bounce`() {
         viewModel.onStartAllPressed()
         val started = stopwatches
+        val saves = store.saveCount
+        felt.clear()
         clock.advanceBy(999.milliseconds)
         viewModel.onStartPressed(1)
 
         assertEquals(started, stopwatches)
+        assertEquals(saves, store.saveCount)
+        assertEquals(emptyList<Feedback>(), felt)
 
         clock.advanceBy(1.milliseconds)
         viewModel.onStartPressed(1)
@@ -159,7 +164,7 @@ class StartAllTest {
         assertEquals(StopwatchState.Stopped, stopwatches[0].state)
         assertEquals(35.seconds, stopwatches[0].totalTime(clock.now() + 60.seconds))
         assertEquals(StopwatchState.Running, stopwatches[1].state)
-        assertEquals(emptyList<Any>(), stopwatches[1].laps)
+        assertEquals(emptyList<Duration>(), stopwatches[1].laps)
         assertEquals(35.seconds, stopwatches[1].totalTime(clock.now()))
     }
 }

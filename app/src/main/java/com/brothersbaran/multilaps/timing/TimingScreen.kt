@@ -53,11 +53,18 @@ private val MIN_TILE_WIDTH = 120.dp
 private val GAP = 8.dp
 
 /**
- * What the two controls are given in a column beside the tiles, gap included; without that much
- * to spare, they stay above the tiles. They are held to this width, shrinking their labels if
+ * What the two controls are given in a column beside the tiles, gap included. They are held to
+ * this width, shrinking their labels if
  * need be, so that enlarged text cannot take from the tiles more than was allowed for.
  */
 private val WIDTH_FOR_CONTROLS = 104.dp
+
+/**
+ * The narrowest a tile may be left by the controls' column. Any narrower and its Lap button would
+ * no longer clearly outsize Stop, which keeps a fixed share of the tile and a minimum width; the
+ * controls then go above the tiles instead, where they cost height but no width.
+ */
+private val MIN_TILE_WIDTH_BESIDE_CONTROLS = 144.dp
 
 /**
  * All the stopwatches at once, with the two controls that act on all of them. Upright, they sit
@@ -83,7 +90,9 @@ fun TimingScreen(viewModel: TimingViewModel) {
             // otherwise two by two.
             val widthForFour = MIN_TILE_WIDTH * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1)
             val sideways = maxWidth > maxHeight && maxWidth >= widthForFour
-            val controlsBeside = sideways && maxWidth >= widthForFour + WIDTH_FOR_CONTROLS
+            val widthForFourBesideControls =
+                MIN_TILE_WIDTH_BESIDE_CONTROLS * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1) + WIDTH_FOR_CONTROLS
+            val controlsBeside = sideways && maxWidth >= widthForFourBesideControls
 
             val startAll: @Composable (Modifier) -> Unit = { modifier ->
                 ScreenButton(
