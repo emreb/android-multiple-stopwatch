@@ -1,5 +1,6 @@
 package com.brothersbaran.multilaps.stopwatch
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -29,7 +31,6 @@ import kotlin.time.Duration
 @Composable
 fun StopwatchScreen(viewModel: StopwatchViewModel) {
     val stopwatch by viewModel.stopwatch.collectAsStateWithLifecycle()
-    val totalTime = rememberTotalTime(stopwatch, viewModel::totalTime)
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -37,13 +38,8 @@ fun StopwatchScreen(viewModel: StopwatchViewModel) {
             verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val formattedTotalTime = formatTime(totalTime)
-            val totalTimeDescription = stringResource(R.string.total_time_description, formattedTotalTime)
-            Text(
-                text = formattedTotalTime,
-                style = MaterialTheme.typography.displayLarge,
-                modifier = Modifier.semantics { contentDescription = totalTimeDescription },
-            )
+            LiveTimes(stopwatch, viewModel.clock)
+            CompletedLaps(stopwatch)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Button(
                     onClick = viewModel::onStopPressed,
@@ -55,23 +51,86 @@ fun StopwatchScreen(viewModel: StopwatchViewModel) {
                     }
                     Text(stringResource(label))
                 }
-                Button(
-                    onClick = viewModel::onStartPressed,
-                    enabled = stopwatch.state != StopwatchState.Running,
-                ) {
-                    Text(stringResource(R.string.action_start))
+                Button(onClick = viewModel::onStartPressed) {
+                    val label = when (stopwatch.state) {
+                        StopwatchState.Running -> R.string.action_lap
+                        StopwatchState.Idle, StopwatchState.Stopped -> R.string.action_start
+                    }
+                    Text(stringResource(label))
                 }
             }
         }
     }
 }
 
+/** The times that advance while running; kept apart so only they recompose on every frame. */
+@Composable
+private fun LiveTimes(stopwatch: Stopwatch, clock: Clock) {
+    val now = rememberNow(stopwatch, clock)
+    val currentLap = formatTime(stopwatch.currentLap(now))
+    val currentLapDescription = stringResource(R.string.current_lap_description, currentLap)
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = currentLap,
+            style = MaterialTheme.typography.displayLarge,
+            modifier = Modifier.semantics { contentDescription = currentLapDescription },
+        )
+        LabelledValue(
+            label = R.string.total_time_label,
+            value = formatTime(stopwatch.totalTime(now)),
+            description = R.string.total_time_description,
+        )
+    }
+}
+
+@Composable
+private fun CompletedLaps(stopwatch: Stopwatch) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        LabelledLap(R.string.last_lap_label, R.string.last_lap_description, stopwatch.lastLap)
+        LabelledLap(R.string.best_lap_label, R.string.best_lap_description, stopwatch.bestLap)
+        LabelledValue(
+            label = R.string.lap_count_label,
+            value = stopwatch.lapCount.toString(),
+            description = R.string.lap_count_description,
+        )
+    }
+}
+
+@Composable
+private fun LabelledLap(@StringRes label: Int, @StringRes description: Int, lap: Duration?) {
+    LabelledValue(
+        label = label,
+        value = lap?.let(::formatTime) ?: stringResource(R.string.no_lap),
+        description = description,
+        spokenValue = lap?.let(::formatTime) ?: stringResource(R.string.no_lap_description),
+    )
+}
+
+/** A caption and its value, read out together as [description] filled with [spokenValue]. */
+@Composable
+private fun LabelledValue(
+    @StringRes label: Int,
+    value: String,
+    @StringRes description: Int,
+    spokenValue: String = value,
+) {
+    val spoken = stringResource(description, spokenValue)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+    ) {
+        Text(stringResource(label), style = MaterialTheme.typography.titleMedium)
+        Text(value, style = MaterialTheme.typography.titleMedium)
+    }
+}
+
 /**
- * Reads the total time afresh on every recomposition, and recomposes on every frame while the
+ * Reads the clock afresh on every recomposition, and recomposes on every frame while the
  * stopwatch is running.
  */
 @Composable
-private fun rememberTotalTime(stopwatch: Stopwatch, readTotalTime: () -> Duration): Duration {
+private fun rememberNow(stopwatch: Stopwatch, clock: Clock): Duration {
     val isRunning = stopwatch.state == StopwatchState.Running
     var frame by remember { mutableLongStateOf(0L) }
     LaunchedEffect(isRunning) {
@@ -82,5 +141,5 @@ private fun rememberTotalTime(stopwatch: Stopwatch, readTotalTime: () -> Duratio
         }
     }
     // Reading the frame subscribes this composition to it.
-    return remember(stopwatch, frame) { readTotalTime() }
+    return remember(stopwatch, frame) { clock.now() }
 }

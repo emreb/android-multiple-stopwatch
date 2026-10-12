@@ -103,12 +103,12 @@ class StopwatchTest {
     }
 
     @Test
-    fun `a stopwatch cannot be built running without a start reading, or holding one while not running`() {
+    fun `a stopwatch cannot be built running without a reading to count from, or holding one while not running`() {
         assertThrows(IllegalArgumentException::class.java) {
             Stopwatch(state = StopwatchState.Running)
         }
         assertThrows(IllegalArgumentException::class.java) {
-            Stopwatch(state = StopwatchState.Stopped, startedAt = 100.seconds)
+            Stopwatch(state = StopwatchState.Stopped, countingFrom = 100.seconds)
         }
     }
 }
