@@ -4,7 +4,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
@@ -41,6 +43,7 @@ import com.brothersbaran.multilaps.Devices.SPLIT_SCREEN
 import com.brothersbaran.multilaps.Devices.TABLET_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.TABLET_PORTRAIT
 import com.brothersbaran.multilaps.stopwatch.FakeClock
+import com.brothersbaran.multilaps.theme.MultiLapsTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -66,7 +69,7 @@ class TimingScreenTest {
     fun setUp() {
         // A running stopwatch redraws every frame, so the test drives frames by hand.
         composeRule.mainClock.autoAdvance = false
-        composeRule.setContent { TimingScreen(viewModel) }
+        composeRule.setContent { MultiLapsTheme { TimingScreen(viewModel) } }
     }
 
     @Test
@@ -940,12 +943,96 @@ class TimingScreenTest {
         }
     }
 
+    @Test
+    fun `lap is the big button and stop the small one beside it, in portrait`() = assertLapDominates()
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `lap is the big button and stop the small one beside it, in landscape`() = assertLapDominates()
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
+    fun `lap is the big button and stop the small one beside it, on a small phone`() = assertLapDominates()
+
+    private fun assertLapDominates() {
+        for (tile in 1..4) {
+            val stop = text("Stop", tile).getUnclippedBoundsInRoot()
+            val start = text("Start", tile).getUnclippedBoundsInRoot()
+
+            assertTrue("widths ${stop.width} and ${start.width}", start.width.value >= 1.4f * stop.width.value)
+            assertTrue(start.height > stop.height)
+            assertTrue("a clear gap between them", start.left - stop.right >= 8.dp)
+            assertEquals("they stand on the same line", stop.bottom, start.bottom)
+        }
+    }
+
+    @Test
+    fun `a tile says whether its stopwatch is idle, running or stopped`() {
+        tileState(1).assertEquals("Idle")
+
+        press("Start", tile = 1)
+        tileState(1).assertEquals("Running")
+        tileState(2).assertEquals("Idle")
+
+        advance(20.seconds)
+        press("Stop", tile = 1)
+        tileState(1).assertEquals("Stopped")
+    }
+
+    private fun tileState(tile: Int): String =
+        composeRule.onNodeWithTag("stopwatch-$tile").fetchSemanticsNode()
+            .config[SemanticsProperties.StateDescription]
+
+    private fun String.assertEquals(expected: String) = assertEquals(expected, this)
+
+    @Test
+    fun `undo shows its time running out`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        val atFirst = undoProgress(text("Undo"))
+        assertTrue("starts nearly full: $atFirst", atFirst > 0.9f)
+
+        advanceBoth(2500.milliseconds)
+        val halfway = undoProgress(text("Undo"))
+        assertTrue("about half left: $halfway", halfway in 0.4f..0.6f)
+    }
+
+    @Test
+    fun `undo after reset all shows its time running out too`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        pressResetAll()
+
+        advanceBoth(2500.milliseconds)
+        val halfway = undoProgress(resetAll())
+        assertTrue("about half left: $halfway", halfway in 0.4f..0.6f)
+    }
+
+    @Test
+    fun `the appearance of undo is announced to a screen reader`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        text("Undo").assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    private fun undoProgress(node: SemanticsNodeInteraction): Float =
+        node.fetchSemanticsNode().config[SemanticsProperties.ProgressBarRangeInfo].current
+
     private fun assertButtonsAreLarge() {
         for (tile in 1..4) {
             for (label in listOf("Start", "Stop")) {
                 val bounds = text(label, tile).getUnclippedBoundsInRoot()
                 assertTrue("$label on $tile is ${bounds.width} wide", bounds.width >= 48.dp)
-                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= 56.dp)
+                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= 48.dp)
             }
         }
     }

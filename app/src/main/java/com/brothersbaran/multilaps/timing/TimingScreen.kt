@@ -1,16 +1,21 @@
 package com.brothersbaran.multilaps.timing
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -21,9 +26,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.brothersbaran.multilaps.R
@@ -47,13 +54,15 @@ fun TimingScreen(viewModel: TimingViewModel) {
     val undoOffer by viewModel.undoOffer.collectAsStateWithLifecycle()
     KeepScreenOn(stopwatches.any { it.state == StopwatchState.Running })
     ExpireUndoOffer(undoOffer, viewModel::undoTimeLeft, viewModel::onUndoExpired)
+    val undoTimeLeft = rememberUndoTimeLeft(undoOffer, viewModel::undoTimeLeft)
     // Which stopwatch's laps are being looked at, by position; kept through a rotation.
     var lapSheetFor by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
             ResetAllButton(
                 undoOffered = undoOffer?.fromResetAll == true,
+                undoTimeLeft = undoTimeLeft,
                 enabled = canResetAll(stopwatches),
                 onResetAllPressed = viewModel::onResetAllPressed,
                 onUndoPressed = viewModel::onUndoPressed,
@@ -63,6 +72,7 @@ fun TimingScreen(viewModel: TimingViewModel) {
                 stopwatches = stopwatches,
                 labels = labels,
                 undoOffer = undoOffer,
+                undoTimeLeft = undoTimeLeft,
                 viewModel = viewModel,
                 onNamePressed = { lapSheetFor = it },
                 modifier = Modifier.weight(1f),
@@ -89,6 +99,7 @@ private fun StopwatchGrid(
     stopwatches: List<Stopwatch>,
     labels: List<StopwatchLabel>,
     undoOffer: UndoOffer?,
+    undoTimeLeft: () -> Float,
     viewModel: TimingViewModel,
     onNamePressed: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -117,6 +128,7 @@ private fun StopwatchGrid(
                                 onUndoPressed = viewModel::onUndoPressed,
                                 undoOffered = undoOffer?.fromResetAll == false &&
                                     index in undoOffer.stopwatches,
+                                undoTimeLeft = undoTimeLeft,
                                 modifier = Modifier
                                     .weight(1f)
                                     .fillMaxHeight()
@@ -134,17 +146,35 @@ private fun StopwatchGrid(
 @Composable
 private fun ResetAllButton(
     undoOffered: Boolean,
+    undoTimeLeft: () -> Float,
     enabled: Boolean,
     onResetAllPressed: () -> Unit,
     onUndoPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    TextButton(
-        onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
-        enabled = undoOffered || enabled,
-        modifier = modifier.testTag("reset-all"),
+    val ink = MaterialTheme.colorScheme.onBackground
+    val shape = RoundedCornerShape(14.dp)
+    val active = undoOffered || enabled
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .padding(bottom = GAP)
+            .heightIn(min = 48.dp)
+            .clip(shape)
+            .then(if (undoOffered) Modifier.border(2.dp, ink, shape).undoCountdown(undoTimeLeft, ink) else Modifier)
+            .clickable(
+                enabled = active,
+                role = Role.Button,
+                onClick = if (undoOffered) onUndoPressed else onResetAllPressed,
+            )
+            .padding(horizontal = 16.dp)
+            .testTag("reset-all"),
     ) {
-        Text(stringResource(if (undoOffered) R.string.action_undo else R.string.action_reset_all))
+        Text(
+            text = stringResource(if (undoOffered) R.string.action_undo else R.string.action_reset_all),
+            style = MaterialTheme.typography.titleMedium,
+            color = if (active) ink else ink.copy(alpha = 0.38f),
+        )
     }
 }
 
