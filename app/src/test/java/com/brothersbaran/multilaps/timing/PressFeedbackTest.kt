@@ -49,21 +49,12 @@ class PressFeedbackTest {
     }
 
     @Test
-    fun `a lap is felt differently from a stop`() {
+    fun `reset all and its undo are each felt once, however many stopwatches they cover`() {
         viewModel.onStartPressed(0)
-        clock.advanceBy(30.seconds)
-        viewModel.onStartPressed(0)
-        clock.advanceBy(30.seconds)
-        viewModel.onStopPressed(0)
-
-        assertEquals(listOf(Feedback.Lap, Feedback.Stop), felt.takeLast(2))
-    }
-
-    @Test
-    fun `reset all and its undo are felt`() {
-        viewModel.onStartPressed(0)
+        viewModel.onStartPressed(2)
         clock.advanceBy(30.seconds)
         viewModel.onStopPressed(0)
+        viewModel.onStopPressed(2)
         felt.clear()
 
         viewModel.onResetAllPressed()

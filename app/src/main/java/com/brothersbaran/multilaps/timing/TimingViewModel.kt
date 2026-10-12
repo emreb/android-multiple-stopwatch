@@ -157,7 +157,7 @@ class TimingViewModel(
 
     /**
      * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback];
-     * unless nothing actually changed, which is how a press ignored as a bounce ends up here.
+     * unless nothing actually changed, as when a lap press is ignored as a bounce.
      */
     private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback) {
         val before = _stopwatches.value

@@ -40,6 +40,14 @@ class VibratorHapticsTest {
     }
 
     @Test
+    fun `no pulse is too brief for a slow motor to get going`() {
+        for (feedback in Feedback.entries) {
+            val pulses = timings(feedback).let { if (it.size == 1) it else it.filterIndexed { i, _ -> i % 2 == 1 } }
+            assertTrue("$feedback pulses $pulses", pulses.all { it >= 50 })
+        }
+    }
+
+    @Test
     fun `every vibration is short`() {
         for (feedback in Feedback.entries) {
             assertTrue("$feedback", timings(feedback).sum() <= 250)
@@ -76,6 +84,21 @@ class VibratorHapticsTest {
     @Config(sdk = [26])
     fun `it vibrates on the oldest Android the app supports`() {
         haptics.play(Feedback.Stop)
+
+        assertTrue(shadow.isVibrating)
+    }
+
+    @Test
+    @Config(sdk = [26])
+    fun `the haptics the app is given reach the device's vibrator on older Android`() {
+        VibratorHaptics.from(context).play(Feedback.Lap)
+
+        assertTrue(shadow.isVibrating)
+    }
+
+    @Test
+    fun `the haptics the app is given reach the device's vibrator on current Android`() {
+        VibratorHaptics.from(context).play(Feedback.Lap)
 
         assertTrue(shadow.isVibrating)
     }

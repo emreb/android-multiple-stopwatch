@@ -7,8 +7,10 @@ import android.os.Vibrator
 import android.os.VibratorManager
 
 /**
- * Plays feedback as short vibrations whose rhythm tells the presses apart: one pulse for a lap,
- * two for a stop. Without a vibrator it does nothing.
+ * Plays feedback as short vibrations whose rhythm tells the presses apart: one pulse for a lap or
+ * a start, two for a stop, one long one for a reset and three for an undo. No pulse is shorter
+ * than 50 ms, which is about what an older motor needs to get going. Without a vibrator it does
+ * nothing.
  */
 class VibratorHaptics(private val vibrator: Vibrator?) : Haptics {
 
@@ -18,11 +20,11 @@ class VibratorHaptics(private val vibrator: Vibrator?) : Haptics {
     }
 
     private fun effect(feedback: Feedback): VibrationEffect = when (feedback) {
-        Feedback.Lap -> pulse(30)
-        Feedback.Start -> pulse(60)
-        Feedback.Stop -> pulses(50, 70, 50)
-        Feedback.Reset -> pulse(150)
-        Feedback.Undo -> pulses(30, 50, 30, 50, 30)
+        Feedback.Lap -> pulse(50)
+        Feedback.Start -> pulse(80)
+        Feedback.Stop -> pulses(60, 90, 60)
+        Feedback.Reset -> pulse(200)
+        Feedback.Undo -> pulses(50, 50, 50, 50, 50)
     }
 
     private fun pulse(milliseconds: Long): VibrationEffect =
