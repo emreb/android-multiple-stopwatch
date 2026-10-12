@@ -51,11 +51,20 @@ class PreferencesLabelStoreTest {
     }
 
     @Test
-    fun `a colour this version does not know is treated as nothing saved`() {
+    fun `a colour this version does not know costs only that colour, not the names`() {
         preferences.edit()
-            .putString(PreferencesLabelStore.KEY, """[{"name":"Ada","colour":"Chartreuse"}]""")
+            .putString(
+                PreferencesLabelStore.KEY,
+                """[{"name":"Ada","colour":"Chartreuse"},{"name":"Grace","colour":"Pink"}]""",
+            )
             .commit()
 
-        assertNull(store.load())
+        assertEquals(
+            listOf(
+                StopwatchLabel("Ada", StopwatchLabel.default(0).colour),
+                StopwatchLabel("Grace", StopwatchColour.Pink),
+            ),
+            store.load(),
+        )
     }
 }

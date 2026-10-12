@@ -83,6 +83,32 @@ class LabelsTest {
     }
 
     @Test
+    fun `the cut never leaves half of a character that takes two code units`() {
+        viewModel.onNameChanged(0, "Nineteen letters ab" + "🏃" + "tail")
+
+        assertEquals("Nineteen letters ab", labels[0].name)
+    }
+
+    @Test
+    fun `a character that takes two code units is kept whole when it fits`() {
+        viewModel.onNameChanged(0, "Ada 🏃")
+
+        assertEquals("Ada 🏃", labels[0].name)
+    }
+
+    @Test
+    fun `saved names are tidied on the way back in`() {
+        labelStore.saved = listOf(
+            StopwatchLabel("", StopwatchColour.Pink),
+            StopwatchLabel("  Ada  ", StopwatchColour.Pink),
+            StopwatchLabel("x".repeat(500), StopwatchColour.Pink),
+            StopwatchLabel("4", StopwatchColour.Pink),
+        )
+
+        assertEquals(listOf("1", "Ada", "x".repeat(20), "4"), reopened().labels.value.map { it.name })
+    }
+
+    @Test
     fun `names and colours come back after the app is killed`() {
         viewModel.onNameChanged(1, "Ada")
         viewModel.onColourChosen(3, StopwatchColour.Pink)

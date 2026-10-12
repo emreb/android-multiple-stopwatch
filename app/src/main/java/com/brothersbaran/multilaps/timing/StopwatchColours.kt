@@ -21,9 +21,14 @@ val StopwatchColour.color: Color
         StopwatchColour.Pink -> Color(0xFFD81B60)
     }
 
-/** Black or white, whichever reads better on the colour. */
+/** Black or white, whichever stands out more against the colour. */
 val StopwatchColour.contentColor: Color
-    get() = if (color.luminance() > 0.3f) Color.Black else Color.White
+    get() {
+        val luminance = color.luminance()
+        val againstWhite = 1.05f / (luminance + 0.05f)
+        val againstBlack = (luminance + 0.05f) / 0.05f
+        return if (againstBlack >= againstWhite) Color.Black else Color.White
+    }
 
 @get:StringRes
 val StopwatchColour.nameResource: Int

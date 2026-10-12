@@ -27,6 +27,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -587,7 +588,7 @@ class TimingScreenTest {
         openLapSheet(tile = 1)
 
         // Scrolled by position: scrolling to a node waits for frames the test is holding back.
-        composeRule.onNodeWithTag("lap-sheet").performScrollToIndex(LAST_OF_FORTY_LAPS)
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(LAST_OF_FORTY_LAPS)
         letSheetSettle()
 
         inSheet(hasContentDescription("Lap 1, 0:30.00, total time 0:30.00, best lap")).assertIsDisplayed()
@@ -699,7 +700,70 @@ class TimingScreenTest {
         letSheetSettle()
 
         text("2", tile = 2).assertExists()
-        nameField().assert(hasText("Ada").not())
+        nameField().assert(
+            SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("")),
+        )
+    }
+
+    @Test
+    fun `the name field takes no more than twenty characters`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Bartholomew the Third of Somewhere")
+        letSheetSettle()
+
+        nameField().assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.EditableText,
+                AnnotatedString("Bartholomew the Thir"),
+            ),
+        )
+        text("Bartholomew the Thir", tile = 2).assertExists()
+    }
+
+    @Test
+    fun `the lap sheet announces whose it is`() {
+        openLapSheet(tile = 2)
+        nameField().performTextReplacement("Ada")
+        letSheetSettle()
+
+        lapSheet().assert(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "Stopwatch Ada"))
+    }
+
+    @Test
+    fun `the name, close and the column headings stay put while a long lap list scrolls`() {
+        viewModel.onStartPressed(0)
+        repeat(40) {
+            clock.advanceBy(30.seconds)
+            viewModel.onStartPressed(0)
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+        openLapSheet(tile = 1)
+
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(LAST_OF_FORTY_LAPS)
+        letSheetSettle()
+
+        nameField().assertIsDisplayed()
+        inSheet(hasText("Close")).assertIsDisplayed()
+        inSheet(hasText("Time")).assertIsDisplayed()
+        inSheet(hasText("Total")).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
+    fun `on a small phone turned sideways the laps can still be reached`() {
+        viewModel.onStartPressed(0)
+        repeat(3) {
+            clock.advanceBy(30.seconds)
+            viewModel.onStartPressed(0)
+        }
+        composeRule.mainClock.advanceTimeByFrame()
+        openLapSheet(tile = 1)
+
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(FIRST_LAP_ITEM + 2)
+        letSheetSettle()
+
+        inSheet(hasContentDescription("Lap 1, 0:30.00, total time 0:30.00, best lap")).assertIsDisplayed()
+        nameField().assertIsDisplayed()
     }
 
     @Test
@@ -714,7 +778,7 @@ class TimingScreenTest {
     @Test
     fun `a colour chosen in the lap sheet shows on the tile`() {
         openLapSheet(tile = 2)
-        composeRule.onNodeWithTag("lap-sheet").performScrollToIndex(PALETTE_ITEM)
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(PALETTE_ITEM)
         swatch("Purple").performClick()
         letSheetSettle()
 
@@ -728,8 +792,9 @@ class TimingScreenTest {
     fun `colour swatches are large enough to hit`() {
         openLapSheet(tile = 1)
 
-        for (bounds in swatches().fetchSemanticsNodes().map { it.boundsInRoot }) {
-            assertTrue(bounds.width >= 48f && bounds.height >= 48f)
+        for (index in 0 until 8) {
+            val bounds = swatches()[index].getUnclippedBoundsInRoot()
+            assertTrue(bounds.width >= 48.dp && bounds.height >= 48.dp)
         }
     }
 
@@ -738,7 +803,7 @@ class TimingScreenTest {
     fun `name and colour can be changed in landscape`() {
         openLapSheet(tile = 3)
         nameField().performTextReplacement("Grace")
-        composeRule.onNodeWithTag("lap-sheet").performScrollToIndex(PALETTE_ITEM)
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(PALETTE_ITEM)
         swatch("Teal").performClick()
         letSheetSettle()
 
@@ -922,6 +987,7 @@ class TimingScreenTest {
 
 private const val SHEET_SETTLE_FRAMES = 60
 
-/** Where things sit in the sheet's list: the name, the palette, the column headings, then the laps. */
-private const val PALETTE_ITEM = 1
-private const val LAST_OF_FORTY_LAPS = 3 + 39
+/** Where things sit in the sheet's list: the palette, the column headings, then the laps. */
+private const val PALETTE_ITEM = 0
+private const val FIRST_LAP_ITEM = 2
+private const val LAST_OF_FORTY_LAPS = FIRST_LAP_ITEM + 39

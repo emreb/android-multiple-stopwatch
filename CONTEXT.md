@@ -8,6 +8,10 @@ Timing several runners at once from the trackside, where each runner sets off at
 One independent timer for one runner, carrying its own name, colour, state and laps. There are always four.
 _Avoid_: Timer, lane, runner
 
+**Label**:
+A stopwatch's name and colour. They stay with the stopwatch through every reset and undo.
+_Avoid_: Identity, tag
+
 **Lap**:
 One completed circuit, measured from the previous lap press (or the start) to the next lap press. Time spent stopped is not part of a lap.
 _Avoid_: Split, round

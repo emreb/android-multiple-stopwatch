@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -34,7 +36,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.brothersbaran.multilaps.R
@@ -63,43 +67,50 @@ fun LapSheet(
     val scope = rememberCoroutineScope()
     val entries = stopwatch.lapEntries()
 
+    val title = stringResource(R.string.stopwatch_title, label.name)
+
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        // One list for everything, so a short sheet scrolls as a whole. It is not keyed by lap: a
-        // keyed list holds on to the row it was showing, which would leave a lap recorded
-        // meanwhile out of sight above the top.
-        LazyColumn(
-            modifier = Modifier.testTag("lap-sheet").padding(horizontal = 24.dp),
+        Column(
+            modifier = Modifier
+                .testTag("lap-sheet")
+                .semantics { paneTitle = title }
+                .padding(horizontal = 24.dp),
         ) {
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    NameField(label.name, onNameChanged, modifier = Modifier.weight(1f))
-                    // Slides away like a swipe or the back button would, rather than vanishing.
-                    TextButton(
-                        onClick = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
-                    ) {
-                        Text(stringResource(R.string.action_close))
-                    }
+            // The name and the way out stay put; everything under them scrolls.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                NameField(label.name, onNameChanged, modifier = Modifier.weight(1f))
+                // Slides away like a swipe or the back button would, rather than vanishing.
+                TextButton(
+                    onClick = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
+                ) {
+                    Text(stringResource(R.string.action_close))
                 }
             }
-            item { ColourPalette(selected = label.colour, onColourChosen = onColourChosen) }
-            if (entries.isEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.no_laps_yet),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(vertical = 24.dp),
-                    )
+            // Not keyed by lap: a keyed list holds on to the row it was showing, which would
+            // leave a lap recorded meanwhile out of sight above the top.
+            LazyColumn(modifier = Modifier.testTag("lap-list")) {
+                item { ColourPalette(selected = label.colour, onColourChosen = onColourChosen) }
+                if (entries.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.no_laps_yet),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(vertical = 24.dp),
+                        )
+                    }
+                } else {
+                    stickyHeader {
+                        LapColumns(
+                            number = stringResource(R.string.lap_column),
+                            time = stringResource(R.string.lap_time_column),
+                            totalTime = stringResource(R.string.total_time_label),
+                            modifier = Modifier
+                                .background(BottomSheetDefaults.ContainerColor)
+                                .padding(vertical = 8.dp),
+                        )
+                    }
+                    items(entries) { LapRow(it) }
                 }
-            } else {
-                item {
-                    LapColumns(
-                        number = stringResource(R.string.lap_column),
-                        time = stringResource(R.string.lap_time_column),
-                        totalTime = stringResource(R.string.total_time_label),
-                        modifier = Modifier.padding(vertical = 8.dp),
-                    )
-                }
-                items(entries) { LapRow(it) }
             }
         }
     }
@@ -115,11 +126,12 @@ private fun NameField(name: String, onNameChanged: (String) -> Unit, modifier: M
     OutlinedTextField(
         value = text,
         onValueChange = {
-            text = it.take(StopwatchLabel.MAX_NAME_LENGTH)
+            text = StopwatchLabel.cutToFit(it)
             onNameChanged(text)
         },
         label = { Text(stringResource(R.string.name_field_label)) },
         singleLine = true,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
         modifier = modifier.testTag("name-field"),
     )
 }

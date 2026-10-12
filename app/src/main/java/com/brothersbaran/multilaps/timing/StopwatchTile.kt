@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -125,7 +126,12 @@ private fun TileName(name: String, onPressed: () -> Unit) {
             .semantics { contentDescription = spoken }
             .testTag("stopwatch-name"),
     ) {
-        Text(name, style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = name,
+            style = MaterialTheme.typography.titleLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -147,6 +153,9 @@ private fun TileButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = colour.contentColor,
             contentColor = colour.color,
+            // Faded from the tile's own text colour, so a disabled button still shows on any colour.
+            disabledContainerColor = colour.contentColor.copy(alpha = 0.12f),
+            disabledContentColor = colour.contentColor.copy(alpha = 0.38f),
         ),
         contentPadding = PaddingValues(horizontal = 4.dp),
         modifier = modifier.height(64.dp).semantics { contentDescription = spoken },

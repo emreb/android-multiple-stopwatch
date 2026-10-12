@@ -13,11 +13,8 @@ class PreferencesLabelStore(private val preferences: SharedPreferences) : LabelS
         val json = preferences.getString(KEY, null) ?: return null
         return try {
             val labels = JSONArray(json)
-            List(labels.length()) { decode(labels.getJSONObject(it)) }
+            List(labels.length()) { decode(labels.getJSONObject(it), index = it) }
         } catch (_: JSONException) {
-            null
-        } catch (_: IllegalArgumentException) {
-            // A colour this version does not know.
             null
         }
     }
@@ -30,10 +27,18 @@ class PreferencesLabelStore(private val preferences: SharedPreferences) : LabelS
         .put(NAME, label.name)
         .put(COLOUR, label.colour.name)
 
-    private fun decode(json: JSONObject) = StopwatchLabel(
-        name = json.getString(NAME),
-        colour = StopwatchColour.valueOf(json.getString(COLOUR)),
-    )
+    /**
+     * A colour this version does not know, as after the palette changes, costs only that colour:
+     * the stopwatch at [index] keeps its name and takes its default colour.
+     */
+    private fun decode(json: JSONObject, index: Int): StopwatchLabel {
+        val colourName = json.getString(COLOUR)
+        return StopwatchLabel(
+            name = json.getString(NAME),
+            colour = StopwatchColour.entries.find { it.name == colourName }
+                ?: StopwatchLabel.default(index).colour,
+        )
+    }
 
     companion object {
         const val FILE_NAME = "labels"

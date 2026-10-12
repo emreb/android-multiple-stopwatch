@@ -78,7 +78,7 @@ class AppLifecycleTest {
         composeRule.onNode(hasTestTag("stopwatch-name") and inTile(2)).performClick()
         settle()
         composeRule.onNodeWithTag("name-field").performTextReplacement("Ada")
-        composeRule.onNodeWithTag("lap-sheet").performScrollToIndex(1)
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(0)
         composeRule.onNode(hasTestTag("colour-swatch") and hasContentDescription("Pink")).performClick()
         settle()
         composeRule.onNode(hasText("Close")).performClick()

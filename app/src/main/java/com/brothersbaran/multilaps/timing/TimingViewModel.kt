@@ -27,6 +27,7 @@ class TimingViewModel(
 
     private val _labels = MutableStateFlow(
         labelStore.load()?.takeIf { it.size == STOPWATCH_COUNT }
+            ?.mapIndexed { index, label -> label.renamed(label.name, index) }
             ?: List(STOPWATCH_COUNT) { StopwatchLabel.default(it) },
     )
     val labels: StateFlow<List<StopwatchLabel>> = _labels.asStateFlow()
