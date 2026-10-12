@@ -44,6 +44,8 @@ fun StopwatchTile(
     clock: Clock,
     onStartPressed: () -> Unit,
     onStopPressed: () -> Unit,
+    onUndoPressed: () -> Unit,
+    undoOffered: Boolean,
     modifier: Modifier = Modifier,
 ) {
     OutlinedCard(modifier = modifier) {
@@ -61,13 +63,16 @@ fun StopwatchTile(
                 CompletedLaps(stopwatch)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                // The button that reset the stopwatch is, for a short while, the one that undoes it.
+                val undoes = undoOffered && stopwatch.state == StopwatchState.Idle
                 TileButton(
-                    label = when (stopwatch.state) {
-                        StopwatchState.Stopped -> R.string.action_reset
-                        StopwatchState.Idle, StopwatchState.Running -> R.string.action_stop
+                    label = when {
+                        undoes -> R.string.action_undo
+                        stopwatch.state == StopwatchState.Stopped -> R.string.action_reset
+                        else -> R.string.action_stop
                     },
-                    onClick = onStopPressed,
-                    enabled = stopwatch.state != StopwatchState.Idle,
+                    onClick = if (undoes) onUndoPressed else onStopPressed,
+                    enabled = undoes || stopwatch.state != StopwatchState.Idle,
                     modifier = Modifier.weight(1f),
                 )
                 TileButton(
