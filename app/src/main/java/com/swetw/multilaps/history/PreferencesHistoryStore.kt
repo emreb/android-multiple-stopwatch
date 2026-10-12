@@ -16,10 +16,13 @@ import kotlin.time.Duration.Companion.nanoseconds
 class PreferencesHistoryStore(private val preferences: SharedPreferences) : HistoryStore {
 
     override fun load(): List<Result> {
-        val json = preferences.getString(KEY, null) ?: return emptyList()
         return try {
+            val json = preferences.getString(KEY, null) ?: return emptyList()
             decode(JSONObject(json))
         } catch (_: JSONException) {
+            emptyList()
+        } catch (_: ClassCastException) {
+            // Something other than text under the key.
             emptyList()
         }
     }
@@ -43,7 +46,8 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
     private fun decode(json: JSONObject): List<Result> {
         if (json.getInt(VERSION) != CURRENT_VERSION) return emptyList()
         val results = json.getJSONArray(RESULTS)
-        return (0 until results.length()).mapNotNull { decodeResult(results.opt(it)) }
+        // Results are told apart by their identifiers, so no two may share one.
+        return (0 until results.length()).mapNotNull { decodeResult(results.opt(it)) }.distinctBy { it.id }
     }
 
     /** One result that cannot be read is left out, and the rest are kept. */

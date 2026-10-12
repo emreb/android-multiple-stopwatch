@@ -157,6 +157,16 @@ class AppLifecycleTest {
         assertFalse(keepsScreenOn())
     }
 
+    @Test
+    fun `the screen is still kept on for a running stopwatch while history is open`() {
+        press("Start", tile = 1)
+        composeRule.onNodeWithTag("open-history").performClick()
+        settle()
+
+        composeRule.onNodeWithTag("history").assertExists()
+        assertTrue(keepsScreenOn())
+    }
+
     private fun keepsScreenOn(): Boolean {
         var result = false
         scenario.onActivity { result = it.window.decorView.anyViewKeepsScreenOn() }

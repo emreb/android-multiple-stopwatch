@@ -123,6 +123,23 @@ class PreferencesHistoryStoreTest {
     }
 
     @Test
+    fun `a value that is not text at all loads as no results`() {
+        preferences.edit { putInt(PreferencesHistoryStore.KEY, 7) }
+
+        assertTrue(reloaded().isEmpty())
+    }
+
+    @Test
+    fun `of two results under one identifier only the first is kept`() {
+        store.save(results)
+        val json = stored()
+        entries(json).getJSONObject(1).put("id", results[0].id)
+        store(json)
+
+        assertEquals(results.take(1), reloaded())
+    }
+
+    @Test
     fun `a colour this version does not know costs only the colour`() {
         store.save(results)
         val json = stored()

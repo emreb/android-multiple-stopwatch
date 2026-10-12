@@ -69,8 +69,8 @@
         <item quantity="one">%1$d lap</item>
         <item quantity="other">%1$d laps</item>
     </plurals>
-    <!-- Under a result's total time in the history list: its lap count, then its best lap. -->
-    <string name="result_laps_and_best">%1$s, best %2$s</string>
+    <!-- Under a result's name in the history list: time of day, lap count, best lap. -->
+    <string name="result_details">%1$s, %2$s, best %3$s</string>
     <!-- When a result was reset: the date, then the time of day. -->
     <string name="date_and_time">%1$s, %2$s</string>
     <!-- A result in the history list as spoken: name, time of day, total time, lap count, best lap. -->

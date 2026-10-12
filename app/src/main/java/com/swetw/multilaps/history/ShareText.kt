@@ -14,7 +14,7 @@ import java.util.Locale
 fun formatDate(date: LocalDate, locale: Locale): String =
     DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale).format(date)
 
-/** A time of day to the minute, such as "16:42". */
+/** A time of day to the minute, as [locale] writes it: "16:42" in British English, "4:42 PM" in American. */
 fun formatTimeOfDay(time: ZonedDateTime, locale: Locale): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(time)
 

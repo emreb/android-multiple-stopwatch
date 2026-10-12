@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,6 +45,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.swetw.multilaps.R
 import com.swetw.multilaps.stopwatch.formatTime
 import com.swetw.multilaps.theme.FigureStyles
@@ -246,17 +248,20 @@ private fun ResultRow(result: Result, zone: ZoneId, locale: Locale, onPressed: (
     ) {
         Box(Modifier.size(28.dp).clip(BUTTON_SHAPE).background(result.colour.color))
         Column(modifier = Modifier.weight(1f)) {
-            Text(result.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = result.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(total, style = FigureStyles.lap, maxLines = 1)
+            }
+            // One line that may run to two, so that on a narrow phone with enlarged text the
+            // lesser figures wrap instead of squeezing the name out.
             Text(
-                text = timeOfDay,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(total, style = FigureStyles.lap)
-            Text(
-                text = stringResource(R.string.result_laps_and_best, laps, best),
+                text = stringResource(R.string.result_details, timeOfDay, laps, best),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -294,7 +299,7 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(GAP)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(GAP), modifier = Modifier.testTag("result-figures")) {
             Figure(R.string.total_time_label, R.string.total_time_description, formatTime(result.totalTime), Modifier.weight(1f))
             Figure(R.string.best_lap_label, R.string.best_lap_description, formatTime(result.bestLap), Modifier.weight(1f))
             Figure(R.string.lap_count_label, R.string.lap_count_description, result.lapCount.toString(), Modifier.weight(1f))
@@ -333,7 +338,15 @@ private fun Figure(@StringRes caption: Int, @StringRes description: Int, value: 
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Text(value, style = FigureStyles.lap, maxLines = 1)
+        // Three share the width, so on a narrow phone with enlarged text a time shrinks to fit
+        // rather than losing its last digits.
+        Text(
+            text = value,
+            style = FigureStyles.lap,
+            maxLines = 1,
+            softWrap = false,
+            autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = FigureStyles.lap.fontSize, stepSize = 1.sp),
+        )
     }
 }
 

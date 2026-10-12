@@ -11,7 +11,6 @@ MultiLaps keeps four things, and only on your device:
 - The names you give the stopwatches.
 - The colours you choose for them.
 - The current timing: whether each stopwatch is running, and its lap times. Alongside it the app notes when your device was last switched on, which is how a running stopwatch keeps the right time after a restart.
-
 - Your history: each time you reset a stopwatch that has laps, its name, colour, lap times and total time are kept as a result, with the date and time of the reset.
 
 This is kept so that your stopwatches are still there when you reopen the app, and so that you can look back at earlier times.
@@ -25,7 +24,7 @@ History has a Share button for each day. Pressing it hands that day's results, a
 ## What the app does not do
 
 - It does not collect personal information.
-- It does not have access to the internet. It cannot send anything from your device.
+- It does not have access to the internet, so it cannot send anything anywhere itself.
 - It has no accounts and no sign-in.
 - It has no advertising and no analytics.
 - It does not share anything with anyone on its own. The only way anything leaves the app is the Share button described above, when you press it.
