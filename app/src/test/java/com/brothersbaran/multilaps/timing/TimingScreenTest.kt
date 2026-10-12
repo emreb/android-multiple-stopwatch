@@ -52,7 +52,7 @@ class TimingScreenTest {
     fun setUp() {
         // A running stopwatch redraws every frame, so the test drives frames by hand.
         composeRule.mainClock.autoAdvance = false
-        composeRule.setContent { TimingScreen(TimingViewModel(clock)) }
+        composeRule.setContent { TimingScreen(TimingViewModel(clock, FakeTimingStore())) }
     }
 
     @Test

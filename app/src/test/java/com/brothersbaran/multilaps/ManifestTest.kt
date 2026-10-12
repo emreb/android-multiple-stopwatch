@@ -9,6 +9,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -35,6 +36,17 @@ class ManifestTest {
         )
 
         assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, activity.screenOrientation)
+    }
+
+    @Test
+    fun `nothing runs in the background, so there is no notification to show`() {
+        val info = context.packageManager.getPackageInfo(
+            context.packageName,
+            PackageManager.GET_SERVICES or PackageManager.GET_PERMISSIONS,
+        )
+
+        assertTrue(info.services.orEmpty().isEmpty())
+        assertFalse(Manifest.permission.POST_NOTIFICATIONS in info.requestedPermissions.orEmpty())
     }
 
     @Test

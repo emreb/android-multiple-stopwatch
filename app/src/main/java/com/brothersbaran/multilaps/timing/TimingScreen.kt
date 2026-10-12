@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.brothersbaran.multilaps.stopwatch.StopwatchState
 
 private const val UPRIGHT_COLUMNS = 2
 private const val SIDEWAYS_COLUMNS = 4
@@ -31,6 +34,7 @@ private val GAP = 8.dp
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
     val stopwatches by viewModel.stopwatches.collectAsStateWithLifecycle()
+    KeepScreenOn(stopwatches.any { it.state == StopwatchState.Running })
 
     Surface(modifier = Modifier.fillMaxSize()) {
         BoxWithConstraints(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
@@ -64,5 +68,14 @@ fun TimingScreen(viewModel: TimingViewModel) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun KeepScreenOn(enabled: Boolean) {
+    val view = LocalView.current
+    DisposableEffect(view, enabled) {
+        view.keepScreenOn = enabled
+        onDispose { view.keepScreenOn = false }
     }
 }
