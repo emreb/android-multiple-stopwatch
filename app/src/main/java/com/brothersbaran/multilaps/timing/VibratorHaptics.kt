@@ -1,7 +1,9 @@
 package com.brothersbaran.multilaps.timing
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.os.Build
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -9,14 +11,24 @@ import android.os.VibratorManager
 /**
  * Plays feedback as short vibrations whose rhythm tells the presses apart: one pulse for a lap or
  * a start, two for a stop, one long one for a reset and three for an undo. No pulse is shorter
- * than 50 ms, which is about what an older motor needs to get going. Without a vibrator it does
- * nothing.
+ * than 50 ms, which is about what an older motor needs to get going. They are played as media
+ * vibration, so they follow the phone's vibration setting but not its touch-feedback one. Without
+ * a vibrator it does nothing.
  */
 class VibratorHaptics(private val vibrator: Vibrator?) : Haptics {
 
     override fun play(feedback: Feedback) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
-        vibrator.vibrate(effect(feedback))
+        val effect = effect(feedback)
+        // Said outright not to be touch feedback. Left unsaid, Android takes a single short pulse
+        // for touch feedback and drops it on any phone with that switched off, which silenced
+        // start, lap and reset while the two-pulse stop still played.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            vibrator.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
+        }
     }
 
     private fun effect(feedback: Feedback): VibrationEffect = when (feedback) {

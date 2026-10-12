@@ -1,6 +1,8 @@
 package com.brothersbaran.multilaps.timing
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.os.VibrationAttributes
 import android.os.Vibrator
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -78,6 +80,29 @@ class VibratorHapticsTest {
         val haptics = VibratorHaptics(null)
 
         for (feedback in Feedback.entries) haptics.play(feedback)
+    }
+
+    @Test
+    fun `no vibration is left to be taken for touch feedback, which many phones have switched off`() {
+        for (feedback in Feedback.entries) {
+            haptics.play(feedback)
+
+            assertEquals(
+                "$feedback",
+                VibrationAttributes.USAGE_MEDIA,
+                (shadow.vibrationAttributesFromLastVibration as VibrationAttributes?)?.usage,
+            )
+        }
+    }
+
+    @Test
+    @Config(sdk = [30])
+    fun `on Android before 13 the same is said the older way`() {
+        for (feedback in Feedback.entries) {
+            haptics.play(feedback)
+
+            assertEquals("$feedback", AudioAttributes.USAGE_MEDIA, shadow.audioAttributesFromLastVibration?.usage)
+        }
     }
 
     @Test
