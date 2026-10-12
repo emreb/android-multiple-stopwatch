@@ -1,9 +1,12 @@
 package com.brothersbaran.multilaps.stopwatch
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -43,9 +46,12 @@ class StopwatchScreenTest {
         composeRule.onNodeWithContentDescription("Last lap none").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Best lap none").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Laps 0").assertIsDisplayed()
+        composeRule.onAllNodesWithText("–:––.––").assertCountEquals(2)
 
         press("Start")
         advance(5.seconds)
+
+        composeRule.onAllNodesWithText("–:––.––").assertCountEquals(2)
 
         composeRule.onNodeWithContentDescription("Last lap none").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Best lap none").assertIsDisplayed()
@@ -80,6 +86,27 @@ class StopwatchScreenTest {
 
         composeRule.onNodeWithContentDescription("Last lap 0:45.00").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("Best lap 0:20.00").assertIsDisplayed()
+    }
+
+    @Test
+    fun `each figure is drawn beside its own caption`() {
+        press("Start")
+        advance(20.seconds)
+        press("Lap")
+        advance(45.seconds)
+        press("Lap")
+        advance(3.seconds)
+
+        composeRule.onNodeWithContentDescription("Total time 1:08.00")
+            .assertTextEquals("Total", "1:08.00")
+        composeRule.onNodeWithContentDescription("Last lap 0:45.00")
+            .assertTextEquals("Last", "0:45.00")
+        composeRule.onNodeWithContentDescription("Best lap 0:20.00")
+            .assertTextEquals("Best", "0:20.00")
+        composeRule.onNodeWithContentDescription("Laps 2")
+            .assertTextEquals("Laps", "2")
+        composeRule.onNodeWithContentDescription("Current lap 0:03.00")
+            .assertTextEquals("0:03.00")
     }
 
     @Test

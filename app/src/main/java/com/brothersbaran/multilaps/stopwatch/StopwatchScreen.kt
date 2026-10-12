@@ -20,7 +20,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -118,7 +117,7 @@ private fun LabelledValue(
     val spoken = stringResource(description, spokenValue)
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.clearAndSetSemantics { contentDescription = spoken },
+        modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
     ) {
         Text(stringResource(label), style = MaterialTheme.typography.titleMedium)
         Text(value, style = MaterialTheme.typography.titleMedium)

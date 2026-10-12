@@ -2,6 +2,7 @@ package com.brothersbaran.multilaps.stopwatch
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -135,5 +136,22 @@ class StopwatchLapsTest {
         assertEquals(0, stopwatch.lapCount)
         assertNull(stopwatch.bestLap)
         assertEquals(Duration.ZERO, stopwatch.currentLap(now = start + 900.seconds))
+    }
+
+    @Test
+    fun `a stopwatch cannot be built idle with laps or time, or with laps longer than its total time`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            Stopwatch(laps = listOf(30.seconds))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            Stopwatch(accumulated = 30.seconds)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            Stopwatch(
+                state = StopwatchState.Stopped,
+                laps = listOf(30.seconds, 40.seconds),
+                accumulated = 60.seconds,
+            )
+        }
     }
 }

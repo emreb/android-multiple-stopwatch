@@ -90,9 +90,10 @@ class StopwatchViewModelTest {
     @Test
     fun `a bounced press on start does not record a lap`() {
         viewModel.onStartPressed()
+        val started = stopwatch
         clock.advanceBy(200.milliseconds)
         viewModel.onStartPressed()
 
-        assertEquals(0, stopwatch.lapCount)
+        assertEquals(started, stopwatch)
     }
 }

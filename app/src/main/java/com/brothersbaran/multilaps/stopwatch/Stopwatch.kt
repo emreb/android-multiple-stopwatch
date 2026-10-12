@@ -7,7 +7,7 @@ enum class StopwatchState { Idle, Running, Stopped }
 
 /**
  * @property laps the completed laps, oldest first.
- * @property accumulated total time gathered up to [countingFrom].
+ * @property accumulated total time gathered before [countingFrom], or all of it when not running.
  * @property countingFrom the clock reading of the press that last started, resumed or lapped this
  *   stopwatch; set only while running.
  */
@@ -18,13 +18,20 @@ data class Stopwatch(
     private val countingFrom: Duration? = null,
 ) {
 
+    private val completedLapsTime: Duration = laps.fold(Duration.ZERO, Duration::plus)
+
     init {
         require((countingFrom != null) == (state == StopwatchState.Running)) {
             "A stopwatch has a clock reading to count from exactly while it is running"
         }
+        require(state != StopwatchState.Idle || accumulated == Duration.ZERO) {
+            "An idle stopwatch has no time"
+        }
+        require(completedLapsTime <= accumulated) {
+            "Completed laps cannot be longer than the total time"
+        }
     }
 
-    private val completedLapsTime: Duration = laps.fold(Duration.ZERO, Duration::plus)
 
     val lapCount: Int get() = laps.size
 
