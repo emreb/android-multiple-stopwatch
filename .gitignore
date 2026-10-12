@@ -6,3 +6,11 @@ local.properties
 .DS_Store
 captures/
 .kotlin/
+# Signing keys and the files they travel in. None belongs in the repository.
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.pepk
+keystore.properties
