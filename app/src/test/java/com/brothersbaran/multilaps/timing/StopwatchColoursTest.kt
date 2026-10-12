@@ -36,4 +36,24 @@ class StopwatchColoursTest {
         assertEquals(StopwatchColour.entries.size, StopwatchColour.entries.map { it.color }.distinct().size)
         assertEquals(StopwatchColour.entries.size, StopwatchColour.entries.map { it.nameResource }.distinct().size)
     }
+
+    @Test
+    fun `no two colours are the same lightness, so they differ by more than hue`() {
+        val colours = StopwatchColour.entries
+        for (a in colours) {
+            for (b in colours) {
+                if (a < b) assertTrue("$a and $b", contrast(a.color, b.color) >= 1.1f)
+            }
+        }
+    }
+
+    @Test
+    fun `the four default colours are well apart in lightness`() {
+        val defaults = (0 until 4).map { StopwatchLabel.default(it).colour.color }
+        for (i in defaults.indices) {
+            for (j in i + 1 until defaults.size) {
+                assertTrue(contrast(defaults[i], defaults[j]) >= 1.15f)
+            }
+        }
+    }
 }

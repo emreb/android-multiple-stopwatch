@@ -29,6 +29,11 @@ class ManifestTest {
     }
 
     @Test
+    fun `the app has a launcher icon of its own`() {
+        assertTrue(context.applicationInfo.icon != 0)
+    }
+
+    @Test
     fun `the screen is free to turn either way`() {
         val activity = context.packageManager.getActivityInfo(
             ComponentName(context, MainActivity::class.java),

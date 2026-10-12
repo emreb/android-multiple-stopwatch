@@ -35,6 +35,10 @@
     <string name="best_lap_description">Best lap %1$s</string>
     <string name="lap_count_description">Laps %1$s</string>
     <string name="no_lap_description">none</string>
+    <!-- What a stopwatch is doing, spoken with its tile. -->
+    <string name="state_idle">Idle</string>
+    <string name="state_running">Running</string>
+    <string name="state_stopped">Stopped</string>
     <!-- A stopwatch's name as spoken; the placeholder is its name or number. -->
     <string name="stopwatch_title">Stopwatch %1$s</string>
     <!-- A tile's button as spoken: what it does, then whose stopwatch it is. -->

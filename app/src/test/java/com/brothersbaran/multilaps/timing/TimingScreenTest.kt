@@ -4,7 +4,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
@@ -33,14 +35,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.brothersbaran.multilaps.Devices.BARELY_WIDE_ENOUGH
+import com.brothersbaran.multilaps.Devices.COMMON_PHONE_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.LANDSCAPE_PHONE
 import com.brothersbaran.multilaps.Devices.PORTRAIT_PHONE
+import com.brothersbaran.multilaps.Devices.SHORT_WIDE_WINDOW
 import com.brothersbaran.multilaps.Devices.SMALL_PHONE
 import com.brothersbaran.multilaps.Devices.SMALL_PHONE_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.SPLIT_SCREEN
 import com.brothersbaran.multilaps.Devices.TABLET_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.TABLET_PORTRAIT
 import com.brothersbaran.multilaps.stopwatch.FakeClock
+import com.brothersbaran.multilaps.theme.MultiLapsTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -66,7 +72,7 @@ class TimingScreenTest {
     fun setUp() {
         // A running stopwatch redraws every frame, so the test drives frames by hand.
         composeRule.mainClock.autoAdvance = false
-        composeRule.setContent { TimingScreen(viewModel) }
+        composeRule.setContent { MultiLapsTheme { TimingScreen(viewModel) } }
     }
 
     @Test
@@ -455,9 +461,57 @@ class TimingScreenTest {
     }
 
     @Test
+    fun `upright, reset all sits above the stopwatches`() {
+        val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+
+        assertTrue(tileBounds().all { it.top >= control.bottom })
+    }
+
+    @Test
     @Config(qualifiers = LANDSCAPE_PHONE)
-    fun `reset all is on screen in landscape too`() {
-        resetAll().assertIsDisplayed()
+    fun `on its side, reset all sits beside the stopwatches, leaving them the full height`() {
+        val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val tiles = tileBounds()
+        val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
+
+        assertTrue("tiles $tiles end before $control", tiles.all { it.right <= control.left })
+        assertTrue(
+            "tiles $tiles reach nearly the full height of $screen",
+            tiles.all { it.height.value >= 0.9f * screen.height.value },
+        )
+        assertTrue("$control is large enough to hit", control.height >= 48.dp && control.width >= 48.dp)
+    }
+
+    @Test
+    @Config(qualifiers = BARELY_WIDE_ENOUGH, fontScale = 1.5f)
+    fun `beside the stopwatches, reset all takes no more than it was allowed, even with enlarged text`() {
+        val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val tiles = tileBounds()
+
+        assertTrue("reset all is ${control.width} wide", control.width <= 96.dp)
+        assertTrue(tiles.all { it.right <= control.left })
+        assertTrue("tiles are ${tiles.first().width} wide", tiles.all { it.width >= 120.dp })
+        assertButtonsAreLarge()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
+    fun `where there is no width to spare, reset all stays above the stopwatches`() {
+        val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+
+        assertTrue(tileBounds().all { it.top >= control.bottom })
+    }
+
+    @Test
+    @Config(qualifiers = COMMON_PHONE_LANDSCAPE)
+    fun `on a common phone on its side there is room for every figure above the buttons`() {
+        // Name, current lap, last, best, and total with lap count: what a short tile draws.
+        val needed = 48 + 48 + 30 + 30 + 22 + 6
+        for (tile in tileBounds()) {
+            val buttons = text("Start", 1).getUnclippedBoundsInRoot().height.value
+            val room = tile.height.value - 20 - 8 - buttons
+            assertTrue("room $room for $needed", room >= needed)
+        }
     }
 
     /** Moves the stopwatches' clock and the screen's own timers on together. */
@@ -940,12 +994,155 @@ class TimingScreenTest {
         }
     }
 
+    @Test
+    fun `lap is the big button and stop the small one beside it, in portrait`() = assertLapDominates()
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `lap is the big button and stop the small one beside it, in landscape`() = assertLapDominates()
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
+    fun `lap is the big button and stop the small one beside it, on a small phone`() = assertLapDominates()
+
+    private fun assertLapDominates() {
+        for (tile in 1..4) {
+            val stop = text("Stop", tile).getUnclippedBoundsInRoot()
+            val start = text("Start", tile).getUnclippedBoundsInRoot()
+
+            assertTrue("widths ${stop.width} and ${start.width}", start.width.value >= 1.4f * stop.width.value)
+            assertTrue(start.height > stop.height)
+            assertTrue("a clear gap between them", start.left - stop.right >= 8.dp)
+            assertEquals("they stand on the same line", stop.bottom, start.bottom)
+        }
+    }
+
+    @Test
+    fun `on a tall tile total time and lap count each have a line`() = assertTotalAndLapCount(share = false)
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `on a phone on its side a tile is tall enough to give them a line each`() =
+        assertTotalAndLapCount(share = false)
+
+    @Test
+    @Config(qualifiers = SHORT_WIDE_WINDOW)
+    fun `on a short, wide tile total time and lap count share a line`() = assertTotalAndLapCount(share = true)
+
+    @Test
+    @Config(qualifiers = COMMON_PHONE_LANDSCAPE)
+    fun `on a common phone on its side total time and lap count share a line`() =
+        assertTotalAndLapCount(share = true)
+
+    private fun assertTotalAndLapCount(share: Boolean) {
+        for (tile in 1..4) {
+            val total = totalTime("0:00.00", tile).getUnclippedBoundsInRoot()
+            val laps = described("Laps 0", tile).getUnclippedBoundsInRoot()
+            if (share) {
+                assertEquals(total.top, laps.top)
+                assertTrue(laps.left >= total.right)
+            } else {
+                assertTrue("lap count sits under total time", laps.top >= total.bottom)
+            }
+        }
+    }
+
+    @Test
+    fun `a tile says whether its stopwatch is idle, running or stopped`() {
+        tileState(1).assertEquals("Idle")
+
+        press("Start", tile = 1)
+        tileState(1).assertEquals("Running")
+        tileState(2).assertEquals("Idle")
+
+        advance(20.seconds)
+        press("Stop", tile = 1)
+        tileState(1).assertEquals("Stopped")
+    }
+
+    /** Spoken with the name, the one part of a tile a screen reader stops on to say what it is. */
+    private fun tileState(tile: Int): String =
+        name(tile).fetchSemanticsNode().config[SemanticsProperties.StateDescription]
+
+    private fun String.assertEquals(expected: String) = assertEquals(expected, this)
+
+    @Test
+    fun `undo shows its time running out`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        val atFirst = undoProgress(text("Undo"))
+        assertTrue("starts nearly full: $atFirst", atFirst > 0.9f)
+
+        advanceBoth(2500.milliseconds)
+        val halfway = undoProgress(text("Undo"))
+        assertTrue("about half left: $halfway", halfway in 0.4f..0.6f)
+    }
+
+    @Test
+    fun `undo's time runs down with the clock, not with an animation the phone may have switched off`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        // Only the stopwatches' clock moves, by half the window, then a single frame is drawn.
+        advance(2500.milliseconds)
+
+        val halfway = undoProgress(text("Undo"))
+        assertTrue("about half left: $halfway", halfway in 0.45f..0.55f)
+    }
+
+    @Test
+    fun `undo stays a button to a screen reader`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        text("Undo")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.ProgressBarRangeInfo))
+    }
+
+    @Test
+    fun `undo after reset all shows its time running out too`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        pressResetAll()
+
+        advanceBoth(2500.milliseconds)
+        val halfway = undoProgress(resetAll())
+        assertTrue("about half left: $halfway", halfway in 0.4f..0.6f)
+    }
+
+    @Test
+    fun `the appearance of undo is announced to a screen reader`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        text("Undo").assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    private fun undoProgress(node: SemanticsNodeInteraction): Float =
+        node.fetchSemanticsNode().config[UndoTimeLeftKey]
+
     private fun assertButtonsAreLarge() {
         for (tile in 1..4) {
             for (label in listOf("Start", "Stop")) {
                 val bounds = text(label, tile).getUnclippedBoundsInRoot()
                 assertTrue("$label on $tile is ${bounds.width} wide", bounds.width >= 48.dp)
-                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= 56.dp)
+                val height = if (label == "Start") 56.dp else 48.dp
+                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= height)
             }
         }
     }

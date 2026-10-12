@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The gaps between the tiles. They run edge to edge, so however the icon is cropped they still cross at its centre. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M51,0h6v108h-6z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M0,51h108v6h-108z" />
+</vector>
