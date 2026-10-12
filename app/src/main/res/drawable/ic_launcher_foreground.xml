@@ -1,10 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The gaps between the tiles. They run edge to edge, so however the icon is cropped they still cross at its centre. -->
+<!--
+    A stopwatch, kept inside the middle of the icon that no launcher crops, over the gaps between
+    the four tiles behind it.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#FFFFFF" android:pathData="M51,0h6v108h-6z" />
-    <path android:fillColor="#FFFFFF" android:pathData="M0,51h108v6h-108z" />
+    <!-- The gaps between the tiles, edge to edge. -->
+    <path android:fillColor="#FFFFFF" android:pathData="M52,0h4v108h-4z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M0,52h108v4h-108z" />
+
+    <!-- The pusher at the upper right. -->
+    <group android:pivotX="54" android:pivotY="58" android:rotation="42">
+        <path android:fillColor="#000000" android:pathData="M50.5,31h7v8h-7z" />
+    </group>
+    <!-- The crown and its stem. -->
+    <path android:fillColor="#000000" android:pathData="M51,29h6v8h-6z" />
+    <path android:fillColor="#000000" android:pathData="M46.5,24h15a2,2 0,0 1,2 2v2a2,2 0,0 1,-2 2h-15a2,2 0,0 1,-2 -2v-2a2,2 0,0 1,2 -2z" />
+
+    <!-- The case and the face. -->
+    <path android:fillColor="#000000" android:pathData="M54,58m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,58m-19,0a19,19 0,1 1,38 0a19,19 0,1 1,-38 0" />
+
+    <!-- Marks at the quarters. -->
+    <path
+        android:pathData="M54,42v4M54,70v4M38,58h4M66,58h4"
+        android:strokeColor="#000000"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.5" />
+
+    <!-- The hand, a little past the top, and its hub. -->
+    <path
+        android:pathData="M54,58L61,45.5"
+        android:strokeColor="#E53935"
+        android:strokeLineCap="round"
+        android:strokeWidth="3" />
+    <path android:fillColor="#000000" android:pathData="M54,58m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
 </vector>
