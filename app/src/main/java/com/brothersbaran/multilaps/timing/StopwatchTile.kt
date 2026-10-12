@@ -5,11 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -23,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -46,15 +46,20 @@ fun StopwatchTile(
     onStopPressed: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedCard(modifier = modifier.testTag("stopwatch-$name")) {
+    OutlinedCard(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxSize().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(name, style = MaterialTheme.typography.titleLarge)
-            LiveTimes(stopwatch, clock)
-            CompletedLaps(stopwatch)
-            Spacer(Modifier.weight(1f))
+            // The figures take what the buttons leave, and scroll if that is not enough.
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(name, style = MaterialTheme.typography.titleLarge)
+                LiveTimes(stopwatch, clock)
+                CompletedLaps(stopwatch)
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TileButton(
                     label = when (stopwatch.state) {
@@ -160,8 +165,8 @@ private fun LabelledValue(
 }
 
 /**
- * Reads the clock afresh on every recomposition, and recomposes on every frame while the
- * stopwatch is running.
+ * The clock reading to show: taken again whenever the stopwatch changes, and on every frame
+ * while it is running.
  */
 @Composable
 private fun rememberNow(stopwatch: Stopwatch, clock: Clock): Duration {

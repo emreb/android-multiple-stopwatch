@@ -3,8 +3,8 @@ package com.brothersbaran.multilaps.timing
 import com.brothersbaran.multilaps.stopwatch.FakeClock
 import com.brothersbaran.multilaps.stopwatch.Stopwatch
 import com.brothersbaran.multilaps.stopwatch.StopwatchState
-
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -16,6 +16,7 @@ class TimingViewModelTest {
     private val viewModel = TimingViewModel(clock)
 
     private val stopwatches get() = viewModel.stopwatches.value
+    /** The first stopwatch, for the tests that need only one. */
     private val stopwatch get() = stopwatches[0]
     private val state get() = stopwatch.state
     private val totalTime get() = stopwatch.totalTime(clock.now())
@@ -138,5 +139,11 @@ class TimingViewModelTest {
         assertEquals(24.seconds, stopwatches[3].totalTime(clock.now()))
         assertEquals(Stopwatch(), stopwatches[0])
         assertEquals(Stopwatch(), stopwatches[2])
+    }
+
+    @Test
+    fun `a press for a stopwatch that does not exist is rejected`() {
+        assertThrows(IllegalArgumentException::class.java) { viewModel.onStartPressed(4) }
+        assertThrows(IllegalArgumentException::class.java) { viewModel.onStopPressed(-1) }
     }
 }

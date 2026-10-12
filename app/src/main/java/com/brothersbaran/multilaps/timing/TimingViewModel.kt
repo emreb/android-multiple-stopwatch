@@ -37,6 +37,7 @@ class TimingViewModel(val clock: Clock) : ViewModel() {
     }
 
     private fun press(index: Int, action: (Stopwatch, now: Duration) -> Stopwatch) {
+        require(index in _stopwatches.value.indices) { "There is no stopwatch $index" }
         val now = clock.now()
         _stopwatches.update { stopwatches ->
             stopwatches.mapIndexed { i, stopwatch -> if (i == index) action(stopwatch, now) else stopwatch }

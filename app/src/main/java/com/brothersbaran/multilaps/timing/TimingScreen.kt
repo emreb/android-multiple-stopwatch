@@ -11,37 +11,54 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-private const val PORTRAIT_COLUMNS = 2
-private const val LANDSCAPE_COLUMNS = 4
+private const val UPRIGHT_COLUMNS = 2
+private const val SIDEWAYS_COLUMNS = 4
 
-/** All the stopwatches at once: two by two when upright, side by side when turned. */
+/** Narrower than this, a tile has no room for two buttons side by side. */
+private val MIN_TILE_WIDTH = 120.dp
+private val GAP = 8.dp
+
+/**
+ * All the stopwatches at once: side by side when the space is wider than tall and wide enough for
+ * four tiles, otherwise two by two.
+ */
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {
     val stopwatches by viewModel.stopwatches.collectAsStateWithLifecycle()
 
     Surface(modifier = Modifier.fillMaxSize()) {
-        BoxWithConstraints(modifier = Modifier.safeDrawingPadding().padding(8.dp)) {
-            val columns = if (maxWidth > maxHeight) LANDSCAPE_COLUMNS else PORTRAIT_COLUMNS
+        BoxWithConstraints(modifier = Modifier.safeDrawingPadding().padding(GAP)) {
+            val widthForFour = MIN_TILE_WIDTH * SIDEWAYS_COLUMNS + GAP * (SIDEWAYS_COLUMNS - 1)
+            val sideways = maxWidth > maxHeight && maxWidth >= widthForFour
+            val columns = if (sideways) SIDEWAYS_COLUMNS else UPRIGHT_COLUMNS
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(GAP)) {
                 stopwatches.indices.chunked(columns).forEach { row ->
                     Row(
                         modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(GAP),
                     ) {
                         row.forEach { index ->
-                            StopwatchTile(
-                                name = (index + 1).toString(),
-                                stopwatch = stopwatches[index],
-                                clock = viewModel.clock,
-                                onStartPressed = { viewModel.onStartPressed(index) },
-                                onStopPressed = { viewModel.onStopPressed(index) },
-                                modifier = Modifier.weight(1f).fillMaxHeight(),
-                            )
+                            // Keyed so a tile keeps its own state when the grid changes shape.
+                            key(index) {
+                                StopwatchTile(
+                                    name = (index + 1).toString(),
+                                    stopwatch = stopwatches[index],
+                                    clock = viewModel.clock,
+                                    onStartPressed = { viewModel.onStartPressed(index) },
+                                    onStopPressed = { viewModel.onStopPressed(index) },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .testTag("stopwatch-${index + 1}"),
+                                )
+                            }
                         }
                     }
                 }

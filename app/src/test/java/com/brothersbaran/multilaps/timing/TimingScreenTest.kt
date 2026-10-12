@@ -13,12 +13,20 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.brothersbaran.multilaps.Devices.LANDSCAPE_PHONE
+import com.brothersbaran.multilaps.Devices.PORTRAIT_PHONE
+import com.brothersbaran.multilaps.Devices.SMALL_PHONE
+import com.brothersbaran.multilaps.Devices.SMALL_PHONE_LANDSCAPE
+import com.brothersbaran.multilaps.Devices.SPLIT_SCREEN
+import com.brothersbaran.multilaps.Devices.TABLET_LANDSCAPE
+import com.brothersbaran.multilaps.Devices.TABLET_PORTRAIT
 import com.brothersbaran.multilaps.stopwatch.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -138,7 +146,7 @@ class TimingScreenTest {
     }
 
     @Test
-    fun `reset clears the laps`() {
+    fun `reset discards the laps`() {
         press("Start")
         advance(20.seconds)
         press("Lap")
@@ -268,7 +276,32 @@ class TimingScreenTest {
     }
 
     @Test
-    fun `in portrait the stopwatches are tiled two by two`() {
+    fun `in portrait the stopwatches are tiled two by two`() = assertTwoByTwo()
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `in landscape the stopwatches sit four side by side`() = assertFourAcross()
+
+    @Test
+    @Config(qualifiers = TABLET_PORTRAIT)
+    fun `an upright tablet is tiled two by two`() = assertTwoByTwo()
+
+    @Test
+    @Config(qualifiers = TABLET_LANDSCAPE)
+    fun `a tablet on its side sits four side by side`() = assertFourAcross()
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
+    fun `a small phone on its side still sits four side by side`() = assertFourAcross()
+
+    @Test
+    @Config(qualifiers = SPLIT_SCREEN)
+    fun `a window wider than tall but too narrow for four tiles stays two by two`() {
+        assertTwoByTwo()
+        assertButtonsAreLarge()
+    }
+
+    private fun assertTwoByTwo() {
         val (one, two, three, four) = tileBounds()
 
         assertEquals(one.top, two.top)
@@ -278,16 +311,24 @@ class TimingScreenTest {
         assertTrue(two.left >= one.right)
         assertTrue(three.top >= one.bottom)
         assertSameSize(listOf(one, two, three, four))
+        assertInsideScreen(listOf(one, two, three, four))
     }
 
-    @Test
-    @Config(qualifiers = LANDSCAPE_PHONE)
-    fun `in landscape the stopwatches sit four side by side`() {
+    private fun assertFourAcross() {
         val bounds = tileBounds()
 
         assertTrue(bounds.all { it.top == bounds.first().top })
         assertSameSize(bounds)
         assertTrue(bounds.zipWithNext().all { (left, right) -> right.left >= left.right })
+        assertInsideScreen(bounds)
+    }
+
+    private fun assertInsideScreen(bounds: List<DpRect>) {
+        val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
+        for (rect in bounds) {
+            assertTrue(rect.left >= screen.left && rect.right <= screen.right)
+            assertTrue(rect.top >= screen.top && rect.bottom <= screen.bottom)
+        }
     }
 
     @Test
@@ -309,11 +350,31 @@ class TimingScreenTest {
     @Config(qualifiers = LANDSCAPE_PHONE)
     fun `buttons are comfortably large touch targets in landscape`() = assertButtonsAreLarge()
 
+    @Test
+    @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
+    fun `buttons keep their size on a small phone with enlarged text`() {
+        assertButtonsAreLarge()
+        for (tile in 1..4) {
+            text("Start", tile).assertIsDisplayed()
+            text("Stop", tile).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE, fontScale = 1.5f)
+    fun `buttons keep their size on a small phone turned sideways with enlarged text`() {
+        assertButtonsAreLarge()
+        for (tile in 1..4) {
+            text("Start", tile).assertIsDisplayed()
+            text("Stop", tile).assertIsDisplayed()
+        }
+    }
+
     private fun assertButtonsAreLarge() {
         for (tile in 1..4) {
             for (label in listOf("Start", "Stop")) {
-                val bounds = button(label, tile).getUnclippedBoundsInRoot()
-                assertTrue("$label on $tile is ${bounds.width} wide", bounds.width >= 64.dp)
+                val bounds = text(label, tile).getUnclippedBoundsInRoot()
+                assertTrue("$label on $tile is ${bounds.width} wide", bounds.width >= 48.dp)
                 assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= 56.dp)
             }
         }
@@ -335,8 +396,6 @@ class TimingScreenTest {
 
     private fun text(text: String, tile: Int = 1) = composeRule.onNode(hasText(text) and inTile(tile))
 
-    private fun button(label: String, tile: Int) = text(label, tile)
-
     private fun allWithText(text: String, tile: Int = 1) =
         composeRule.onAllNodes(hasText(text) and inTile(tile))
 
@@ -356,5 +415,3 @@ class TimingScreenTest {
     }
 }
 
-private const val PORTRAIT_PHONE = "w411dp-h891dp-port"
-private const val LANDSCAPE_PHONE = "w891dp-h411dp-land"

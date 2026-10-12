@@ -1,7 +1,9 @@
 package com.brothersbaran.multilaps
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -23,6 +25,16 @@ class ManifestTest {
     @Test
     fun `the app is named MultiLaps`() {
         assertEquals("MultiLaps", context.applicationInfo.loadLabel(context.packageManager).toString())
+    }
+
+    @Test
+    fun `the screen is free to turn either way`() {
+        val activity = context.packageManager.getActivityInfo(
+            ComponentName(context, MainActivity::class.java),
+            0,
+        )
+
+        assertEquals(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED, activity.screenOrientation)
     }
 
     @Test
