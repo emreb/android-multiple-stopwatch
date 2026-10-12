@@ -55,6 +55,17 @@ class TimingViewModel(
     }
 
     /**
+     * Sets every idle stopwatch off at the same instant. Running and stopped ones are left as they
+     * are, so a time that has been taken is never set going again by this.
+     */
+    fun onStartAllPressed() {
+        val now = clock.now()
+        val idle = _stopwatches.value.indices.filter { _stopwatches.value[it].state == StopwatchState.Idle }
+        idle.forEach(::withdrawFromUndoOffer)
+        replace(idle.associateWith { _stopwatches.value[it].start(now) }, Feedback.Start)
+    }
+
+    /**
      * Stop holds a running stopwatch; pressed again while stopped, it resets. A reset sooner than
      * [MIN_RESET_INTERVAL] after the stop is taken for a bounce and ignored.
      */
@@ -204,6 +215,10 @@ class TimingViewModel(
         }
     }
 }
+
+/** Whether there is any stopwatch for start all to set off. */
+fun canStartAll(stopwatches: List<Stopwatch>): Boolean =
+    stopwatches.any { it.state == StopwatchState.Idle }
 
 /** Whether there is anything for reset all to do, and nothing running that it would disturb. */
 fun canResetAll(stopwatches: List<Stopwatch>): Boolean =

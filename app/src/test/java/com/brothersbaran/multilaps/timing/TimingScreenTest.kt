@@ -461,6 +461,93 @@ class TimingScreenTest {
     }
 
     @Test
+    fun `upright, start all is at the top left, across from reset all`() {
+        val start = startAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val reset = resetAll().getUnclippedBoundsInRoot()
+        val tiles = tileBounds()
+
+        assertTrue(tiles.all { it.top >= start.bottom })
+        assertEquals("flush with the left of the tiles", tiles.first().left, start.left)
+        assertTrue(start.right <= reset.left)
+        assertTrue("$start is large enough to hit", start.height >= 48.dp && start.width >= 48.dp)
+    }
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `on its side, start all is at the top left, beside the stopwatches`() {
+        val start = startAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val tiles = tileBounds()
+        val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
+
+        assertTrue("$start is left of $tiles", tiles.all { it.left >= start.right })
+        assertTrue(start.top < screen.height / 4)
+        assertTrue("tiles keep nearly the full height", tiles.all { it.height.value >= 0.9f * screen.height.value })
+        assertTrue(start.height >= 48.dp && start.width >= 48.dp)
+        assertButtonsAreLarge()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
+    fun `where there is no width to spare, start all stays above the stopwatches`() {
+        val start = startAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+
+        assertTrue(tileBounds().all { it.top >= start.bottom })
+        assertTrue(start.right <= resetAll().getUnclippedBoundsInRoot().left)
+    }
+
+    @Test
+    fun `start all sets every idle stopwatch off together`() {
+        startAll().assertIsEnabled().assertTextEquals("Start all")
+
+        pressStartAll()
+        advance(12.seconds)
+
+        for (tile in 1..4) {
+            totalTime("0:12.00", tile).assertIsDisplayed()
+            text("Lap", tile).assertIsEnabled()
+        }
+        startAll().assertIsNotEnabled()
+    }
+
+    @Test
+    fun `start all leaves running and stopped stopwatches alone`() {
+        press("Start", tile = 1)
+        press("Start", tile = 2)
+        advance(20.seconds)
+        press("Stop", tile = 2)
+        advance(5.seconds)
+
+        pressStartAll()
+        advance(3.seconds)
+
+        totalTime("0:28.00", tile = 1).assertIsDisplayed()
+        totalTime("0:20.00", tile = 2).assertIsDisplayed()
+        text("Reset", tile = 2).assertIsEnabled()
+        totalTime("0:03.00", tile = 3).assertIsDisplayed()
+        totalTime("0:03.00", tile = 4).assertIsDisplayed()
+    }
+
+    @Test
+    fun `start all can be pressed again once a stopwatch is idle again`() {
+        pressStartAll()
+        startAll().assertIsNotEnabled()
+
+        advance(20.seconds)
+        press("Stop", tile = 3)
+        advance(1.seconds)
+        press("Reset", tile = 3)
+
+        startAll().assertIsEnabled()
+    }
+
+    private fun startAll() = composeRule.onNodeWithTag("start-all")
+
+    private fun pressStartAll() {
+        startAll().performClick()
+        composeRule.mainClock.advanceTimeByFrame()
+    }
+
+    @Test
     fun `upright, reset all sits above the stopwatches`() {
         val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
 
@@ -484,12 +571,14 @@ class TimingScreenTest {
 
     @Test
     @Config(qualifiers = BARELY_WIDE_ENOUGH, fontScale = 1.5f)
-    fun `beside the stopwatches, reset all takes no more than it was allowed, even with enlarged text`() {
+    fun `beside the stopwatches, the two controls take no more than they were allowed, even with enlarged text`() {
         val control = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val start = startAll().assertIsDisplayed().getUnclippedBoundsInRoot()
         val tiles = tileBounds()
 
         assertTrue("reset all is ${control.width} wide", control.width <= 96.dp)
-        assertTrue(tiles.all { it.right <= control.left })
+        assertTrue("start all is ${start.width} wide", start.width <= 96.dp)
+        assertTrue(tiles.all { it.right <= control.left && it.left >= start.right })
         assertTrue("tiles are ${tiles.first().width} wide", tiles.all { it.width >= 120.dp })
         assertButtonsAreLarge()
     }
