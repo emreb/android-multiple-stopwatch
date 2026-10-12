@@ -30,6 +30,14 @@ _Avoid_: Elapsed, duration
 Returning a stopwatch to idle, discarding its laps. Name and colour are kept.
 _Avoid_: Clear
 
+**Reset all**:
+Resetting every stopped stopwatch at once, possible only while none is running.
+_Avoid_: Clear all, new race
+
+**Undo**:
+Taking back a reset within a few seconds of it, restoring each stopwatch exactly as it was.
+_Avoid_: Restore, revert
+
 ## Stopwatch states
 
 **Idle**:

@@ -151,6 +151,7 @@ class TimingScreenTest {
         advance(20.seconds)
         press("Lap")
         press("Stop")
+        advance(1.seconds)
         press("Reset")
 
         described("Last lap none").assertIsDisplayed()
@@ -214,12 +215,13 @@ class TimingScreenTest {
         press("Start")
         advance(1234.milliseconds)
         press("Stop")
+        advance(1.seconds)
         press("Reset")
 
         totalTime("0:00.00").assertIsDisplayed()
         described("Current lap 0:00.00").assertIsDisplayed()
-        text("Stop").assertIsNotEnabled()
         text("Reset").assertDoesNotExist()
+        text("Start").assertIsEnabled()
     }
 
     @Test
@@ -299,6 +301,136 @@ class TimingScreenTest {
     fun `a window wider than tall but too narrow for four tiles stays two by two`() {
         assertTwoByTwo()
         assertButtonsAreLarge()
+    }
+
+    @Test
+    fun `a reset pressed straight after stop does nothing`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(300.milliseconds)
+        press("Reset")
+
+        totalTime("0:20.00").assertIsDisplayed()
+        text("Reset").assertIsEnabled()
+    }
+
+    @Test
+    fun `after a reset the stop button offers undo, which brings the stopwatch back`() {
+        press("Start")
+        advance(20.seconds)
+        press("Lap")
+        advance(5.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        totalTime("0:00.00").assertIsDisplayed()
+        text("Undo").assertIsEnabled()
+        text("Stop").assertDoesNotExist()
+
+        advance(1.seconds)
+        press("Undo")
+
+        totalTime("0:25.00").assertIsDisplayed()
+        described("Last lap 0:20.00").assertIsDisplayed()
+        described("Laps 1").assertIsDisplayed()
+        text("Reset").assertIsEnabled()
+        text("Undo").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the offer to undo goes away after a few seconds`() {
+        press("Start")
+        advance(20.seconds)
+        press("Stop")
+        advance(1.seconds)
+        press("Reset")
+
+        composeRule.mainClock.advanceTimeBy(4_000)
+        text("Undo").assertIsEnabled()
+
+        composeRule.mainClock.advanceTimeBy(1_500)
+        text("Undo").assertDoesNotExist()
+        text("Stop").assertIsNotEnabled()
+        totalTime("0:00.00").assertIsDisplayed()
+    }
+
+    @Test
+    fun `only the stopwatch that was reset offers undo`() {
+        press("Start", tile = 2)
+        advance(20.seconds)
+        press("Stop", tile = 2)
+        advance(1.seconds)
+        press("Reset", tile = 2)
+
+        text("Undo", tile = 2).assertIsEnabled()
+        for (tile in listOf(1, 3, 4)) text("Undo", tile).assertDoesNotExist()
+        resetAll().assertTextEquals("Reset all")
+    }
+
+    @Test
+    fun `reset all can be pressed only when something is stopped and nothing is running`() {
+        resetAll().assertIsDisplayed().assertIsNotEnabled()
+
+        press("Start", tile = 1)
+        resetAll().assertIsNotEnabled()
+
+        advance(20.seconds)
+        press("Stop", tile = 1)
+        resetAll().assertIsEnabled()
+
+        press("Start", tile = 2)
+        resetAll().assertIsNotEnabled()
+    }
+
+    @Test
+    fun `reset all resets every stopwatch and turns into undo, which brings them all back`() {
+        press("Start", tile = 1)
+        press("Start", tile = 3)
+        advance(20.seconds)
+        press("Stop", tile = 1)
+        advance(5.seconds)
+        press("Stop", tile = 3)
+        pressResetAll()
+
+        totalTime("0:00.00", tile = 1).assertIsDisplayed()
+        totalTime("0:00.00", tile = 3).assertIsDisplayed()
+        resetAll().assertTextEquals("Undo").assertIsEnabled()
+        for (tile in 1..4) text("Undo", tile).assertDoesNotExist()
+
+        advance(1.seconds)
+        pressResetAll()
+
+        totalTime("0:20.00", tile = 1).assertIsDisplayed()
+        totalTime("0:25.00", tile = 3).assertIsDisplayed()
+        resetAll().assertTextEquals("Reset all").assertIsEnabled()
+    }
+
+    @Test
+    fun `the offer to undo reset all goes away after a few seconds`() {
+        press("Start", tile = 1)
+        advance(20.seconds)
+        press("Stop", tile = 1)
+        pressResetAll()
+
+        composeRule.mainClock.advanceTimeBy(5_500)
+
+        resetAll().assertTextEquals("Reset all").assertIsNotEnabled()
+        totalTime("0:00.00", tile = 1).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `reset all is on screen in landscape too`() {
+        resetAll().assertIsDisplayed()
+    }
+
+    private fun resetAll() = composeRule.onNodeWithTag("reset-all")
+
+    private fun pressResetAll() {
+        resetAll().performClick()
+        composeRule.mainClock.advanceTimeByFrame()
     }
 
     private fun assertTwoByTwo() {

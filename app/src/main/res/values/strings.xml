@@ -5,6 +5,8 @@
     <string name="action_lap">Lap</string>
     <string name="action_stop">Stop</string>
     <string name="action_reset">Reset</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_reset_all">Reset all</string>
 
     <string name="total_time_label">Total</string>
     <string name="last_lap_label">Last</string>

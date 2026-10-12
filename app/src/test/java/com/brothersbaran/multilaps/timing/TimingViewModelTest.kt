@@ -67,6 +67,7 @@ class TimingViewModelTest {
         viewModel.onStartPressed(0)
         clock.advanceBy(3.seconds)
         viewModel.onStopPressed(0)
+        clock.advanceBy(1.seconds)
         viewModel.onStopPressed(0)
 
         assertEquals(StopwatchState.Idle, state)
@@ -131,12 +132,13 @@ class TimingViewModelTest {
         viewModel.onStartPressed(3)
         clock.advanceBy(4.seconds)
         viewModel.onStopPressed(1)
+        clock.advanceBy(1.seconds)
         viewModel.onStopPressed(1)
 
         assertEquals(Stopwatch(), stopwatches[1])
         assertEquals(StopwatchState.Running, stopwatches[3].state)
         assertEquals(listOf(20.seconds), stopwatches[3].laps)
-        assertEquals(24.seconds, stopwatches[3].totalTime(clock.now()))
+        assertEquals(25.seconds, stopwatches[3].totalTime(clock.now()))
         assertEquals(Stopwatch(), stopwatches[0])
         assertEquals(Stopwatch(), stopwatches[2])
     }
