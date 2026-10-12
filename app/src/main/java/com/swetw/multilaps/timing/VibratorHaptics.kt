@@ -11,23 +11,29 @@ import android.os.VibratorManager
 /**
  * Plays feedback as short vibrations whose rhythm tells the presses apart: one pulse for a lap or
  * a start, two for a stop, one long one for a reset and three for an undo. No pulse is shorter
- * than 50 ms, which is about what an older motor needs to get going. They are played as media
- * vibration, so they follow the phone's vibration setting but not its touch-feedback one. Without
- * a vibrator it does nothing.
+ * than 50 ms, which is about what an older motor needs to get going. They are played as an
+ * alarm's vibration: from Android 11 that follows the phone's main vibration switch and its
+ * alarm-vibration level, but not its touch-feedback setting, and it is still played in Battery
+ * Saver. Without a vibrator it does nothing.
  */
 class VibratorHaptics(private val vibrator: Vibrator?) : Haptics {
 
     override fun play(feedback: Feedback) {
         val vibrator = vibrator?.takeIf { it.hasVibrator() } ?: return
         val effect = effect(feedback)
-        // Said outright not to be touch feedback. Left unsaid, Android takes a single short pulse
-        // for touch feedback and drops it on any phone with that switched off, which silenced
-        // start, lap and reset while the two-pulse stop still played.
+        // Played as an alarm's vibration. Left with no usage, Android takes a short vibration for
+        // touch feedback and drops it on any phone with that switched off, which silenced start,
+        // lap and reset. Of the usages that are not touch feedback, an alarm's is the one that is
+        // also still played in Battery Saver, which matters on a long day at the track.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            vibrator.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_MEDIA))
+            vibrator.vibrate(effect, VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
         } else {
+            // Android 11 and 12 work the usage out from audio attributes, and an alarm's is one
+            // they keep. Android 9 and 10 take any short vibration that is not a notification's
+            // for touch feedback whatever is said here; there, touch feedback being off silences
+            // these, and nothing an app can honestly say prevents it.
             @Suppress("DEPRECATION")
-            vibrator.vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).build())
+            vibrator.vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build())
         }
     }
 
