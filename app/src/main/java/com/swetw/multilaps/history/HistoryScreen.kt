@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +80,9 @@ fun HistoryScreen(
     // deleted is no longer found, and the list shows again.
     var openResultId by rememberSaveable { mutableStateOf<Long?>(null) }
     val open = results.find { it.id == openResultId }
+    // Held here, above the choice between list and result, so that coming back from a result
+    // finds the list where it was left.
+    val listState = rememberLazyListState()
     val locale = LocalConfiguration.current.locales[0]
     val title = stringResource(R.string.history_title)
 
@@ -91,7 +96,7 @@ fun HistoryScreen(
         ) {
             if (open == null) {
                 BackHandler(onBack = onBack)
-                ResultList(results, zone, locale, onResultPressed = { openResultId = it }, onAllResultsDeleted, onBack)
+                ResultList(results, listState, zone, locale, onResultPressed = { openResultId = it }, onAllResultsDeleted, onBack)
             } else {
                 BackHandler { openResultId = null }
                 ResultDetail(open, zone, locale, onDeleted = { onResultDeleted(open.id) }, onBack = { openResultId = null })
@@ -103,6 +108,7 @@ fun HistoryScreen(
 @Composable
 private fun ResultList(
     results: List<Result>,
+    listState: LazyListState,
     zone: ZoneId,
     locale: Locale,
     onResultPressed: (id: Long) -> Unit,
@@ -127,7 +133,11 @@ private fun ResultList(
             modifier = Modifier.padding(vertical = 24.dp, horizontal = GAP).testTag("no-results"),
         )
     } else {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(GAP), modifier = Modifier.testTag("result-list")) {
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(GAP),
+            modifier = Modifier.testTag("result-list"),
+        ) {
             results.byDay(zone).forEach { day ->
                 item(key = day.date.toEpochDay()) {
                     DayHeading(

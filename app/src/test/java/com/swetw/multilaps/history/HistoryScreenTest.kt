@@ -21,6 +21,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
@@ -256,6 +257,20 @@ class HistoryScreenTest {
 
         composeRule.onNodeWithTag("result-detail").assertDoesNotExist()
         rows().assertCountEquals(2)
+    }
+
+    @Test
+    fun `coming back from a result leaves the list where it had been scrolled to`() {
+        results = (1..60L).map { result(it, "2026-10-12T10:00", lisbon, name = "Runner $it") }
+        show()
+        composeRule.onNodeWithTag("result-list").performScrollToIndex(50)
+        row("Runner 50,").assertIsDisplayed()
+
+        row("Runner 50,").performClick()
+        back().performClick()
+
+        row("Runner 50,").assertIsDisplayed()
+        row("Runner 1,").assertDoesNotExist()
     }
 
     @Test
