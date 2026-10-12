@@ -3,6 +3,7 @@ package com.brothersbaran.multilaps.stopwatch
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -31,7 +32,15 @@ class TimeFormatTest {
     }
 
     @Test
-    fun `minutes are not padded and can exceed one digit`() {
+    fun `minutes are not padded below an hour`() {
         assertEquals("12:00.00", formatTime(12.minutes))
+        assertEquals("59:59.99", formatTime(1.hours - 1.milliseconds))
+    }
+
+    @Test
+    fun `an hour or more adds hours and pads minutes`() {
+        assertEquals("1:00:00.00", formatTime(1.hours))
+        assertEquals("1:02:03.45", formatTime(1.hours + 2.minutes + 3.seconds + 450.milliseconds))
+        assertEquals("12:00:00.00", formatTime(12.hours))
     }
 }
