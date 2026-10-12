@@ -77,9 +77,7 @@
     <string name="result_description">%1$s, %2$s, total time %3$s, %4$s, best lap %5$s</string>
     <!-- What tapping a result does, spoken after "double tap to". -->
     <string name="show_result">show its laps</string>
-    <!-- The share button of a day as spoken; the placeholder is the date. -->
-    <string name="share_day_description">Share %1$s</string>
-    <!-- A day's results as shared text. The first placeholder of the title is the date. -->
+    <!-- A result as shared text. The placeholder of the title is the date. -->
     <string name="share_title">MultiLaps, %1$s</string>
     <!-- A result's heading in shared text: name, then time of day. -->
     <string name="share_result_heading">%1$s, %2$s</string>

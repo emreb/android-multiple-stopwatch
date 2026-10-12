@@ -19,27 +19,21 @@ fun formatTimeOfDay(time: ZonedDateTime, locale: Locale): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(time)
 
 /**
- * A day's results as plain text to hand to another app: the date, then each result with its
- * figures and every lap, in the order the laps were run.
+ * One result as plain text to hand to another app: the date, whose it was and when, its figures,
+ * and every lap in the order the laps were run.
  */
-fun shareText(day: Day, zone: ZoneId, locale: Locale, resources: Resources): String {
-    val title = resources.getString(R.string.share_title, formatDate(day.date, locale))
-    val results = day.results.map { result ->
-        val heading = resources.getString(
-            R.string.share_result_heading,
-            result.name,
-            formatTimeOfDay(result.resetTime(zone), locale),
-        )
-        val summary = resources.getString(
-            R.string.share_result_summary,
-            formatTime(result.totalTime),
-            resources.getQuantityString(R.plurals.lap_count, result.lapCount, result.lapCount),
-            formatTime(result.bestLap),
-        )
-        val laps = result.laps.mapIndexed { index, lap ->
-            resources.getString(R.string.share_lap, index + 1, formatTime(lap))
-        }
-        (listOf(heading, summary) + laps).joinToString("\n")
+fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
+    val reset = result.resetTime(zone)
+    val title = resources.getString(R.string.share_title, formatDate(reset.toLocalDate(), locale))
+    val heading = resources.getString(R.string.share_result_heading, result.name, formatTimeOfDay(reset, locale))
+    val summary = resources.getString(
+        R.string.share_result_summary,
+        formatTime(result.totalTime),
+        resources.getQuantityString(R.plurals.lap_count, result.lapCount, result.lapCount),
+        formatTime(result.bestLap),
+    )
+    val laps = result.laps.mapIndexed { index, lap ->
+        resources.getString(R.string.share_lap, index + 1, formatTime(lap))
     }
-    return (listOf(title) + results).joinToString("\n\n")
+    return (listOf(title, "", heading, summary) + laps).joinToString("\n")
 }

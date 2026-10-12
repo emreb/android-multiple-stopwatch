@@ -64,7 +64,7 @@ private val GAP = 8.dp
 
 /**
  * What has been timed and reset, by day with the most recent first. Tapping a result opens its
- * laps in place of the list. Timing carries on meanwhile; nothing here touches it.
+ * laps in place of the list, from where that result can be shared or deleted. Timing carries on meanwhile; nothing here touches it.
  *
  * @param zone where the phone is, which decides the day and the time of day a result belongs to.
  */
@@ -115,7 +115,6 @@ private fun ResultList(
     onAllResultsDeleted: () -> Unit,
     onBack: () -> Unit,
 ) {
-    val context = LocalContext.current
     var confirming by rememberSaveable { mutableStateOf(false) }
 
     TopBar(
@@ -140,10 +139,7 @@ private fun ResultList(
         ) {
             results.byDay(zone).forEach { day ->
                 item(key = day.date.toEpochDay()) {
-                    DayHeading(
-                        date = formatDate(day.date, locale),
-                        onSharePressed = { context.share(shareText(day, zone, locale, context.resources)) },
-                    )
+                    DayHeading(formatDate(day.date, locale))
                 }
                 items(day.results, key = { "result-${it.id}" }) { result ->
                     ResultRow(result, zone, locale, onPressed = { onResultPressed(result.id) })
@@ -211,25 +207,12 @@ private fun TopBar(
 }
 
 @Composable
-private fun DayHeading(date: String, onSharePressed: () -> Unit) {
-    val share = stringResource(R.string.share_day_description, date)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth().padding(top = GAP),
-    ) {
-        Text(
-            text = date,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f).testTag("day-heading").semantics { heading() },
-        )
-        ScreenButton(
-            label = R.string.action_share,
-            enabled = true,
-            outlined = true,
-            onClick = onSharePressed,
-            modifier = Modifier.testTag("share-day").semantics { contentDescription = share },
-        )
-    }
+private fun DayHeading(date: String) {
+    Text(
+        text = date,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.fillMaxWidth().padding(top = GAP).testTag("day-heading").semantics { heading() },
+    )
 }
 
 /** One result in the list: whose it was, when, and the three figures worth comparing. */
@@ -284,6 +267,7 @@ private fun ResultRow(result: Result, zone: ZoneId, locale: Locale, onPressed: (
 private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted: () -> Unit, onBack: () -> Unit) {
     var confirming by rememberSaveable { mutableStateOf(false) }
     val reset = result.resetTime(zone)
+    val context = LocalContext.current
 
     TopBar(
         title = result.name,
@@ -307,6 +291,15 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            // This one result and no other: sharing is by the result, never the whole history.
+            ScreenButton(
+                label = R.string.action_share,
+                enabled = true,
+                outlined = true,
+                onClick = { context.share(shareText(result, zone, locale, context.resources)) },
+                modifier = Modifier.testTag("share-result"),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(GAP), modifier = Modifier.testTag("result-figures")) {

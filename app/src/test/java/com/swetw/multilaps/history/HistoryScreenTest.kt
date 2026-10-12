@@ -214,9 +214,10 @@ class HistoryScreenTest {
     }
 
     @Test
-    fun `sharing a day hands that day's results, and no other day's, to the phone's share sheet as plain text`() {
+    fun `sharing a result hands that one result, and no other, to the phone's share sheet as plain text`() {
         show()
-        composeRule.onNode(hasContentDescription("Share Monday, October 12, 2026")).performClick()
+        row("Ada").performClick()
+        composeRule.onNodeWithTag("share-result").performClick()
 
         val chooser = shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity
         assertEquals(Intent.ACTION_CHOOSER, chooser.action)
@@ -224,14 +225,25 @@ class HistoryScreenTest {
         assertEquals(Intent.ACTION_SEND, send.action)
         assertEquals("text/plain", send.type)
         val text = send.getStringExtra(Intent.EXTRA_TEXT)!!
-        assertEquals(shareText(Day(ada.resetTime(lisbon).toLocalDate(), listOf(ada, leo)), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources), text)
+        assertEquals(shareText(ada, lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources), text)
         assertTrue("Lap 3: 1:25.00" in text)
+        assertFalse("Leo" in text)
         assertFalse("Mia" in text)
     }
 
     @Test
-    fun `nothing is shared until share is pressed`() {
+    fun `the list offers no sharing of a whole day or of everything`() {
         show()
+
+        composeRule.onAllNodesWithTag("share-result").assertCountEquals(0)
+        composeRule.onAllNodes(hasContentDescription("Share", substring = true)).assertCountEquals(0)
+        composeRule.onAllNodes(androidx.compose.ui.test.hasText("Share")).assertCountEquals(0)
+    }
+
+    @Test
+    fun `nothing is shared by opening history or a result`() {
+        show()
+        row("Ada").performClick()
 
         assertNull(shadowOf(RuntimeEnvironment.getApplication()).nextStartedActivity)
     }
@@ -293,15 +305,28 @@ class HistoryScreenTest {
 
     private fun assertControlsAreLarge() {
         show()
+        assertLargeAndOnScreen(back(), deleteAll())
+        assertTrue(back().getUnclippedBoundsInRoot().right <= deleteAll().getUnclippedBoundsInRoot().left)
+
+        row("Ada").performClick()
+        val share = composeRule.onNodeWithTag("share-result")
+        val delete = composeRule.onNodeWithTag("delete-result")
+        assertLargeAndOnScreen(back(), share, delete)
+        val shareBounds = share.getUnclippedBoundsInRoot()
+        val deleteBounds = delete.getUnclippedBoundsInRoot()
+        assertTrue(
+            "share and delete stand clear of each other: $shareBounds, $deleteBounds",
+            shareBounds.top >= deleteBounds.bottom || shareBounds.right <= deleteBounds.left,
+        )
+    }
+
+    private fun assertLargeAndOnScreen(vararg controls: androidx.compose.ui.test.SemanticsNodeInteraction) {
         val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
-        val controls = listOf(back(), deleteAll()) +
-            composeRule.onAllNodesWithTag("share-day").let { listOf(it[0], it[1]) }
         controls.forEach {
             val bounds = it.getUnclippedBoundsInRoot()
             assertTrue("$bounds", bounds.width >= 48.dp && bounds.height >= 48.dp)
             assertTrue("$bounds in $screen", bounds.left >= 0.dp && bounds.right <= screen.right)
         }
-        assertTrue(back().getUnclippedBoundsInRoot().right <= deleteAll().getUnclippedBoundsInRoot().left)
     }
 
     private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertContentDescriptionContains(text: String) {

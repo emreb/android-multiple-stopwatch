@@ -19,7 +19,7 @@ Resetting a stopwatch clears its timing and lap times from the stopwatch, and ke
 
 ## Sharing
 
-History has a Share button for each day. Pressing it hands that day's results, as plain text, to the app you then choose from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
+Each result in History has a Share button. Pressing it hands that one result, as plain text, to the app you then choose from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
 
 ## What the app does not do
 
