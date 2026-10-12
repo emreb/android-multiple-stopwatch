@@ -1,14 +1,18 @@
-package com.brothersbaran.multilaps.stopwatch
+package com.brothersbaran.multilaps.timing
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,46 +23,75 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.unit.sp
 import com.brothersbaran.multilaps.R
+import com.brothersbaran.multilaps.stopwatch.Clock
+import com.brothersbaran.multilaps.stopwatch.Stopwatch
+import com.brothersbaran.multilaps.stopwatch.StopwatchState
+import com.brothersbaran.multilaps.stopwatch.formatTime
 import kotlin.time.Duration
 
+/** One stopwatch: its name, its figures, and its two buttons along the bottom edge. */
 @Composable
-fun StopwatchScreen(viewModel: StopwatchViewModel) {
-    val stopwatch by viewModel.stopwatch.collectAsStateWithLifecycle()
-
-    Surface(modifier = Modifier.fillMaxSize()) {
+fun StopwatchTile(
+    name: String,
+    stopwatch: Stopwatch,
+    clock: Clock,
+    onStartPressed: () -> Unit,
+    onStopPressed: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedCard(modifier = modifier.testTag("stopwatch-$name")) {
         Column(
-            modifier = Modifier.safeDrawingPadding(),
-            verticalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterVertically),
+            modifier = Modifier.fillMaxSize().padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            LiveTimes(stopwatch, viewModel.clock)
+            Text(name, style = MaterialTheme.typography.titleLarge)
+            LiveTimes(stopwatch, clock)
             CompletedLaps(stopwatch)
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Button(
-                    onClick = viewModel::onStopPressed,
-                    enabled = stopwatch.state != StopwatchState.Idle,
-                ) {
-                    val label = when (stopwatch.state) {
+            Spacer(Modifier.weight(1f))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TileButton(
+                    label = when (stopwatch.state) {
                         StopwatchState.Stopped -> R.string.action_reset
                         StopwatchState.Idle, StopwatchState.Running -> R.string.action_stop
-                    }
-                    Text(stringResource(label))
-                }
-                Button(onClick = viewModel::onStartPressed) {
-                    val label = when (stopwatch.state) {
+                    },
+                    onClick = onStopPressed,
+                    enabled = stopwatch.state != StopwatchState.Idle,
+                    modifier = Modifier.weight(1f),
+                )
+                TileButton(
+                    label = when (stopwatch.state) {
                         StopwatchState.Running -> R.string.action_lap
                         StopwatchState.Idle, StopwatchState.Stopped -> R.string.action_start
-                    }
-                    Text(stringResource(label))
-                }
+                    },
+                    onClick = onStartPressed,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun TileButton(
+    @StringRes label: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        contentPadding = PaddingValues(horizontal = 4.dp),
+        modifier = modifier.height(64.dp),
+    ) {
+        Text(stringResource(label), maxLines = 1)
     }
 }
 
@@ -73,6 +106,8 @@ private fun LiveTimes(stopwatch: Stopwatch, clock: Clock) {
         Text(
             text = currentLap,
             style = MaterialTheme.typography.displayLarge,
+            maxLines = 1,
+            autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = 57.sp),
             modifier = Modifier.semantics { contentDescription = currentLapDescription },
         )
         LabelledValue(

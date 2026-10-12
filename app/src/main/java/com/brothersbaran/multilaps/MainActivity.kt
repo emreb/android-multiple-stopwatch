@@ -6,8 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.brothersbaran.multilaps.stopwatch.StopwatchScreen
-import com.brothersbaran.multilaps.stopwatch.StopwatchViewModel
+import com.brothersbaran.multilaps.timing.TimingScreen
+import com.brothersbaran.multilaps.timing.TimingViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                StopwatchScreen(viewModel(factory = StopwatchViewModel.Factory))
+                TimingScreen(viewModel(factory = TimingViewModel.Factory))
             }
         }
     }
