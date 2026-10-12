@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.brothersbaran.multilaps.Devices.BARELY_WIDE_ENOUGH
+import com.brothersbaran.multilaps.Devices.BARELY_WIDE_ENOUGH_TALL
+import com.brothersbaran.multilaps.Devices.JUST_TOO_NARROW
+import com.brothersbaran.multilaps.Devices.OLDER_PHONE_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.COMMON_PHONE_LANDSCAPE
 import com.brothersbaran.multilaps.Devices.LANDSCAPE_PHONE
 import com.brothersbaran.multilaps.Devices.PORTRAIT_PHONE
@@ -480,11 +483,61 @@ class TimingScreenTest {
         val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
 
         assertTrue("$start is left of $tiles", tiles.all { it.left >= start.right })
-        assertTrue(start.top < screen.height / 4)
+        assertTrue("$start is at the top", start.top < screen.height / 4)
+        assertTrue("$start is at the left edge", start.left < 24.dp)
         assertTrue("tiles keep nearly the full height", tiles.all { it.height.value >= 0.9f * screen.height.value })
         assertTrue(start.height >= 48.dp && start.width >= 48.dp)
         assertButtonsAreLarge()
     }
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `on its side, the two controls share one column, start all at its top and reset all at its foot`() {
+        val start = startAll().getUnclippedBoundsInRoot()
+        val reset = resetAll().assertIsDisplayed().getUnclippedBoundsInRoot()
+        val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
+
+        assertEquals(start.left, reset.left)
+        assertEquals(start.right, reset.right)
+        assertTrue("well apart, so one is not hit for the other", reset.top - start.bottom >= 48.dp)
+        assertTrue("$reset is at the foot", reset.bottom > screen.height * 3 / 4)
+    }
+
+    @Test
+    @Config(qualifiers = COMMON_PHONE_LANDSCAPE)
+    fun `on a common phone on its side lap is still the big button`() = assertLapDominates()
+
+    @Test
+    @Config(qualifiers = COMMON_PHONE_LANDSCAPE)
+    fun `on a common phone on its side the controls leave the tiles their width`() {
+        // 154dp each: the window less its margins and the controls' column, shared four ways.
+        assertTrue(tileBounds().all { it.width >= 154.dp })
+    }
+
+    @Test
+    @Config(qualifiers = BARELY_WIDE_ENOUGH)
+    fun `at the narrowest the column appears, lap is still the big button`() {
+        assertTrue(tileBounds().all { it.left >= startAll().getUnclippedBoundsInRoot().right })
+        assertLapDominates()
+    }
+
+    @Test
+    @Config(qualifiers = BARELY_WIDE_ENOUGH_TALL)
+    fun `at the narrowest the column appears, lap is still the big button on a full-height tile`() {
+        assertTrue(tileBounds().all { it.left >= startAll().getUnclippedBoundsInRoot().right })
+        assertLapDominates()
+    }
+
+    @Test
+    @Config(qualifiers = JUST_TOO_NARROW)
+    fun `just too narrow for the column, the controls go above and lap is still the big button`() {
+        assertTrue(tileBounds().all { it.top >= startAll().getUnclippedBoundsInRoot().bottom })
+        assertLapDominates()
+    }
+
+    @Test
+    @Config(qualifiers = OLDER_PHONE_LANDSCAPE)
+    fun `on an older phone on its side lap is still the big button`() = assertLapDominates()
 
     @Test
     @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
@@ -561,7 +614,7 @@ class TimingScreenTest {
         val tiles = tileBounds()
         val screen = composeRule.onRoot().getUnclippedBoundsInRoot()
 
-        assertTrue("tiles $tiles end before $control", tiles.all { it.right <= control.left })
+        assertTrue("tiles $tiles begin after $control", tiles.all { it.left >= control.right })
         assertTrue(
             "tiles $tiles reach nearly the full height of $screen",
             tiles.all { it.height.value >= 0.9f * screen.height.value },
@@ -578,8 +631,8 @@ class TimingScreenTest {
 
         assertTrue("reset all is ${control.width} wide", control.width <= 96.dp)
         assertTrue("start all is ${start.width} wide", start.width <= 96.dp)
-        assertTrue(tiles.all { it.right <= control.left && it.left >= start.right })
-        assertTrue("tiles are ${tiles.first().width} wide", tiles.all { it.width >= 120.dp })
+        assertTrue(tiles.all { it.left >= control.right })
+        assertTrue("tiles are ${tiles.first().width} wide", tiles.all { it.width >= 144.dp })
         assertButtonsAreLarge()
     }
 

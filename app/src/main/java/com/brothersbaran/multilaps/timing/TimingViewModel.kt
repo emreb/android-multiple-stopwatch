@@ -60,9 +60,10 @@ class TimingViewModel(
      */
     fun onStartAllPressed() {
         val now = clock.now()
-        val idle = _stopwatches.value.indices.filter { _stopwatches.value[it].state == StopwatchState.Idle }
+        val stopwatches = _stopwatches.value
+        val idle = stopwatches.indices.filter { stopwatches[it].state == StopwatchState.Idle }
         idle.forEach(::withdrawFromUndoOffer)
-        replace(idle.associateWith { _stopwatches.value[it].start(now) }, Feedback.Start)
+        replace(idle.associateWith { stopwatches[it].start(now) }, Feedback.Start)
     }
 
     /**
