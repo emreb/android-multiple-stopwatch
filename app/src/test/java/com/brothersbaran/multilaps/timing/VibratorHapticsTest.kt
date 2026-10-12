@@ -1,0 +1,82 @@
+package com.brothersbaran.multilaps.timing
+
+import android.content.Context
+import android.os.Vibrator
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+
+@RunWith(AndroidJUnit4::class)
+class VibratorHapticsTest {
+
+    private val context = ApplicationProvider.getApplicationContext<Context>()
+
+    @Suppress("DEPRECATION")
+    private val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val shadow = shadowOf(vibrator)
+    private val haptics = VibratorHaptics(vibrator)
+
+    /** What one kind of feedback makes the device do: on and off spans, in milliseconds. */
+    private fun timings(feedback: Feedback): List<Long> {
+        haptics.play(feedback)
+        return shadow.pattern?.toList() ?: listOf(shadow.milliseconds)
+    }
+
+    @Test
+    fun `every kind of feedback vibrates`() {
+        for (feedback in Feedback.entries) {
+            vibrator.cancel()
+            haptics.play(feedback)
+
+            assertTrue("$feedback", shadow.isVibrating)
+        }
+    }
+
+    @Test
+    fun `every vibration is short`() {
+        for (feedback in Feedback.entries) {
+            assertTrue("$feedback", timings(feedback).sum() <= 250)
+        }
+    }
+
+    @Test
+    fun `a lap is one pulse and a stop is two, so they are told apart without looking`() {
+        val lap = timings(Feedback.Lap)
+        val stop = timings(Feedback.Stop)
+
+        assertEquals(1, lap.size)
+        assertEquals("a wait, a pulse, a gap, a pulse", 4, stop.size)
+        assertNotEquals(lap, stop)
+    }
+
+    @Test
+    fun `on a device that cannot vibrate nothing happens and nothing breaks`() {
+        shadow.setHasVibrator(false)
+
+        for (feedback in Feedback.entries) haptics.play(feedback)
+
+        assertFalse(shadow.isVibrating)
+    }
+
+    @Test
+    fun `with no vibrator service at all nothing breaks`() {
+        val haptics = VibratorHaptics(null)
+
+        for (feedback in Feedback.entries) haptics.play(feedback)
+    }
+
+    @Test
+    @Config(sdk = [26])
+    fun `it vibrates on the oldest Android the app supports`() {
+        haptics.play(Feedback.Stop)
+
+        assertTrue(shadow.isVibrating)
+    }
+}

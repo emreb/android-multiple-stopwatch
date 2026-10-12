@@ -50,6 +50,18 @@ class ManifestTest {
     }
 
     @Test
+    fun `the only permission the app asks for is to vibrate`() {
+        val requested = context.packageManager
+            .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions
+            .orEmpty()
+            // Added by the support libraries for their own use, not a permission over anything.
+            .filterNot { it.endsWith(".DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION") }
+
+        assertEquals(listOf(Manifest.permission.VIBRATE), requested)
+    }
+
+    @Test
     fun `the app requests no network access`() {
         val requested = context.packageManager
             .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
