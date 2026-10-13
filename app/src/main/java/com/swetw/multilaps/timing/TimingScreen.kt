@@ -61,9 +61,9 @@ private val GAP = 8.dp
 private val WIDTH_FOR_CONTROLS = 104.dp
 
 /**
- * The narrowest a tile may be left by the controls' column. Any narrower and its Lap button would
- * no longer clearly outsize Stop, which keeps a fixed share of the tile and a minimum width; the
- * controls then go above the tiles instead, where they cost height but no width.
+ * The narrowest a tile may be left by the controls' column. Any narrower and its two buttons,
+ * which share its width equally, would be cramped; the controls then go above the tiles instead,
+ * where they cost height but no width.
  */
 private val MIN_TILE_WIDTH_BESIDE_CONTROLS = 144.dp
 
@@ -72,7 +72,7 @@ private val MIN_TILE_WIDTH_BESIDE_CONTROLS = 144.dp
  * history between the two. Upright, they sit above the tiles, start all at the top left and reset
  * all at the top right. On its side with width to spare, where height is what the tiles are short
  * of, they share one column at the left, start all at its top and reset all at its foot: one
- * column, because a second would leave the tiles too narrow for a Lap button that outsizes Stop.
+ * column, because a second would leave the tiles too narrow for their two buttons.
  */
 @Composable
 fun TimingScreen(viewModel: TimingViewModel) {

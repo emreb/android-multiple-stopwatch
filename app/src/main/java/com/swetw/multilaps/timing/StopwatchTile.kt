@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.swetw.multilaps.R
 import com.swetw.multilaps.stopwatch.Clock
@@ -69,19 +68,15 @@ private val TILE_SHAPE = RoundedCornerShape(20.dp)
 private val PLATE_SHAPE = RoundedCornerShape(10.dp)
 private val PLATE_INSET = 6.dp
 
-/** Lap is pressed far more than anything else, so it is the bigger target in both directions. */
-private val LAP_BUTTON_HEIGHT = 72.dp
-private val STOP_BUTTON_HEIGHT = 56.dp
-private val MIN_STOP_BUTTON_WIDTH = 48.dp
-private const val STOP_BUTTON_SHARE = 0.32f
+/** Both of a tile's buttons are this tall and share its width equally. */
+private val BUTTON_HEIGHT = 72.dp
 
 /**
  * Shorter than this, as on a phone turned sideways, a tile sets its current lap and its buttons a
  * little smaller so that every figure still fits above the buttons.
  */
 private val SHORT_TILE = 330.dp
-private val SHORT_TILE_LAP_BUTTON_HEIGHT = 56.dp
-private val SHORT_TILE_STOP_BUTTON_HEIGHT = 48.dp
+private val SHORT_TILE_BUTTON_HEIGHT = 56.dp
 private val SHORT_TILE_CURRENT_LAP = 46.sp
 private val SHORT_TILE_LAP_LINE = 27.sp
 private val CLOSED_UP_CAPTION = 14.sp
@@ -132,8 +127,7 @@ fun StopwatchTile(
                     stopwatchName = label.name,
                     colour = colour,
                     state = stopwatch.state,
-                    lapButtonHeight = if (short) SHORT_TILE_LAP_BUTTON_HEIGHT else LAP_BUTTON_HEIGHT,
-                    stopButtonHeight = if (short) SHORT_TILE_STOP_BUTTON_HEIGHT else STOP_BUTTON_HEIGHT,
+                    buttonHeight = if (short) SHORT_TILE_BUTTON_HEIGHT else BUTTON_HEIGHT,
                     undoOffered = undoOffered,
                     undoShareLeft = undoShareLeft,
                     onStartPressed = onStartPressed,
@@ -351,16 +345,15 @@ private fun LabelledValue(
 }
 
 /**
- * Stop, small, at the left; Start or Lap, large, at the right. Both stand on the same line so
- * the thumb finds them by feel.
+ * Stop at the left; Start or Lap, filled, at the right. They are the same size and stand on the
+ * same line so the thumb finds them by feel.
  */
 @Composable
 private fun TileButtons(
     stopwatchName: String,
     colour: StopwatchColour,
     state: StopwatchState,
-    lapButtonHeight: Dp,
-    stopButtonHeight: Dp,
+    buttonHeight: Dp,
     undoOffered: Boolean,
     undoShareLeft: () -> Float,
     onStartPressed: () -> Unit,
@@ -369,40 +362,37 @@ private fun TileButtons(
 ) {
     // The button that reset the stopwatch is, for a short while, the one that undoes it.
     val undoes = undoOffered && state == StopwatchState.Idle
-    BoxWithConstraints {
-        val stopWidth = max(MIN_STOP_BUTTON_WIDTH, maxWidth * STOP_BUTTON_SHARE)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            TileButton(
-                stopwatchName = stopwatchName,
-                label = when {
-                    undoes -> R.string.action_undo
-                    state == StopwatchState.Stopped -> R.string.action_reset
-                    else -> R.string.action_stop
-                },
-                onClick = if (undoes) onUndoPressed else onStopPressed,
-                enabled = undoes || state != StopwatchState.Idle,
-                ink = colour.contentColor,
-                paper = colour.color,
-                filled = false,
-                countdown = undoShareLeft.takeIf { undoes },
-                modifier = Modifier.width(stopWidth).height(stopButtonHeight),
-            )
-            TileButton(
-                stopwatchName = stopwatchName,
-                label = when (state) {
-                    StopwatchState.Running -> R.string.action_lap
-                    StopwatchState.Idle, StopwatchState.Stopped -> R.string.action_start
-                },
-                onClick = onStartPressed,
-                ink = colour.contentColor,
-                paper = colour.color,
-                filled = true,
-                modifier = Modifier.weight(1f).height(lapButtonHeight),
-            )
-        }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        TileButton(
+            stopwatchName = stopwatchName,
+            label = when {
+                undoes -> R.string.action_undo
+                state == StopwatchState.Stopped -> R.string.action_reset
+                else -> R.string.action_stop
+            },
+            onClick = if (undoes) onUndoPressed else onStopPressed,
+            enabled = undoes || state != StopwatchState.Idle,
+            ink = colour.contentColor,
+            paper = colour.color,
+            filled = false,
+            countdown = undoShareLeft.takeIf { undoes },
+            modifier = Modifier.weight(1f).height(buttonHeight),
+        )
+        TileButton(
+            stopwatchName = stopwatchName,
+            label = when (state) {
+                StopwatchState.Running -> R.string.action_lap
+                StopwatchState.Idle, StopwatchState.Stopped -> R.string.action_start
+            },
+            onClick = onStartPressed,
+            ink = colour.contentColor,
+            paper = colour.color,
+            filled = true,
+            modifier = Modifier.weight(1f).height(buttonHeight),
+        )
     }
 }
 
