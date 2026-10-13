@@ -12,8 +12,8 @@ android {
         applicationId = "com.swetw.multilaps"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 4
+        versionName = "0.3.1"
     }
 
     // The upload key lives outside the repository. Its location and passwords come from Gradle
@@ -41,7 +41,10 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 shrinks, optimises and renames the code, and unused resources go with it.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("upload")
         }
     }
