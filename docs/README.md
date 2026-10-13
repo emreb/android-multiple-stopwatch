@@ -2,7 +2,7 @@
 
 | Folder | What is in it |
 |---|---|
-| `play-store/` | What goes into Google Play: the upload walkthrough ([UPLOAD-GUIDE.md](play-store/UPLOAD-GUIDE.md)), the signing key notes ([SIGNING.md](play-store/SIGNING.md)), listing text, icon, feature graphic and six captioned screenshots |
+| `play-store/` | What goes into Google Play: the upload walkthrough ([UPLOAD-GUIDE.md](play-store/UPLOAD-GUIDE.md)), the signing key notes ([SIGNING.md](play-store/SIGNING.md)), listing text, icon, feature graphic and seven captioned screenshots |
 | `marketing/` | The marketing kit PDF, the plain app screenshots it uses, and the sources both it and the store graphics are drawn from |
 | `design-history/` | Screenshots from the design rounds, kept for reference: the first plain pass, the redesign, the Start all button, and the icon preview |
 | `agents/` | Settings for the coding agents that work on this repository |
@@ -28,7 +28,7 @@ shot 1080,1920 docs/play-store/screenshots/1-time-four-runners.png 1-time-four-r
   --print-to-pdf=docs/marketing/MultiLaps-marketing-kit.pdf "$src/kit.html"
 ```
 
-Screenshots 2 to 5 are 1080 x 1920 like the first; number 6 is 1920 x 1080. Google Play
+Screenshots 2 to 6 are 1080 x 1920 like the first; number 7 is 1920 x 1080. Google Play
 refuses screenshots with transparency, and Chrome writes none here.
 
 A redrawn image looks the same as the committed one but is not the same bytes, so git

@@ -14,11 +14,11 @@ Each stopwatch shows the lap in progress in large digits, with the last lap, bes
 Hard to lose a time
 Reset by mistake? Undo it within five seconds. Screen locked, call came in, app closed? The stopwatches are still running when you come back. The screen stays on while anything is being timed.
 
+Look back later
+Reset a stopwatch and what it timed is kept in History, by day. Open a result to see every lap. Share one result as text, or pick several and share them together. Results stay on your phone until you delete them.
+
 Yours to set up
 Name each stopwatch and pick its colour from eight. They stay as you set them. Light and dark themes follow your phone.
 
 Nothing in the way
 No ads. No account. No internet connection: the app cannot go online, and your times stay on your phone unless you choose to share them.
-
-Look back later
-Reset a stopwatch and what it timed is kept in History, by day. Open a result to see every lap. Share one result as text, or pick several and share them together. Results stay on your phone until you delete them.

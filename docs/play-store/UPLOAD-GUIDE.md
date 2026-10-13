@@ -11,7 +11,7 @@ of Play Console from time to time, so a label may differ slightly.
 | `MultiLaps-0.3.0-release.aab` | The signed app bundle to upload (version code 3). Not in git: see "Building the bundle" |
 | `icon-512.png` | App icon, 512 x 512 |
 | `feature-graphic-1024x500.png` | Feature graphic |
-| `screenshots/` | Six phone screenshots, in upload order |
+| `screenshots/` | Seven phone screenshots, in upload order |
 | `listing-text.txt`, `full-description.txt` | Text to paste into the store listing |
 
 The upload key that signs the bundle is not in this repository and must never be. Where
@@ -62,7 +62,7 @@ Play Console > **Grow users** > **Store presence** > **Main store listing**.
   `full-description.txt`.
 - App icon: `icon-512.png`.
 - Feature graphic: `feature-graphic-1024x500.png`.
-- Phone screenshots: the six in `screenshots/`, in number order. Number 6 is landscape;
+- Phone screenshots: the seven in `screenshots/`, in number order. Number 7 is landscape;
   if Play shows it oddly beside the portrait ones, leave it out. Two is the minimum.
 - Tablet screenshots are optional. Skip them.
 
