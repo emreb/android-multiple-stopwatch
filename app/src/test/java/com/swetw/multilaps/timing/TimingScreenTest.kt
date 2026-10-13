@@ -1149,30 +1149,36 @@ class TimingScreenTest {
     fun `stop is the same size as start, beside it, on a small phone`() = assertStopMatchesStart()
 
     @Test
-    fun `stop stays the same size as the button beside it once that one reads lap, and as reset`() {
+    fun `the two buttons stay the same size whatever they read`() {
         press("Start")
-        assertSameSize(text("Stop").getUnclippedBoundsInRoot(), text("Lap").getUnclippedBoundsInRoot())
+        advance(20.seconds)
+        press("Lap")
+        assertMatched(left = text("Stop").getUnclippedBoundsInRoot(), right = text("Lap").getUnclippedBoundsInRoot())
 
         press("Stop")
-        assertSameSize(text("Reset").getUnclippedBoundsInRoot(), text("Start").getUnclippedBoundsInRoot())
+        advance(1.seconds)
+        assertMatched(left = text("Reset").getUnclippedBoundsInRoot(), right = text("Start").getUnclippedBoundsInRoot())
+
+        press("Reset")
+        assertMatched(left = text("Undo").getUnclippedBoundsInRoot(), right = text("Start").getUnclippedBoundsInRoot())
     }
 
     private fun assertStopMatchesStart() {
         for (tile in 1..4) {
-            assertSameSize(
-                stop = text("Stop", tile).getUnclippedBoundsInRoot(),
-                start = text("Start", tile).getUnclippedBoundsInRoot(),
+            assertMatched(
+                left = text("Stop", tile).getUnclippedBoundsInRoot(),
+                right = text("Start", tile).getUnclippedBoundsInRoot(),
             )
         }
     }
 
-    private fun assertSameSize(stop: DpRect, start: DpRect) {
-        // Two halves of a width that is an odd number of pixels differ by one.
-        assertEquals("widths", start.width.value, stop.width.value, 1f)
-        assertEquals("heights", start.height, stop.height)
-        assertTrue("stop is at the left", stop.right <= start.left)
-        assertTrue("a clear gap between them", start.left - stop.right >= 8.dp)
-        assertEquals("they stand on the same line", stop.bottom, start.bottom)
+    /** A tile's two buttons: the same size, side by side on one line, with a gap between. */
+    private fun assertMatched(left: DpRect, right: DpRect) {
+        // An odd width cannot be halved exactly, so the two may differ by a pixel.
+        assertEquals("widths", right.width.value, left.width.value, 1f)
+        assertEquals("heights", right.height, left.height)
+        assertTrue("a clear gap between them", right.left - left.right >= 8.dp)
+        assertEquals("they stand on the same line", left.bottom, right.bottom)
     }
 
     @Test
@@ -1299,8 +1305,7 @@ class TimingScreenTest {
             for (label in listOf("Start", "Stop")) {
                 val bounds = text(label, tile).getUnclippedBoundsInRoot()
                 assertTrue("$label on $tile is ${bounds.width} wide", bounds.width >= 48.dp)
-                val height = if (label == "Start") 56.dp else 48.dp
-                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= height)
+                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= 56.dp)
             }
         }
     }
