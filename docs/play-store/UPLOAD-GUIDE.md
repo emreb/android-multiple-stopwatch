@@ -41,7 +41,7 @@ no review wait. It is also the first time the release build will have been run a
 4. If asked about app signing, accept **Play App Signing** (the default). Google then
    holds the real signing key, and the key on your Mac is only the upload key.
 5. Upload `MultiLaps-0.3.0-release.aab`.
-6. Release name: leave as offered. Release notes: paste the line from `listing-text.txt`.
+6. Release name: leave as offered. Release notes: paste the notes for this version from `listing-text.txt`.
 7. **Next** > **Save and publish** (or **Start rollout to internal testing**).
 
 Then, on your Pixel 10:
