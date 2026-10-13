@@ -7,6 +7,11 @@ Time four runners at once. Big lap buttons, best laps, results kept, no ads.
 Full description
 See full-description.txt
 
+Release notes for 0.3.1
+History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
+Stop is now the same size as Start on every stopwatch.
+The app is now a much smaller download.
+
 Release notes for 0.3.0
 History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
 Stop is now the same size as Start on every stopwatch.
