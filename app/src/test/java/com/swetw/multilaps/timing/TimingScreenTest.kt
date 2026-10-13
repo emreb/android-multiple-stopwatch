@@ -506,7 +506,7 @@ class TimingScreenTest {
 
     @Test
     @Config(qualifiers = COMMON_PHONE_LANDSCAPE)
-    fun `on a common phone on its side lap is still the big button`() = assertLapDominates()
+    fun `on a common phone on its side stop is still the same size as start`() = assertStopMatchesStart()
 
     @Test
     @Config(qualifiers = COMMON_PHONE_LANDSCAPE)
@@ -517,28 +517,28 @@ class TimingScreenTest {
 
     @Test
     @Config(qualifiers = BARELY_WIDE_ENOUGH)
-    fun `at the narrowest the column appears, lap is still the big button`() {
+    fun `at the narrowest the column appears, stop is still the same size as start`() {
         assertTrue(tileBounds().all { it.left >= startAll().getUnclippedBoundsInRoot().right })
-        assertLapDominates()
+        assertStopMatchesStart()
     }
 
     @Test
     @Config(qualifiers = BARELY_WIDE_ENOUGH_TALL)
-    fun `at the narrowest the column appears, lap is still the big button on a full-height tile`() {
+    fun `at the narrowest the column appears, stop is still the same size as start on a full-height tile`() {
         assertTrue(tileBounds().all { it.left >= startAll().getUnclippedBoundsInRoot().right })
-        assertLapDominates()
+        assertStopMatchesStart()
     }
 
     @Test
     @Config(qualifiers = JUST_TOO_NARROW)
-    fun `just too narrow for the column, the controls go above and lap is still the big button`() {
+    fun `just too narrow for the column, the controls go above and stop is still the same size as start`() {
         assertTrue(tileBounds().all { it.top >= startAll().getUnclippedBoundsInRoot().bottom })
-        assertLapDominates()
+        assertStopMatchesStart()
     }
 
     @Test
     @Config(qualifiers = OLDER_PHONE_LANDSCAPE)
-    fun `on an older phone on its side lap is still the big button`() = assertLapDominates()
+    fun `on an older phone on its side stop is still the same size as start`() = assertStopMatchesStart()
 
     @Test
     @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
@@ -1138,26 +1138,47 @@ class TimingScreenTest {
     }
 
     @Test
-    fun `lap is the big button and stop the small one beside it, in portrait`() = assertLapDominates()
+    fun `stop is the same size as start, beside it, in portrait`() = assertStopMatchesStart()
 
     @Test
     @Config(qualifiers = LANDSCAPE_PHONE)
-    fun `lap is the big button and stop the small one beside it, in landscape`() = assertLapDominates()
+    fun `stop is the same size as start, beside it, in landscape`() = assertStopMatchesStart()
 
     @Test
     @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
-    fun `lap is the big button and stop the small one beside it, on a small phone`() = assertLapDominates()
+    fun `stop is the same size as start, beside it, on a small phone`() = assertStopMatchesStart()
 
-    private fun assertLapDominates() {
+    @Test
+    fun `the two buttons stay the same size whatever they read`() {
+        press("Start")
+        advance(20.seconds)
+        press("Lap")
+        assertMatched(left = text("Stop").getUnclippedBoundsInRoot(), right = text("Lap").getUnclippedBoundsInRoot())
+
+        press("Stop")
+        advance(1.seconds)
+        assertMatched(left = text("Reset").getUnclippedBoundsInRoot(), right = text("Start").getUnclippedBoundsInRoot())
+
+        press("Reset")
+        assertMatched(left = text("Undo").getUnclippedBoundsInRoot(), right = text("Start").getUnclippedBoundsInRoot())
+    }
+
+    private fun assertStopMatchesStart() {
         for (tile in 1..4) {
-            val stop = text("Stop", tile).getUnclippedBoundsInRoot()
-            val start = text("Start", tile).getUnclippedBoundsInRoot()
-
-            assertTrue("widths ${stop.width} and ${start.width}", start.width.value >= 1.4f * stop.width.value)
-            assertTrue(start.height > stop.height)
-            assertTrue("a clear gap between them", start.left - stop.right >= 8.dp)
-            assertEquals("they stand on the same line", stop.bottom, start.bottom)
+            assertMatched(
+                left = text("Stop", tile).getUnclippedBoundsInRoot(),
+                right = text("Start", tile).getUnclippedBoundsInRoot(),
+            )
         }
+    }
+
+    /** A tile's two buttons: the same size, side by side on one line, with a gap between. */
+    private fun assertMatched(left: DpRect, right: DpRect) {
+        // An odd width cannot be halved exactly, so the two may differ by a pixel.
+        assertEquals("widths", right.width.value, left.width.value, 1f)
+        assertEquals("heights", right.height, left.height)
+        assertTrue("a clear gap between them", right.left - left.right >= 8.dp)
+        assertEquals("they stand on the same line", left.bottom, right.bottom)
     }
 
     @Test
@@ -1284,8 +1305,7 @@ class TimingScreenTest {
             for (label in listOf("Start", "Stop")) {
                 val bounds = text(label, tile).getUnclippedBoundsInRoot()
                 assertTrue("$label on $tile is ${bounds.width} wide", bounds.width >= 48.dp)
-                val height = if (label == "Start") 56.dp else 48.dp
-                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= height)
+                assertTrue("$label on $tile is ${bounds.height} high", bounds.height >= 56.dp)
             }
         }
     }
