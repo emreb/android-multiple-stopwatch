@@ -8,11 +8,11 @@ Full description
 See full-description.txt
 
 Release notes for 0.3.0
-History: when you reset a stopwatch, what it timed is kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
+History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
 Stop is now the same size as Start on every stopwatch.
 
 Release notes for 0.2.0
-History: when you reset a stopwatch, what it timed is kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
+History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
 
 Release notes for 0.1.0
 First release. Four stopwatches on one screen, each with its own laps, name and colour.

@@ -33,7 +33,7 @@ upload key is set, the bundle is unsigned and Play will refuse it.
 ## 1. Upload to internal testing first
 
 Internal testing puts the real, Play-signed app on your own phone within minutes and has
-no review wait. It is also the first time the release build will have been run at all.
+no review wait. It is where each new release build gets its first run.
 
 1. Play Console > your app > **Test and release** > **Testing** > **Internal testing**.
 2. **Testers** tab: create an email list with your own Google account on it, and save.
@@ -75,7 +75,7 @@ Privacy policy link, if you have not set one already:
 
 You have done these. For reference, what is true of the app:
 
-- **Data safety:** collects no data, shares no data. Nothing leaves the device.
+- **Data safety:** collects no data, shares no data. Nothing leaves the device unless the person shares a result themselves.
 - **Ads:** none.
 - **App access:** everything is available without sign-in.
 - **Target audience:** adults (parents and coaches), 18 and over. Declaring a children's
