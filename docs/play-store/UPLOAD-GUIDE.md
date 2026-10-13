@@ -8,7 +8,7 @@ of Play Console from time to time, so a label may differ slightly.
 
 | File | What it is for |
 |---|---|
-| `MultiLaps-0.2.0-release.aab` | The signed app bundle to upload (version code 2). Not in git: see "Building the bundle" |
+| `MultiLaps-0.3.0-release.aab` | The signed app bundle to upload (version code 3). Not in git: see "Building the bundle" |
 | `icon-512.png` | App icon, 512 x 512 |
 | `feature-graphic-1024x500.png` | Feature graphic |
 | `screenshots/` | Six phone screenshots, in upload order |
@@ -24,7 +24,7 @@ On a machine set up as SIGNING.md describes:
 
 ```
 ./gradlew bundleRelease
-cp app/build/outputs/bundle/release/app-release.aab docs/play-store/MultiLaps-0.2.0-release.aab
+cp app/build/outputs/bundle/release/app-release.aab docs/play-store/MultiLaps-0.3.0-release.aab
 ```
 
 Git ignores `*.aab`, so the copy stays out of the repository. If the build warns that no
@@ -40,8 +40,8 @@ no review wait. It is also the first time the release build will have been run a
 3. **Releases** tab > **Create new release**.
 4. If asked about app signing, accept **Play App Signing** (the default). Google then
    holds the real signing key, and the key on your Mac is only the upload key.
-5. Upload `MultiLaps-0.2.0-release.aab`.
-6. Release name: leave as offered. Release notes: paste the line from `listing-text.txt`.
+5. Upload `MultiLaps-0.3.0-release.aab`.
+6. Release name: leave as offered. Release notes: paste the notes for this version from `listing-text.txt`.
 7. **Next** > **Save and publish** (or **Start rollout to internal testing**).
 
 Then, on your Pixel 10:
@@ -111,6 +111,6 @@ Review usually takes a few days for a first release. Nothing is public until it 
 ## Decide before production
 
 - **Free or paid.** A free app can never be made paid later.
-- **Version name.** The bundle says 0.2.0. That is what users see. To launch as 1.0.0
+- **Version name.** The bundle says 0.3.0. That is what users see. To launch as 1.0.0
   instead, change `versionName` and rebuild before promoting to production.
 - **Package name.** `com.swetw.multilaps` is fixed for good from the first upload.
