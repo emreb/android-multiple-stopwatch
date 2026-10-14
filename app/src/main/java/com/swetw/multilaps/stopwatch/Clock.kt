@@ -11,6 +11,9 @@ interface Clock {
     /** Wall-clock time, which outlives a restart but can jump when the time is corrected. */
     fun wallNow(): Duration
 
-    /** How many times the device has booted; a change means [now] readings started over. */
+    /**
+     * How many times the device has booted; a change means [now] readings started over. 0 where
+     * the device does not say, as before Android 7.
+     */
     val bootCount: Int
 }

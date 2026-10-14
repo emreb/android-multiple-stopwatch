@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.ConfigurationCompat
 import com.swetw.multilaps.R
 import com.swetw.multilaps.stopwatch.formatTime
 import com.swetw.multilaps.theme.FigureStyles
@@ -95,7 +96,7 @@ fun HistoryScreen(
     // Held here, above the choice between list and result, so that coming back from a result
     // finds the list where it was left.
     val listState = rememberLazyListState()
-    val locale = LocalConfiguration.current.locales[0]
+    val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.getDefault()
     val title = stringResource(R.string.history_title)
 
     Surface(

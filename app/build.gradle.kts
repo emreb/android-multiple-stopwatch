@@ -10,10 +10,10 @@ android {
 
     defaultConfig {
         applicationId = "com.swetw.multilaps"
-        minSdk = 26
+        minSdk = 23
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.3.1"
+        versionCode = 5
+        versionName = "0.3.2"
     }
 
     // The upload key lives outside the repository. Its location and passwords come from Gradle
@@ -50,6 +50,8 @@ android {
     }
 
     compileOptions {
+        // java.time arrived in Android 8; desugaring brings it to the older phones History runs on.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -75,6 +77,7 @@ kotlin {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

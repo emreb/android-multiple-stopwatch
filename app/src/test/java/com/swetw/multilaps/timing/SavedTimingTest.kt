@@ -105,4 +105,29 @@ class SavedTimingTest {
         val away = 2.minutes + 5.minutes + 40.seconds
         assertEquals(30.seconds + away, restored.totalTime(clock.now()))
     }
+
+    @Test
+    fun `on a device that does not count its boots, a restart is recognised by when the device started`() {
+        val clock = FakeClock(bootCount = 0)
+        val running = Stopwatch().start(clock.now())
+        val saved = SavedTiming.of(listOf(running), clock)
+
+        clock.restart(downtime = 5.minutes, uptime = 2.hours, countsBoot = false)
+
+        val restored = saved.restoredAt(clock).single()
+        assertEquals(5.minutes + 2.hours, restored.totalTime(clock.now()))
+    }
+
+    @Test
+    fun `on a device that does not count its boots, a small correction to the wall clock does not disturb the time`() {
+        val clock = FakeClock(bootCount = 0)
+        val running = Stopwatch().start(clock.now())
+        val saved = SavedTiming.of(listOf(running), clock)
+
+        clock.advanceBy(10.minutes)
+        clock.adjustWallClockBy(-2.seconds)
+
+        assertEquals(running, saved.restoredAt(clock).single())
+        assertEquals(10.minutes, saved.restoredAt(clock).single().totalTime(clock.now()))
+    }
 }

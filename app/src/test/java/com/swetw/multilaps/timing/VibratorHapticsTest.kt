@@ -125,14 +125,34 @@ class VibratorHapticsTest {
 
     @Test
     @Config(sdk = [26])
-    fun `it vibrates on the oldest Android the app supports`() {
+    fun `on Android 8 it vibrates`() {
         haptics.play(Feedback.Stop)
 
         assertTrue(shadow.isVibrating)
     }
 
     @Test
-    @Config(sdk = [26])
+    @Config(sdk = [23])
+    fun `on the oldest Android the app supports every kind of feedback vibrates in the same rhythm`() {
+        val rhythms = mapOf(
+            Feedback.Lap to listOf(0L, 50),
+            Feedback.Start to listOf(0L, 80),
+            Feedback.Stop to listOf(0L, 60, 90, 60),
+            Feedback.Reset to listOf(0L, 200),
+            Feedback.Undo to listOf(0L, 50, 50, 50, 50, 50),
+        )
+        for ((feedback, rhythm) in rhythms) {
+            vibrator.cancel()
+            haptics.play(feedback)
+
+            assertTrue("$feedback", shadow.isVibrating)
+            assertEquals("$feedback", rhythm, shadow.pattern?.toList())
+            assertEquals("$feedback", -1, shadow.repeat)
+        }
+    }
+
+    @Test
+    @Config(sdk = [23])
     fun `the haptics the app is given reach the device's vibrator on older Android`() {
         VibratorHaptics.from(context).play(Feedback.Lap)
 

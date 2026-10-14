@@ -1,5 +1,6 @@
 package com.swetw.multilaps.stopwatch
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.os.SystemClock
 import android.provider.Settings
@@ -14,6 +15,8 @@ class DeviceClock(private val contentResolver: ContentResolver) : Clock {
 
     override fun wallNow(): Duration = System.currentTimeMillis().milliseconds
 
+    // Before Android 7 the setting is not kept, so this reads 0, which SavedTiming allows for.
+    @get:SuppressLint("InlinedApi")
     override val bootCount: Int
         get() = Settings.Global.getInt(contentResolver, Settings.Global.BOOT_COUNT, 0)
 }
