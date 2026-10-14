@@ -50,7 +50,7 @@ android {
     }
 
     compileOptions {
-        // java.time arrived in Android 8; desugaring brings it to the older phones History runs on.
+        // java.time arrived in Android 8; desugaring brings it to older phones.
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

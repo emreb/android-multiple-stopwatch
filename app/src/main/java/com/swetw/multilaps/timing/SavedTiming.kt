@@ -35,7 +35,9 @@ data class SavedTiming(
      * A reading from the future can only belong to an earlier boot, whatever the boot count says;
      * some devices do not report it. Where the count is not reported at all, as before Android 7,
      * the moment the device started tells boots apart: a restart moves it on by at least the time
-     * the device was off, while a correction to the wall clock moves it by a second or so.
+     * the device was off, while a correction to the wall clock moves it by a second or so. A
+     * correction of more than 10 seconds there is taken for a restart, and running stopwatches
+     * move with it.
      */
     private fun isFromThisBoot(clock: Clock): Boolean {
         val now = clock.now()
