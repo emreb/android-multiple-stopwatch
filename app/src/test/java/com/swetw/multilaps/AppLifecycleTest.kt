@@ -1,5 +1,7 @@
 package com.swetw.multilaps
 
+import android.content.Context
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.test.assertCountEquals
@@ -16,6 +18,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
 import com.swetw.multilaps.timing.StopwatchColour
@@ -43,6 +46,13 @@ class AppLifecycleTest {
 
     @Before
     fun setUp() {
+        // The test device moves its time since boot without its wall clock, so it must say which
+        // boot it is on, as a phone does from Android 7, for the stopwatches to stay in this boot.
+        Settings.Global.putInt(
+            ApplicationProvider.getApplicationContext<Context>().contentResolver,
+            Settings.Global.BOOT_COUNT,
+            1,
+        )
         composeRule.mainClock.autoAdvance = false
         scenario = ActivityScenario.launch(MainActivity::class.java)
     }

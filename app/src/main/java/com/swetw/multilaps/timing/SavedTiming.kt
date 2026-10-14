@@ -3,6 +3,7 @@ package com.swetw.multilaps.timing
 import com.swetw.multilaps.stopwatch.Clock
 import com.swetw.multilaps.stopwatch.Stopwatch
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The stopwatches as they stood at a press, with what is needed to make sense of their clock
@@ -32,12 +33,20 @@ data class SavedTiming(
 
     /**
      * A reading from the future can only belong to an earlier boot, whatever the boot count says;
-     * some devices do not report it.
+     * some devices do not report it. Where the count is not reported at all, as before Android 7,
+     * the moment the device started tells boots apart: a restart moves it on by at least the time
+     * the device was off, while a correction to the wall clock moves it by a second or so. A
+     * correction of more than 10 seconds there is taken for a restart, and running stopwatches
+     * move with it.
      */
     private fun isFromThisBoot(clock: Clock): Boolean {
         val now = clock.now()
-        return clock.bootCount == bootCount &&
-            stopwatches.none { stopwatch -> stopwatch.countingFrom?.let { it > now } ?: false }
+        val sameBoot = if (bootCount == UNKNOWN_BOOT_COUNT && clock.bootCount == UNKNOWN_BOOT_COUNT) {
+            (bootedAt - bootedAt(clock)).absoluteValue <= BOOT_MOMENT_TOLERANCE
+        } else {
+            clock.bootCount == bootCount
+        }
+        return sameBoot && stopwatches.none { stopwatch -> stopwatch.countingFrom?.let { it > now } ?: false }
     }
 
     companion object {
@@ -45,5 +54,8 @@ data class SavedTiming(
             SavedTiming(stopwatches, clock.bootCount, bootedAt(clock))
 
         private fun bootedAt(clock: Clock): Duration = clock.wallNow() - clock.now()
+
+        private const val UNKNOWN_BOOT_COUNT = 0
+        private val BOOT_MOMENT_TOLERANCE = 10.seconds
     }
 }

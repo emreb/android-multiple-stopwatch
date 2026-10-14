@@ -4,13 +4,17 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
-/** A clock the test moves by hand, on a device the test can restart. */
+/**
+ * A clock the test moves by hand, on a device the test can restart. A [bootCount] of 0 is a device
+ * that does not count its boots at all.
+ */
 class FakeClock(
     private var now: Duration = 1000.seconds,
     private var wallNow: Duration = 20_000.days,
+    bootCount: Int = 1,
 ) : Clock {
 
-    override var bootCount: Int = 1
+    override var bootCount: Int = bootCount
         private set
 
     override fun now(): Duration = now

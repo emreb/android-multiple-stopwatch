@@ -123,6 +123,17 @@ class HistoryScreenTest {
     }
 
     @Test
+    @Config(sdk = [23])
+    fun `on the oldest Android the app supports, results are listed under their days and open`() {
+        show()
+
+        headings()[0].assertTextEquals("Monday, October 12, 2026")
+        rows().assertCountEquals(3)
+        row("Ada").performClick()
+        lapRows().assertCountEquals(3)
+    }
+
+    @Test
     fun `a result is read out whole, with its time of day, total, laps and best lap`() {
         show()
 
