@@ -104,7 +104,9 @@ class StopwatchLapsTest {
             .stop(now = start + 20.seconds)
             .start(now = start + 60.seconds)
 
-        assertEquals(listOf(20.seconds + 300.milliseconds), resumed.lap(now = start + 60.seconds + 300.milliseconds).laps)
+        val lapped = resumed.lap(now = start + 60.seconds + 300.milliseconds)
+
+        assertEquals(listOf(20.seconds + 300.milliseconds), lapped.laps)
     }
 
     @Test

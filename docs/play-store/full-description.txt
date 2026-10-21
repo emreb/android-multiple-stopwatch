@@ -6,7 +6,7 @@ Everyone at once
 Four stopwatches, each a solid block of colour with the runner's name on it. Start each one when that runner sets off, or press Start all when they go together. Turn the phone on its side and they line up in a row.
 
 Made for the Lap press
-Lap and Stop are two big buttons at the foot of every stopwatch. Lap is solid and Stop is an outline, so you can tell them apart at a glance. Each press gives a short vibration, different for a lap and a stop, so you can keep your eyes on the track. A double press is ignored instead of recording a lap that never happened.
+Lap and Stop are two big buttons at the foot of every stopwatch. Lap is solid and Stop is an outline, so you can tell them apart at a glance. Each press gives a short vibration, different for a lap and a stop, so you can keep your eyes on the track.
 
 The numbers that matter
 Each stopwatch shows the lap in progress in large digits, with the last lap, best lap, total time and lap count beneath. Tap a name to see every lap, with the best one marked.
