@@ -13,7 +13,7 @@ interface Clock {
 
     /**
      * How many times the device has booted; a change means [now] readings started over. 0 where
-     * the device does not say, as before Android 7.
+     * the device does not say.
      */
     val bootCount: Int
 }

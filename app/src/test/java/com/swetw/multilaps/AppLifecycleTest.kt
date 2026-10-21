@@ -47,7 +47,7 @@ class AppLifecycleTest {
     @Before
     fun setUp() {
         // The test device moves its time since boot without its wall clock, so it must say which
-        // boot it is on, as a phone does from Android 7, for the stopwatches to stay in this boot.
+        // boot it is on, as a phone does, for the stopwatches to stay in this boot.
         Settings.Global.putInt(
             ApplicationProvider.getApplicationContext<Context>().contentResolver,
             Settings.Global.BOOT_COUNT,

@@ -36,7 +36,7 @@ class VibratorHaptics(private val vibrator: Vibrator?) : Haptics {
             @Suppress("DEPRECATION")
             vibrator.vibrate(effect(timings), ALARM)
         } else {
-            // Android 6 and 7 have no vibration effects, only patterns.
+            // Android 7 has no vibration effects, only patterns.
             @Suppress("DEPRECATION")
             vibrator.vibrate(timings, NO_REPEAT, ALARM)
         }
