@@ -225,7 +225,7 @@ class TimingViewModel(
 
     /**
      * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback];
-     * unless nothing actually changed, as when a lap press is ignored as a bounce.
+     * unless nothing actually changed, as when start all finds no idle stopwatch.
      */
     private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback) {
         val before = _stopwatches.value

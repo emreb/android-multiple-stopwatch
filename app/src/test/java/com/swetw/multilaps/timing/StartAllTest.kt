@@ -136,21 +136,16 @@ class StartAllTest {
     }
 
     @Test
-    fun `a lap press within a second of start all is taken for a bounce`() {
+    fun `a lap press straight after start all is recorded, saved and felt`() {
         viewModel.onStartAllPressed()
-        val started = stopwatches
         val saves = store.saveCount
         felt.clear()
-        clock.advanceBy(999.milliseconds)
+        clock.advanceBy(300.milliseconds)
         viewModel.onStartPressed(1)
 
-        assertEquals(started, stopwatches)
-        assertEquals(saves, store.saveCount)
-        assertEquals(emptyList<Feedback>(), felt)
-
-        clock.advanceBy(1.milliseconds)
-        viewModel.onStartPressed(1)
-        assertEquals(listOf(1.seconds), stopwatches[1].laps)
+        assertEquals(listOf(300.milliseconds), stopwatches[1].laps)
+        assertEquals(saves + 1, store.saveCount)
+        assertEquals(listOf(Feedback.Lap), felt)
     }
 
     @Test

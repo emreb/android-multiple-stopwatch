@@ -66,12 +66,14 @@ class PressFeedbackTest {
     }
 
     @Test
-    fun `a lap press taken for a bounce is not felt`() {
+    fun `every lap press is felt, however soon after the last`() {
         viewModel.onStartPressed(0)
         clock.advanceBy(300.milliseconds)
         viewModel.onStartPressed(0)
+        clock.advanceBy(100.milliseconds)
+        viewModel.onStartPressed(0)
 
-        assertEquals(listOf(Feedback.Start), felt)
+        assertEquals(listOf(Feedback.Start, Feedback.Lap, Feedback.Lap), felt)
     }
 
     @Test
