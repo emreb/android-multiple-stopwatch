@@ -84,35 +84,34 @@ class StopwatchLapsTest {
     }
 
     @Test
-    fun `a lap press within a second of the previous lap press is ignored`() {
-        val lapped = running.lap(now = start + 30.seconds)
-
-        assertEquals(lapped, lapped.lap(now = start + 30.seconds + 200.milliseconds))
-        assertEquals(lapped, lapped.lap(now = start + 30.seconds + 999.milliseconds))
-    }
-
-    @Test
-    fun `a lap press a full second after the previous one counts`() {
+    fun `a lap press straight after the previous one counts`() {
         val stopwatch = running
             .lap(now = start + 30.seconds)
-            .lap(now = start + 31.seconds)
+            .lap(now = start + 30.seconds + 200.milliseconds)
 
-        assertEquals(listOf(30.seconds, 1.seconds), stopwatch.laps)
+        assertEquals(listOf(30.seconds, 200.milliseconds), stopwatch.laps)
+        assertEquals(200.milliseconds, stopwatch.bestLap)
     }
 
     @Test
-    fun `a lap press within a second of starting is ignored`() {
-        assertEquals(running, running.lap(now = start + 300.milliseconds))
+    fun `a lap press straight after starting counts`() {
+        assertEquals(listOf(300.milliseconds), running.lap(now = start + 300.milliseconds).laps)
     }
 
     @Test
-    fun `a lap press within a second of resuming is ignored`() {
+    fun `a lap press straight after resuming counts`() {
         val resumed = running
             .stop(now = start + 20.seconds)
             .start(now = start + 60.seconds)
 
-        assertEquals(resumed, resumed.lap(now = start + 60.seconds + 300.milliseconds))
-        assertEquals(1, resumed.lap(now = start + 61.seconds).lapCount)
+        val lapped = resumed.lap(now = start + 60.seconds + 300.milliseconds)
+
+        assertEquals(listOf(20.seconds + 300.milliseconds), lapped.laps)
+    }
+
+    @Test
+    fun `a lap pressed at the same instant as the start counts as a lap of no time`() {
+        assertEquals(listOf(Duration.ZERO), running.lap(now = start).laps)
     }
 
     @Test

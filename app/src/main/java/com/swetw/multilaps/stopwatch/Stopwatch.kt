@@ -1,7 +1,6 @@
 package com.swetw.multilaps.stopwatch
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 enum class StopwatchState { Idle, Running, Stopped }
 
@@ -46,12 +45,9 @@ data class Stopwatch(
             copy(state = StopwatchState.Running, countingFrom = now)
     }
 
-    /**
-     * Completes the current lap. A press sooner than [MIN_LAP_INTERVAL] after the press that
-     * started, resumed or last lapped the stopwatch is taken for a bounce and ignored.
-     */
+    /** Completes the current lap. Every press counts, however soon after the last. */
     fun lap(now: Duration): Stopwatch {
-        if (countingFrom == null || now - countingFrom < MIN_LAP_INTERVAL) return this
+        if (countingFrom == null) return this
         return copy(laps = laps + currentLap(now), accumulated = totalTime(now), countingFrom = now)
     }
 
@@ -78,8 +74,4 @@ data class Stopwatch(
         accumulated + (countingFrom?.let { now - it } ?: Duration.ZERO)
 
     fun currentLap(now: Duration): Duration = totalTime(now) - completedLapsTime
-
-    companion object {
-        val MIN_LAP_INTERVAL: Duration = 1.seconds
-    }
 }
