@@ -123,7 +123,7 @@ class HistoryScreenTest {
     }
 
     @Test
-    @Config(sdk = [23])
+    @Config(sdk = [24])
     fun `on the oldest Android the app supports, results are listed under their days and open`() {
         show()
 

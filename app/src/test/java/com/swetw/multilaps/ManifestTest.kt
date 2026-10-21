@@ -32,6 +32,11 @@ class ManifestTest {
     }
 
     @Test
+    fun `the app runs on Android 7_0 and later, the oldest Play automatic protection allows`() {
+        assertEquals(24, context.applicationInfo.minSdkVersion)
+    }
+
+    @Test
     fun `the app has a launcher icon of its own`() {
         assertTrue(context.applicationInfo.icon != 0)
     }

@@ -19,7 +19,7 @@ class AppIconTest {
     private fun icon() = ContextCompat.getDrawable(context, R.mipmap.ic_launcher)
 
     @Test
-    @Config(sdk = [23])
+    @Config(sdk = [24])
     fun `phones older than Android 8 get a picture of the icon, as they cannot shape one`() {
         assertTrue("${icon()}", icon() is BitmapDrawable)
     }

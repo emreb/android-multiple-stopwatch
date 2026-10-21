@@ -132,7 +132,7 @@ class VibratorHapticsTest {
     }
 
     @Test
-    @Config(sdk = [23])
+    @Config(sdk = [24])
     fun `on the oldest Android the app supports every kind of feedback vibrates in the same rhythm`() {
         val rhythms = mapOf(
             Feedback.Lap to listOf(0L, 50),
@@ -152,7 +152,7 @@ class VibratorHapticsTest {
     }
 
     @Test
-    @Config(sdk = [23])
+    @Config(sdk = [24])
     fun `the haptics the app is given reach the device's vibrator on older Android`() {
         VibratorHaptics.from(context).play(Feedback.Lap)
 
