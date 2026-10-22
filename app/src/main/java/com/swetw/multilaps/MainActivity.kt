@@ -15,9 +15,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val ratingPrompt = PlayRatingPrompt(this)
         setContent {
             MultiLapsTheme {
-                TimingScreen(viewModel(factory = TimingViewModel.Factory), PlayRatingPrompt(this))
+                TimingScreen(viewModel(factory = TimingViewModel.Factory), ratingPrompt)
             }
         }
     }

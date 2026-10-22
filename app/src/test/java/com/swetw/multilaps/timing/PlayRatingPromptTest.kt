@@ -4,10 +4,10 @@ import android.app.Activity
 import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.android.gms.tasks.Task
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.testing.FakeReviewManager
-import com.google.android.gms.tasks.Task
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,7 +39,7 @@ class PlayRatingPromptTest {
     fun `when Play answers, its rating card is put up once`() {
         val play = CountingReviewManager(activity)
 
-        PlayRatingPrompt(activity, play).show()
+        PlayRatingPrompt(activity, play).show(stillWanted = { true })
         answers()
 
         assertEquals(1, play.launches)
@@ -49,7 +49,7 @@ class PlayRatingPromptTest {
     fun `nothing is put up over a screen that has gone by the time Play answers`() {
         val play = CountingReviewManager(activity)
 
-        PlayRatingPrompt(activity, play).show()
+        PlayRatingPrompt(activity, play).show(stillWanted = { true })
         controller.pause().stop().destroy()
         answers()
 
@@ -57,8 +57,31 @@ class PlayRatingPromptTest {
     }
 
     @Test
+    fun `nothing is put up if, by the time Play answers, it is no longer wanted`() {
+        val play = CountingReviewManager(activity)
+        var wanted = true
+
+        PlayRatingPrompt(activity, play).show(stillWanted = { wanted })
+        wanted = false
+        answers()
+
+        assertEquals(0, play.launches)
+    }
+
+    @Test
+    fun `nothing is put up over a screen sent to the background before Play answers`() {
+        val play = CountingReviewManager(activity)
+
+        PlayRatingPrompt(activity, play).show(stillWanted = { true })
+        controller.pause().stop()
+        answers()
+
+        assertEquals(0, play.launches)
+    }
+
+    @Test
     fun `without Play on the phone, asking does nothing and breaks nothing`() {
-        PlayRatingPrompt(activity).show()
+        PlayRatingPrompt(activity).show(stillWanted = { true })
         answers()
 
         assertEquals(null, shadowOf(activity).nextStartedActivity)

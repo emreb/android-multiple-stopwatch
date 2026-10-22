@@ -14,8 +14,8 @@ interface RatingStore {
 /**
  * When to ask for a rating on Google Play: on leaving History with no stopwatch running, once
  * [WAIT] has passed since the app was installed at [installedAt] (wall-clock time since the epoch),
- * and only once per install. Once it has said yes it never does again, whether or not Google then
- * shows its prompt.
+ * and only once per install, unless the app's data is cleared. Once it has said yes it never does
+ * again, whether or not Google then shows its prompt.
  */
 class RatingAsk(private val installedAt: Duration, private val store: RatingStore) {
 

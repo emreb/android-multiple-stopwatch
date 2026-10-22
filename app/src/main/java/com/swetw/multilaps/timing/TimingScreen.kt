@@ -95,7 +95,7 @@ fun TimingScreen(viewModel: TimingViewModel, ratingPrompt: RatingPrompt = Rating
             onAllResultsDeleted = viewModel::onAllResultsDeleted,
             onBack = {
                 showingHistory = false
-                if (viewModel.onHistoryLeft()) ratingPrompt.show()
+                if (viewModel.onHistoryLeft()) ratingPrompt.show(stillWanted = { !viewModel.isAnyRunning() })
             },
         )
         return

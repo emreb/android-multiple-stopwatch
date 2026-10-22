@@ -1,6 +1,8 @@
 package com.swetw.multilaps.timing
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -59,10 +61,10 @@ class TimingViewModel(
     private var lastResultId = 0L
 
     /** Whether to ask for a rating now that History has been left; see [RatingAsk]. */
-    fun onHistoryLeft(): Boolean {
-        val anyRunning = _stopwatches.value.any { it.state == StopwatchState.Running }
-        return ratingAsk.tryAsk(clock.wallNow(), anyRunning)
-    }
+    fun onHistoryLeft(): Boolean = ratingAsk.tryAsk(clock.wallNow(), isAnyRunning())
+
+    /** Whether any stopwatch is running right now. */
+    fun isAnyRunning(): Boolean = _stopwatches.value.any { it.state == StopwatchState.Running }
 
     /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed(index: Int) {
@@ -282,8 +284,7 @@ class TimingViewModel(
                     ),
                     haptics = VibratorHaptics.from(application),
                     ratingAsk = RatingAsk(
-                        installedAt = application.packageManager
-                            .getPackageInfo(application.packageName, 0).firstInstallTime.milliseconds,
+                        installedAt = installedAt(application),
                         store = PreferencesRatingStore(
                             application.getSharedPreferences(PreferencesRatingStore.FILE_NAME, Context.MODE_PRIVATE),
                         ),
@@ -292,6 +293,18 @@ class TimingViewModel(
             }
         }
     }
+}
+
+/** When the app was first installed on this phone, by the wall clock; updates leave it as it was. */
+private fun installedAt(context: Context): Duration {
+    val packages = context.packageManager
+    val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        packages.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+    } else {
+        @Suppress("DEPRECATION")
+        packages.getPackageInfo(context.packageName, 0)
+    }
+    return info.firstInstallTime.milliseconds
 }
 
 /** Whether there is any stopwatch for start all to set off. */

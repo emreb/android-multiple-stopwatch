@@ -36,6 +36,7 @@ class RatingFromHistoryTest {
         ratingAsk = RatingAsk(installedAt, ratingStore),
     )
     private var prompts = 0
+    private var lastStillWanted: () -> Boolean = { false }
     private lateinit var backDispatcher: OnBackPressedDispatcher
 
     @Before
@@ -43,7 +44,13 @@ class RatingFromHistoryTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current!!.onBackPressedDispatcher
-            MultiLapsTheme { TimingScreen(viewModel, ratingPrompt = { prompts++ }) }
+            MultiLapsTheme { TimingScreen(
+                    viewModel,
+                    ratingPrompt = { stillWanted ->
+                        lastStillWanted = stillWanted
+                        if (stillWanted()) prompts++
+                    },
+                ) }
         }
     }
 
@@ -105,6 +112,17 @@ class RatingFromHistoryTest {
         leaveByBackButton()
 
         assertEquals(0, prompts)
+    }
+
+    @Test
+    fun `a stopwatch started after leaving History, before the card is up, keeps it away`() {
+        clock.advanceBy(10.days)
+        openHistory()
+        leaveByBackButton()
+
+        assertEquals(true, lastStillWanted())
+        composeRule.runOnUiThread { viewModel.onStartPressed(0) }
+        assertEquals(false, lastStillWanted())
     }
 
     @Test

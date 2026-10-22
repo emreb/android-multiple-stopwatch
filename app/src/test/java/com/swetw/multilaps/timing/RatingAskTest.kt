@@ -50,6 +50,12 @@ class RatingAskTest {
         ask.tryAsk(wallNow = installedAt + 20.days, anyRunning = true)
 
         assertFalse(store.asked)
+        assertTrue(ask.tryAsk(wallNow = installedAt + 20.days, anyRunning = false))
+    }
+
+    @Test
+    fun `a clock set back before the install does not ask`() {
+        assertFalse(ask.tryAsk(wallNow = installedAt - 30.days, anyRunning = false))
     }
 
     @Test
