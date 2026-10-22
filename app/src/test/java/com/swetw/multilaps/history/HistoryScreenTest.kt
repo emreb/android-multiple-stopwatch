@@ -244,8 +244,9 @@ class HistoryScreenTest {
         composeRule.onNodeWithTag("share-result").performClick()
 
         val text = sharedText()
-        assertEquals(shareText(listOf(ada), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources), text)
+        assertEquals(shareText(listOf(ada), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources, "com.swetw.multilaps"), text)
         assertTrue("Lap 3: 1:25.00" in text)
+        assertTrue(text.endsWith("Timed with MultiLaps: https://play.google.com/store/apps/details?id=com.swetw.multilaps"))
         assertFalse("Leo" in text)
         assertFalse("Mia" in text)
     }
@@ -466,7 +467,7 @@ class HistoryScreenTest {
 
         val text = sharedText()
         assertEquals(
-            shareText(listOf(ada, mia), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources),
+            shareText(listOf(ada, mia), lisbon, java.util.Locale.US, RuntimeEnvironment.getApplication().resources, "com.swetw.multilaps"),
             text,
         )
         assertTrue("Ada" in text && "Mia" in text)

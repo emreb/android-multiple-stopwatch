@@ -94,4 +94,6 @@
     <string name="share_result_summary">Total %1$s, %2$s, best %3$s</string>
     <!-- One lap in shared text: number, then time. -->
     <string name="share_lap">Lap %1$d: %2$s</string>
+    <!-- The last line of shared text. The placeholder is the app's page on Google Play. -->
+    <string name="share_footer">Timed with MultiLaps: %1$s</string>
 </resources>
