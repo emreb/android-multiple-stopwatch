@@ -31,7 +31,7 @@ class ShareTextTest {
     }
 
     @Test
-    fun `the link is to the app sharing, by its application identifier`() {
+    fun `the link is found by the application identifier of the app that shares`() {
         val text = shareText(listOf(result(1, "2026-10-12T16:42", lisbon)), lisbon, Locale.UK, resources, "org.example.laps")
 
         assertTrue(text, text.endsWith("https://play.google.com/store/apps/details?id=org.example.laps"))
