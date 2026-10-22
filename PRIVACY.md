@@ -6,12 +6,13 @@ MultiLaps is a stopwatch app for timing up to four runners at once. This policy 
 
 ## What the app stores
 
-MultiLaps keeps four things, and only on your device:
+MultiLaps keeps five things, and only on your device:
 
 - The names you give the stopwatches.
 - The colours you choose for them.
 - The current timing: whether each stopwatch is running, and its lap times. Alongside it the app notes when your device was last switched on, which is how a running stopwatch keeps the right time after a restart.
 - Your history: each time you reset a stopwatch that has laps, its name, colour, lap times and total time are kept as a result, with the date and time of the reset.
+- Whether it has already asked Google Play to show its rating card, so that it asks only once (see Rating below).
 
 This is kept so that your stopwatches are still there when you reopen the app, and so that you can look back at earlier times.
 
@@ -20,6 +21,10 @@ Resetting a stopwatch clears its timing and lap times from the stopwatch, and ke
 ## Sharing
 
 Each result in History has a Share button, and you can also select several results in the list and share those together. Pressing Share hands the results you chose, as plain text ending with a link to MultiLaps on Google Play, to the app you then pick from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
+
+## Rating
+
+Once per install (or once again after you clear the app's data), when you leave History at least ten days after installing MultiLaps and no stopwatch is running, the app asks Google Play to show its rating card. The card is Google Play's own: Google Play decides whether to show it, and any rating or review you give there goes to Google Play under its terms. MultiLaps sends nothing with the request and never learns whether you rated it.
 
 ## What the app does not do
 

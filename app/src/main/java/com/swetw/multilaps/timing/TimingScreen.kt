@@ -75,7 +75,7 @@ private val MIN_TILE_WIDTH_BESIDE_CONTROLS = 144.dp
  * column, because a second would take too much width from the tiles.
  */
 @Composable
-fun TimingScreen(viewModel: TimingViewModel) {
+fun TimingScreen(viewModel: TimingViewModel, ratingPrompt: RatingPrompt = RatingPrompt.None) {
     val stopwatches by viewModel.stopwatches.collectAsStateWithLifecycle()
     val labels by viewModel.labels.collectAsStateWithLifecycle()
     val undoOffer by viewModel.undoOffer.collectAsStateWithLifecycle()
@@ -93,7 +93,10 @@ fun TimingScreen(viewModel: TimingViewModel) {
             results = results,
             onResultDeleted = viewModel::onResultDeleted,
             onAllResultsDeleted = viewModel::onAllResultsDeleted,
-            onBack = { showingHistory = false },
+            onBack = {
+                showingHistory = false
+                if (viewModel.onHistoryLeft()) ratingPrompt.show(stillWanted = { !viewModel.isAnyRunning() })
+            },
         )
         return
     }

@@ -1,6 +1,8 @@
 package com.swetw.multilaps.timing
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class TimingViewModel(
@@ -25,6 +28,7 @@ class TimingViewModel(
     private val labelStore: LabelStore,
     private val historyStore: HistoryStore,
     private val haptics: Haptics = Haptics.None,
+    private val ratingAsk: RatingAsk = RatingAsk.Never,
 ) : ViewModel() {
 
     private val _stopwatches = MutableStateFlow(restored())
@@ -55,6 +59,12 @@ class TimingViewModel(
 
     /** The highest identifier given out in this run of the app, so one is not given out twice. */
     private var lastResultId = 0L
+
+    /** Whether to ask for a rating now that History has been left; see [RatingAsk]. */
+    fun onHistoryLeft(): Boolean = ratingAsk.tryAsk(clock.wallNow(), isAnyRunning())
+
+    /** Whether any stopwatch is running right now. */
+    fun isAnyRunning(): Boolean = _stopwatches.value.any { it.state == StopwatchState.Running }
 
     /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed(index: Int) {
@@ -273,10 +283,28 @@ class TimingViewModel(
                         application.getSharedPreferences(PreferencesHistoryStore.FILE_NAME, Context.MODE_PRIVATE),
                     ),
                     haptics = VibratorHaptics.from(application),
+                    ratingAsk = RatingAsk(
+                        installedAt = installedAt(application),
+                        store = PreferencesRatingStore(
+                            application.getSharedPreferences(PreferencesRatingStore.FILE_NAME, Context.MODE_PRIVATE),
+                        ),
+                    ),
                 )
             }
         }
     }
+}
+
+/** When the app was first installed on this phone, by the wall clock; updates leave it as it was. */
+private fun installedAt(context: Context): Duration {
+    val packages = context.packageManager
+    val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        packages.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+    } else {
+        @Suppress("DEPRECATION")
+        packages.getPackageInfo(context.packageName, 0)
+    }
+    return info.firstInstallTime.milliseconds
 }
 
 /** Whether there is any stopwatch for start all to set off. */
