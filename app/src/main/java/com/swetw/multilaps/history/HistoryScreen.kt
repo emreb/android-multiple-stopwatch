@@ -167,7 +167,7 @@ private fun ResultList(
             action = R.string.action_share,
             actionEnabled = true,
             onAction = {
-                context.share(shareText(selected, zone, locale, context.resources))
+                context.share(shareText(selected, zone, locale, context.resources, context.packageName))
                 selectedIds = emptySet()
             },
             actionTag = "share-selected",
@@ -441,7 +441,7 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 label = R.string.action_share,
                 enabled = true,
                 outlined = true,
-                onClick = { context.share(shareText(listOf(result), zone, locale, context.resources)) },
+                onClick = { context.share(shareText(listOf(result), zone, locale, context.resources, context.packageName)) },
                 modifier = Modifier.testTag("share-result"),
             )
         }

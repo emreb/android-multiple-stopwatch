@@ -10,6 +10,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
+private const val PLAY_STORE_PAGE = "https://play.google.com/store/apps/details?id="
+
 /** A date written out in full, such as "Monday, 12 October 2026" in British English. */
 fun formatDate(date: LocalDate, locale: Locale): String =
     DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale).format(date)
@@ -21,12 +23,16 @@ fun formatTimeOfDay(time: ZonedDateTime, locale: Locale): String =
 /**
  * Results as plain text to hand to another app. Each day's come under its date: whose each was
  * and when, its figures, and every lap in the order the laps were run. Days come in the order they are first met.
+ * The text ends with a link to the app on Google Play, found by its [applicationId].
  */
-fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Resources): String =
-    results.byDay(zone).joinToString("\n\n") { day ->
+fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Resources, applicationId: String): String {
+    val days = results.byDay(zone).map { day ->
         val title = resources.getString(R.string.share_title, formatDate(day.date, locale))
         (listOf(title) + day.results.map { shareText(it, zone, locale, resources) }).joinToString("\n\n")
     }
+    val footer = resources.getString(R.string.share_footer, "$PLAY_STORE_PAGE$applicationId")
+    return (days + footer).joinToString("\n\n")
+}
 
 private fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
     val heading = resources.getString(

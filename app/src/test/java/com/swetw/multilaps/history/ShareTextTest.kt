@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.time.ZoneId
@@ -14,6 +15,27 @@ class ShareTextTest {
 
     private val resources = ApplicationProvider.getApplicationContext<Context>().resources
     private val lisbon = ZoneId.of("Europe/Lisbon")
+
+    @Test
+    fun `whatever is shared ends with one line linking to the app on Google Play`() {
+        val oneDay = listOf(result(1, "2026-10-12T16:42", lisbon), result(2, "2026-10-12T16:40", lisbon))
+        val twoDays = oneDay + result(3, "2026-10-10T09:05", lisbon)
+        val footer = "Timed with MultiLaps: https://play.google.com/store/apps/details?id=com.swetw.multilaps"
+
+        for (results in listOf(oneDay.take(1), oneDay, twoDays)) {
+            val text = shareText(results, lisbon, Locale.UK, resources, APP)
+
+            assertTrue(text, text.endsWith("\n\n$footer"))
+            assertEquals(text, 1, text.lines().count { "Timed with" in it })
+        }
+    }
+
+    @Test
+    fun `the link is found by the application identifier of the app that shares`() {
+        val text = shareText(listOf(result(1, "2026-10-12T16:42", lisbon)), lisbon, Locale.UK, resources, "org.example.laps")
+
+        assertTrue(text, text.endsWith("https://play.google.com/store/apps/details?id=org.example.laps"))
+    }
 
     @Test
     fun `a result is shared as its date, its name and time of day, its figures and every lap in order`() {
@@ -28,8 +50,10 @@ class ShareTextTest {
             Lap 1: 1:23.00
             Lap 2: 1:22.00
             Lap 3: 1:25.00
+
+            Timed with MultiLaps: https://play.google.com/store/apps/details?id=com.swetw.multilaps
             """.trimIndent(),
-            shareText(listOf(ada), lisbon, Locale.UK, resources),
+            shareText(listOf(ada), lisbon, Locale.UK, resources, APP),
         )
     }
 
@@ -56,8 +80,10 @@ class ShareTextTest {
             Mia, 09:05
             Total 1:15.00, 1 lap, best 1:15.00
             Lap 1: 1:15.00
+
+            Timed with MultiLaps: https://play.google.com/store/apps/details?id=com.swetw.multilaps
             """.trimIndent(),
-            shareText(listOf(ada, leo, mia), lisbon, Locale.UK, resources),
+            shareText(listOf(ada, leo, mia), lisbon, Locale.UK, resources, APP),
         )
     }
 
@@ -67,15 +93,19 @@ class ShareTextTest {
 
         assertEquals(
             listOf("Leo, 16:40", "Total 1:02:05.00, 1 lap, best 1:02:05.00", "Lap 1: 1:02:05.00"),
-            shareText(listOf(leo), lisbon, Locale.UK, resources).lines().drop(2),
+            shareText(listOf(leo), lisbon, Locale.UK, resources, APP).lines().drop(2).take(3),
         )
     }
 
     @Test
     fun `dates and times of day are written the way the phone's language writes them`() {
-        val american = shareText(listOf(result(1, "2026-10-12T16:42", lisbon)), lisbon, Locale.US, resources)
+        val american = shareText(listOf(result(1, "2026-10-12T16:42", lisbon)), lisbon, Locale.US, resources, APP)
 
         assertEquals("MultiLaps, Monday, October 12, 2026", american.lines().first())
         assertEquals("1, 4:42 PM", american.lines()[2].replace('\u202f', ' '))
+    }
+
+    private companion object {
+        const val APP = "com.swetw.multilaps"
     }
 }
