@@ -10,6 +10,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
+private const val PLAY_STORE_PAGE = "https://play.google.com/store/apps/details?id="
+
 /** A date written out in full, such as "Monday, 12 October 2026" in British English. */
 fun formatDate(date: LocalDate, locale: Locale): String =
     DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale).format(date)
@@ -31,8 +33,6 @@ fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Re
     val footer = resources.getString(R.string.share_footer, "$PLAY_STORE_PAGE$applicationId")
     return (days + footer).joinToString("\n\n")
 }
-
-private const val PLAY_STORE_PAGE = "https://play.google.com/store/apps/details?id="
 
 private fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
     val heading = resources.getString(

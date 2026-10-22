@@ -1,6 +1,6 @@
 # MultiLaps privacy policy
 
-Last updated: 12 October 2026
+Last updated: 22 October 2026
 
 MultiLaps is a stopwatch app for timing up to four runners at once. This policy explains what the app does with information. The short version: it collects nothing and sends nothing anywhere.
 
@@ -19,7 +19,7 @@ Resetting a stopwatch clears its timing and lap times from the stopwatch, and ke
 
 ## Sharing
 
-Each result in History has a Share button, and you can also select several results in the list and share those together. Pressing Share hands the results you chose, as plain text, to the app you then pick from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
+Each result in History has a Share button, and you can also select several results in the list and share those together. Pressing Share hands the results you chose, as plain text ending with a link to MultiLaps on Google Play, to the app you then pick from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
 
 ## What the app does not do
 
