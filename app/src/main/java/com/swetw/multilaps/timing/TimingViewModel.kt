@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class TimingViewModel(
@@ -25,6 +26,7 @@ class TimingViewModel(
     private val labelStore: LabelStore,
     private val historyStore: HistoryStore,
     private val haptics: Haptics = Haptics.None,
+    private val ratingAsk: RatingAsk = RatingAsk.Never,
 ) : ViewModel() {
 
     private val _stopwatches = MutableStateFlow(restored())
@@ -55,6 +57,12 @@ class TimingViewModel(
 
     /** The highest identifier given out in this run of the app, so one is not given out twice. */
     private var lastResultId = 0L
+
+    /** Whether to ask for a rating now that History has been left; see [RatingAsk]. */
+    fun onHistoryLeft(): Boolean {
+        val anyRunning = _stopwatches.value.any { it.state == StopwatchState.Running }
+        return ratingAsk.tryAsk(clock.wallNow(), anyRunning)
+    }
 
     /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed(index: Int) {
@@ -273,6 +281,13 @@ class TimingViewModel(
                         application.getSharedPreferences(PreferencesHistoryStore.FILE_NAME, Context.MODE_PRIVATE),
                     ),
                     haptics = VibratorHaptics.from(application),
+                    ratingAsk = RatingAsk(
+                        installedAt = application.packageManager
+                            .getPackageInfo(application.packageName, 0).firstInstallTime.milliseconds,
+                        store = PreferencesRatingStore(
+                            application.getSharedPreferences(PreferencesRatingStore.FILE_NAME, Context.MODE_PRIVATE),
+                        ),
+                    ),
                 )
             }
         }

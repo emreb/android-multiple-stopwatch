@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Timing is tied to this device's clock, and the privacy policy promises that nothing kept by the
-     app leaves the device, so neither it, the labels nor the history is backed up or copied to a
-     new device. All three are kept in shared preferences. -->
+     app leaves the device, so neither it, the labels, the history nor whether a rating has been
+     asked for is backed up or copied to a new device. All of them are kept in shared preferences. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="." />

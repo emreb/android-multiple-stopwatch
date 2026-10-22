@@ -21,6 +21,10 @@ Resetting a stopwatch clears its timing and lap times from the stopwatch, and ke
 
 Each result in History has a Share button, and you can also select several results in the list and share those together. Pressing Share hands the results you chose, as plain text ending with a link to MultiLaps on Google Play, to the app you then pick from your phone's share sheet, such as a messaging app. MultiLaps does this only when you press Share, and sends nothing itself. What the app you choose does with the text is up to that app.
 
+## Rating
+
+Once per install, when you leave History at least ten days after installing MultiLaps and no stopwatch is running, the app asks Google Play to show its rating card. The card is Google Play's own: Google Play decides whether to show it, and any rating or review you give there goes to Google Play under its terms. MultiLaps sends nothing with the request and never learns whether you rated it.
+
 ## What the app does not do
 
 - It does not collect personal information.

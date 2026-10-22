@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.swetw.multilaps.theme.MultiLapsTheme
+import com.swetw.multilaps.timing.PlayRatingPrompt
 import com.swetw.multilaps.timing.TimingScreen
 import com.swetw.multilaps.timing.TimingViewModel
 
@@ -16,7 +17,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MultiLapsTheme {
-                TimingScreen(viewModel(factory = TimingViewModel.Factory))
+                TimingScreen(viewModel(factory = TimingViewModel.Factory), PlayRatingPrompt(this))
             }
         }
     }
