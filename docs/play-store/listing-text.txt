@@ -1,11 +1,18 @@
 App name (28 of 30 characters)
 MultiLaps: 4 Lap Stopwatches
 
-Short description (76 of 80 characters)
-Time four runners at once. Big lap buttons, best laps, results kept, no ads.
+Short description (74 of 80 characters)
+A lap stopwatch for each of four runners. Best laps, results kept, no ads.
 
 Full description
 See full-description.txt
+
+Release notes for 0.3.4
+History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
+Stop is now the same size as Start on every stopwatch.
+The app is now a much smaller download, and runs on Android 7.0 and later.
+Every press on Lap now counts, however soon after the last.
+Shared results end with a link to MultiLaps on Google Play.
 
 Release notes for 0.3.3
 History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
