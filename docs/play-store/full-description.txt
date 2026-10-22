@@ -1,12 +1,14 @@
 Two kids on the track and one stopwatch on your phone. You time one of them properly and guess the other.
 
-MultiLaps puts four stopwatches on one screen, so every runner gets their own.
+MultiLaps puts four stopwatches on one screen, so every runner gets their own track stopwatch. It is a multiple stopwatch for anyone timing more than one runner: a parent at the club track, a coach with a small group doing repeats, or whoever has been made sports day timer.
+
+You may have looked for a lap timer, a coach stopwatch or a split timer for runners. It counts up, not down, so here it is called a stopwatch.
 
 Everyone at once
 Four stopwatches, each a solid block of colour with the runner's name on it. Start each one when that runner sets off, or press Start all when they go together. Turn the phone on its side and they line up in a row.
 
 Made for the Lap press
-Lap and Stop are two big buttons at the foot of every stopwatch. Lap is solid and Stop is an outline, so you can tell them apart at a glance. Each press gives a short vibration, different for a lap and a stop, so you can keep your eyes on the track.
+Each one is a lap stopwatch first. Lap and Stop are two big buttons at the foot of every stopwatch. Lap is solid and Stop is an outline, so you can tell them apart at a glance. Each press gives a short vibration, different for a lap and a stop, so you can keep your eyes on the track.
 
 The numbers that matter
 Each stopwatch shows the lap in progress in large digits, with the last lap, best lap, total time and lap count beneath. Tap a name to see every lap, with the best one marked.
