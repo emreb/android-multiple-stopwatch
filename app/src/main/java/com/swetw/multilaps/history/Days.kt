@@ -6,7 +6,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.time.Duration
 
-/** The results reset on one calendar day. */
+/** The results placed on one calendar day: started on it, or reset on it where no start time was kept. */
 data class Day(val date: LocalDate, val results: List<Result>)
 
 /** When this result's stopwatch was reset, as the clocks in [zone] read. */
@@ -22,8 +22,9 @@ private fun zoned(sinceEpoch: Duration, zone: ZoneId): ZonedDateTime =
     Instant.ofEpochSecond(sinceEpoch.inWholeSeconds).atZone(zone)
 
 /**
- * These results under the days they were reset on in [zone]. Days come in the order they are
- * first met, and results keep their order within a day, so most recent first stays so.
+ * These results under the days they are placed on in [zone]; see [Result.placedAt]. Days come in
+ * the order they are first met, and results keep their order within a day, so most recent first
+ * stays so.
  */
 fun List<Result>.byDay(zone: ZoneId): List<Day> =
-    groupBy { it.resetTime(zone).toLocalDate() }.map { (date, results) -> Day(date, results) }
+    groupBy { zoned(it.placedAt, zone).toLocalDate() }.map { (date, results) -> Day(date, results) }

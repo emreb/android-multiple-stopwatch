@@ -47,7 +47,7 @@ The date and time a stopwatch was first started after its last reset. Resuming a
 _Avoid_: Begin time, first start
 
 **History**:
-All the results kept on the phone, looked at by day with the most recent first.
+All the results kept on the phone, looked at by the day they started on, most recently started first. A result without a start time goes by its reset instead.
 _Avoid_: Log, archive
 
 **Start all**:

@@ -126,7 +126,7 @@ class NotesTest {
         viewModel.onNoteChanged(1, "Leo's note")
         viewModel.onResetAllPressed()
 
-        assertEquals(listOf("Ada's note", "Leo's note"), results.map { it.note })
+        assertEquals(mapOf("1" to "Ada's note", "2" to "Leo's note"), results.associate { it.name to it.note })
         assertEquals(listOf("", ""), stopwatches.take(2).map { it.note })
     }
 
