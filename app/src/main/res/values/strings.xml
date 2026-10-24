@@ -16,6 +16,8 @@
     <string name="lap_count_label">Laps</string>
     <string name="name_field_label">Name</string>
     <string name="colour_group_label">Colour</string>
+    <string name="note_field_label">Note</string>
+    <string name="note_mark_description">Has a note</string>
     <string name="colour_red">Red</string>
     <string name="colour_orange">Orange</string>
     <string name="colour_yellow">Yellow</string>

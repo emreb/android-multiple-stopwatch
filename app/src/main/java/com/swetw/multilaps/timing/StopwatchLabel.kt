@@ -25,13 +25,16 @@ data class StopwatchLabel(val name: String, val colour: StopwatchColour) {
          * [text] cut to the longest name allowed, without leaving half of a character that takes
          * two code units, such as most emoji.
          */
-        fun cutToFit(text: String): String {
-            val cut = text.take(MAX_NAME_LENGTH)
-            return if (cut.lastOrNull()?.isHighSurrogate() == true) cut.dropLast(1) else cut
-        }
+        fun cutToFit(text: String): String = cutToLength(text, MAX_NAME_LENGTH)
 
         fun defaultName(index: Int): String = (index + 1).toString()
 
         fun default(index: Int) = StopwatchLabel(defaultName(index), DEFAULT_COLOURS[index])
     }
+}
+
+/** [text] cut to [length], without leaving half of a character that takes two code units, such as most emoji. */
+internal fun cutToLength(text: String, length: Int): String {
+    val cut = text.take(length)
+    return if (cut.lastOrNull()?.isHighSurrogate() == true) cut.dropLast(1) else cut
 }

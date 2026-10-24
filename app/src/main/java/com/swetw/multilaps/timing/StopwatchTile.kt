@@ -113,7 +113,7 @@ fun StopwatchTile(
             Column(modifier = Modifier.fillMaxSize().padding(if (short) 8.dp else 10.dp)) {
                 // The figures take what the buttons leave, and scroll if that is not enough.
                 Column(modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                    TileName(label.name, stopwatch.state, onNamePressed)
+                    TileName(label.name, stopwatch.state, hasNote = stopwatch.note.isNotEmpty(), onNamePressed)
                     Figures(
                         stopwatch = stopwatch,
                         clock = clock,
@@ -140,12 +140,12 @@ fun StopwatchTile(
 }
 
 /**
- * The stopwatch's name, which is also the way in to its laps; the mark beside it says so. It is
- * where a screen reader stops to say whose tile this is, so it says what the stopwatch is doing
- * too.
+ * The stopwatch's name, which is also the way in to its laps and note; the mark beside it says so,
+ * with another before it once there is a note. It is where a screen reader stops to say whose tile
+ * this is, so it says what the stopwatch is doing too.
  */
 @Composable
-private fun TileName(name: String, state: StopwatchState, onPressed: () -> Unit) {
+private fun TileName(name: String, state: StopwatchState, hasNote: Boolean, onPressed: () -> Unit) {
     val spoken = stringResource(R.string.stopwatch_title, name)
     val spokenState = stringResource(
         when (state) {
@@ -178,6 +178,7 @@ private fun TileName(name: String, state: StopwatchState, onPressed: () -> Unit)
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+        if (hasNote) NoteMark(size = 16.dp)
         ListMark()
     }
 }

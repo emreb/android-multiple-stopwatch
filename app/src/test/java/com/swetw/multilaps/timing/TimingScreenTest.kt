@@ -1347,7 +1347,7 @@ class TimingScreenTest {
 
 private const val SHEET_SETTLE_FRAMES = 60
 
-/** Where things sit in the sheet's list: the palette, the column headings, then the laps. */
+/** Where things sit in the sheet's list: the palette, the note, the column headings, then the laps. */
 private const val PALETTE_ITEM = 0
-private const val FIRST_LAP_ITEM = 2
+private const val FIRST_LAP_ITEM = 3
 private const val LAST_OF_FORTY_LAPS = FIRST_LAP_ITEM + 39

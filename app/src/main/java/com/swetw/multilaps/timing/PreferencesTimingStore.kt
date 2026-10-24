@@ -43,6 +43,7 @@ class PreferencesTimingStore(private val preferences: SharedPreferences) : Timin
         .put(LAPS, JSONArray(stopwatch.laps.map { it.inWholeNanoseconds }))
         .put(ACCUMULATED, stopwatch.accumulated.inWholeNanoseconds)
         .putOpt(COUNTING_FROM, stopwatch.countingFrom?.inWholeNanoseconds)
+        .put(NOTE, stopwatch.note)
 
     private fun decode(json: JSONObject): SavedTiming? {
         if (json.getInt(VERSION) != CURRENT_VERSION) return null
@@ -61,6 +62,8 @@ class PreferencesTimingStore(private val preferences: SharedPreferences) : Timin
             laps = List(laps.length()) { laps.getLong(it).nanoseconds },
             accumulated = json.getLong(ACCUMULATED).nanoseconds,
             countingFrom = if (json.has(COUNTING_FROM)) json.getLong(COUNTING_FROM).nanoseconds else null,
+            // Timing saved before stopwatches had notes has none.
+            note = json.optString(NOTE),
         )
     }
 
@@ -77,5 +80,6 @@ class PreferencesTimingStore(private val preferences: SharedPreferences) : Timin
         private const val LAPS = "lapsNanos"
         private const val ACCUMULATED = "accumulatedNanos"
         private const val COUNTING_FROM = "countingFromNanos"
+        private const val NOTE = "note"
     }
 }

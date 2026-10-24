@@ -12,8 +12,8 @@ android {
         applicationId = "com.swetw.multilaps"
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
-        versionName = "0.3.4"
+        versionCode = 8
+        versionName = "0.4.0"
     }
 
     // The upload key lives outside the repository. Its location and passwords come from Gradle

@@ -65,6 +65,7 @@ import com.swetw.multilaps.theme.FigureStyles
 import com.swetw.multilaps.timing.BUTTON_SHAPE
 import com.swetw.multilaps.timing.LapColumns
 import com.swetw.multilaps.timing.LapRow
+import com.swetw.multilaps.timing.NoteMark
 import com.swetw.multilaps.timing.ScreenButton
 import com.swetw.multilaps.timing.StopwatchColourKey
 import com.swetw.multilaps.timing.color
@@ -384,13 +385,21 @@ private fun ResultRow(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = result.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    // The mark stays beside the name, however short, and a long name gives way to it.
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f),
-                    )
+                    ) {
+                        Text(
+                            text = result.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (result.note.isNotEmpty()) NoteMark(size = 14.dp)
+                    }
                     Text(total, style = FigureStyles.lap, maxLines = 1)
                 }
                 // One line that may run to two, so that on a narrow phone with enlarged text the
@@ -443,6 +452,13 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 outlined = true,
                 onClick = { context.share(shareText(listOf(result), zone, locale, context.resources, context.packageName)) },
                 modifier = Modifier.testTag("share-result"),
+            )
+        }
+        if (result.note.isNotEmpty()) {
+            Text(
+                text = result.note,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag("result-note"),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(GAP), modifier = Modifier.testTag("result-figures")) {

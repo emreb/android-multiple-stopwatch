@@ -42,6 +42,7 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
         .put(LAPS, JSONArray(result.laps.map { it.inWholeNanoseconds }))
         .put(TOTAL, result.totalTime.inWholeNanoseconds)
         .put(RESET_AT, result.resetAt.inWholeNanoseconds)
+        .put(NOTE, result.note)
 
     private fun decode(json: JSONObject): List<Result> {
         if (json.getInt(VERSION) != CURRENT_VERSION) return emptyList()
@@ -65,6 +66,8 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
                 laps = List(laps.length()) { laps.getLong(it).nanoseconds },
                 totalTime = entry.getLong(TOTAL).nanoseconds,
                 resetAt = entry.getLong(RESET_AT).nanoseconds,
+                // Results kept before they had notes have none.
+                note = entry.optString(NOTE),
             )
         } catch (_: JSONException) {
             null
@@ -89,5 +92,6 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
         private const val LAPS = "lapsNanos"
         private const val TOTAL = "totalNanos"
         private const val RESET_AT = "resetAtNanos"
+        private const val NOTE = "note"
     }
 }

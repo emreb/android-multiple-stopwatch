@@ -58,6 +58,32 @@ class ShareTextTest {
     }
 
     @Test
+    fun `a result's note is shared under its name, before its figures`() {
+        val ada = result(1, "2026-10-12T16:42", lisbon, name = "Ada", laps = listOf(83))
+            .copy(note = "Spikes on\nWindy back straight")
+        val leo = result(2, "2026-10-12T16:40", lisbon, name = "Leo", laps = listOf(90))
+
+        assertEquals(
+            """
+            MultiLaps, Monday, 12 October 2026
+
+            Ada, 16:42
+            Spikes on
+            Windy back straight
+            Total 1:23.00, 1 lap, best 1:23.00
+            Lap 1: 1:23.00
+
+            Leo, 16:40
+            Total 1:30.00, 1 lap, best 1:30.00
+            Lap 1: 1:30.00
+
+            Timed with MultiLaps: https://play.google.com/store/apps/details?id=com.swetw.multilaps
+            """.trimIndent(),
+            shareText(listOf(ada, leo), lisbon, Locale.UK, resources, APP),
+        )
+    }
+
+    @Test
     fun `several results are shared together, each day's under its date`() {
         val ada = result(1, "2026-10-12T16:42", lisbon, name = "Ada", laps = listOf(83))
         val leo = result(2, "2026-10-12T16:40", lisbon, name = "Leo", laps = listOf(90))
