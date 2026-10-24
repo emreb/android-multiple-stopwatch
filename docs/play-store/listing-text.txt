@@ -7,6 +7,11 @@ A lap stopwatch for each of four runners. Best laps, results kept, no ads.
 Full description
 See full-description.txt
 
+Release notes for 1.0.0
+First release. Four lap stopwatches on one screen, each with its own name and colour. Start each one or all together, and see the lap in progress, last lap, best lap and total.
+Reset a stopwatch and its laps are kept in History, under the day it started, with the times it started and was reset. Add a note, open a result for every lap, and share one or several as text.
+Undo a reset within five seconds. No ads, no account, no internet.
+
 Release notes for 0.4.0
 History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.
 Stop is now the same size as Start on every stopwatch.
