@@ -157,4 +157,12 @@ class StopwatchTest {
             Stopwatch(state = StopwatchState.Stopped, countingFrom = 100.seconds)
         }
     }
+
+    @Test
+    fun `a note is kept through start, lap and stop, and cleared by a reset`() {
+        val noted = Stopwatch(note = "Spikes on").start(now = 0.seconds, wallNow = 0.seconds).lap(now = 30.seconds).stop(now = 35.seconds)
+
+        assertEquals("Spikes on", noted.note)
+        assertEquals(Stopwatch(), noted.reset())
+    }
 }

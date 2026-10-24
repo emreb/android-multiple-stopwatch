@@ -12,6 +12,10 @@ _Avoid_: Timer, lane, runner
 A stopwatch's name and colour. They stay with the stopwatch through every reset and undo.
 _Avoid_: Identity, tag
 
+**Note**:
+Free text written about one run: who ran, the conditions, anything worth remembering. A stopwatch has one note for the run it is timing; on reset it goes into the result with the laps, and the stopwatch starts again with none. A blank note is no note.
+_Avoid_: Comment, memo
+
 **Lap**:
 One completed circuit, measured from the previous lap press (or the start) to the next lap press. Time spent stopped is not part of a lap.
 _Avoid_: Split, round
@@ -35,7 +39,7 @@ Returning a stopwatch to idle, clearing its laps from it. Name and colour are ke
 _Avoid_: Clear
 
 **Result**:
-The record of what one stopwatch had timed when it was reset: its name and colour at that moment, its laps, best lap, total time, its start time and the date and time of the reset. A stopwatch reset without a completed lap leaves none. A result never changes afterwards; it can only be deleted.
+The record of what one stopwatch had timed when it was reset: its name and colour at that moment, its note, its laps, best lap, total time, its start time and the date and time of the reset. A stopwatch reset without a completed lap leaves none, and its note goes with it. A result's laps and times never change afterwards; only its note can be edited, and the result can be deleted.
 _Avoid_: Session, race, run, saved timing
 
 **Start time**:
@@ -55,7 +59,7 @@ Resetting every stopped stopwatch at once, possible only while none is running.
 _Avoid_: Clear all, new race
 
 **Undo**:
-Taking back a reset within a few seconds of it, restoring each stopwatch exactly as it was and leaving no result of it.
+Taking back a reset within a few seconds of it, restoring each stopwatch exactly as it was, note included, and leaving no result of it.
 _Avoid_: Restore, revert
 
 ## Stopwatch states

@@ -22,7 +22,7 @@ fun formatTimeOfDay(time: ZonedDateTime, locale: Locale): String =
 
 /**
  * Results as plain text to hand to another app. Each day's come under its date: whose each was
- * and when, its figures, and every lap in the order the laps were run. Days come in the order they are first met.
+ * and when, its note if it has one, its figures, and every lap in the order the laps were run. Days come in the order they are first met.
  * The text ends with a link to the app on Google Play, found by its [applicationId].
  */
 fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Resources, applicationId: String): String {
@@ -49,5 +49,6 @@ private fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: R
     val laps = result.laps.mapIndexed { index, lap ->
         resources.getString(R.string.share_lap, index + 1, formatTime(lap))
     }
-    return (listOf(heading, summary) + laps).joinToString("\n")
+    val note = listOfNotNull(result.note.ifEmpty { null })
+    return (listOf(heading) + note + summary + laps).joinToString("\n")
 }

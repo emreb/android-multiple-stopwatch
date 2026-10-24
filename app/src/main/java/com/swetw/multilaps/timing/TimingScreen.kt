@@ -91,6 +91,7 @@ fun TimingScreen(viewModel: TimingViewModel, ratingPrompt: RatingPrompt = Rating
         val results by viewModel.results.collectAsStateWithLifecycle()
         HistoryScreen(
             results = results,
+            onNoteEdited = viewModel::onResultNoteEdited,
             onResultDeleted = viewModel::onResultDeleted,
             onAllResultsDeleted = viewModel::onAllResultsDeleted,
             onBack = {
@@ -187,6 +188,7 @@ fun TimingScreen(viewModel: TimingViewModel, ratingPrompt: RatingPrompt = Rating
             stopwatch = stopwatches[index],
             onNameChanged = { viewModel.onNameChanged(index, it) },
             onColourChosen = { viewModel.onColourChosen(index, it) },
+            onNoteChanged = { viewModel.onNoteChanged(index, it) },
             onDismiss = { lapSheetFor = null },
         )
     }

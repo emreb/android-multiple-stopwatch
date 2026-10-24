@@ -30,7 +30,6 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.swipeLeft
-import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
@@ -83,6 +82,7 @@ class HistoryScreenTest {
         MultiLapsTheme {
             HistoryScreen(
                 results = results,
+                onNoteEdited = { _, _ -> },
                 onResultDeleted = { id -> results = results.filterNot { it.id == id } },
                 onAllResultsDeleted = { results = emptyList() },
                 onBack = { wentBack = true },
@@ -450,21 +450,12 @@ class HistoryScreenTest {
     }
 
     @Test
-    fun `swiping a result to the right does nothing`() {
-        show()
-        row("Leo").performTouchInput { swipeRight() }
-
-        composeRule.onNodeWithText("Delete 1 result?").assertDoesNotExist()
-        assertEquals(3, results.size)
-    }
-
-    @Test
     fun `a screen reader is offered delete on a result, since it cannot swipe`() {
         show()
         val actions = row("Leo").fetchSemanticsNode().config[SemanticsActions.CustomActions]
-        assertEquals(listOf("Delete"), actions.map { it.label })
+        assertEquals(listOf("Edit note", "Delete"), actions.map { it.label })
 
-        composeRule.runOnUiThread { actions.single().action() }
+        composeRule.runOnUiThread { actions.single { it.label == "Delete" }.action() }
 
         composeRule.onNodeWithText("Delete 1 result?").assertIsDisplayed()
     }

@@ -30,6 +30,7 @@ class PreferencesHistoryStoreTest {
             laps = listOf(83.seconds + 123_456_789.nanoseconds, 82.seconds),
             totalTime = 170.seconds + 1.nanoseconds,
             resetAt = 20_000.days + 7.nanoseconds,
+            note = "Spikes on, \"new\" ones 🏃\nWindy back straight",
             startedAt = 20_000.days - 170.seconds - 3.nanoseconds,
         ),
         Result(7, "2", StopwatchColour.Red, listOf(61.seconds), 61.seconds, 20_001.days),
@@ -168,5 +169,15 @@ class PreferencesHistoryStoreTest {
         store(json)
 
         assertEquals(listOf(results[0], results[1].copy(colour = StopwatchColour.Blue)), reloaded())
+    }
+
+    @Test
+    fun `results kept before they had notes load with none`() {
+        store.save(results)
+        val json = stored()
+        entries(json).getJSONObject(0).remove("note")
+        store(json)
+
+        assertEquals(listOf(results[0].copy(note = ""), results[1]), reloaded())
     }
 }

@@ -10,6 +10,7 @@ enum class StopwatchState { Idle, Running, Stopped }
  * @property countingFrom the clock reading of the press that last started, resumed or lapped this
  *   stopwatch; set only while running. It can be negative once carried over a restart, standing
  *   for a press made before the device booted.
+ * @property note what has been written about this run; empty when there is none.
  * @property startedAt the wall-clock time, since the epoch, of the first start after the last
  *   reset; never set while idle. A stopwatch carried over from before start times were kept has
  *   none until its next reset.
@@ -19,6 +20,7 @@ data class Stopwatch(
     val laps: List<Duration> = emptyList(),
     val accumulated: Duration = Duration.ZERO,
     val countingFrom: Duration? = null,
+    val note: String = "",
     val startedAt: Duration? = null,
 ) {
 
@@ -67,7 +69,7 @@ data class Stopwatch(
 
     fun reset(): Stopwatch = when (state) {
         StopwatchState.Stopped ->
-            copy(state = StopwatchState.Idle, laps = emptyList(), accumulated = Duration.ZERO, startedAt = null)
+            copy(state = StopwatchState.Idle, laps = emptyList(), accumulated = Duration.ZERO, note = "", startedAt = null)
         StopwatchState.Idle, StopwatchState.Running -> this
     }
 

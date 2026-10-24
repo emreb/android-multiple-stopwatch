@@ -42,6 +42,7 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
         .put(LAPS, JSONArray(result.laps.map { it.inWholeNanoseconds }))
         .put(TOTAL, result.totalTime.inWholeNanoseconds)
         .put(RESET_AT, result.resetAt.inWholeNanoseconds)
+        .put(NOTE, result.note)
         .putOpt(STARTED_AT, result.startedAt?.inWholeNanoseconds)
 
     private fun decode(json: JSONObject): List<Result> {
@@ -66,6 +67,8 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
                 laps = List(laps.length()) { laps.getLong(it).nanoseconds },
                 totalTime = entry.getLong(TOTAL).nanoseconds,
                 resetAt = entry.getLong(RESET_AT).nanoseconds,
+                // Results kept before they had notes have none.
+                note = entry.optString(NOTE),
                 // Results kept before start times were recorded have none.
                 startedAt = if (entry.has(STARTED_AT)) entry.getLong(STARTED_AT).nanoseconds else null,
             )
@@ -92,6 +95,7 @@ class PreferencesHistoryStore(private val preferences: SharedPreferences) : Hist
         private const val LAPS = "lapsNanos"
         private const val TOTAL = "totalNanos"
         private const val RESET_AT = "resetAtNanos"
+        private const val NOTE = "note"
         private const val STARTED_AT = "startedAtNanos"
     }
 }

@@ -158,6 +158,19 @@ class TimingViewModel(
 
     fun onColourChosen(index: Int, colour: StopwatchColour) = relabel(index) { it.copy(colour = colour) }
 
+    /** Writes the note on the run the stopwatch at [index] is timing; space alone leaves it without one. */
+    fun onNoteChanged(index: Int, note: String) {
+        val stopwatch = stopwatchAt(index)
+        replace(mapOf(index to stopwatch.copy(note = Note.tidied(note))), feedback = null)
+    }
+
+    /**
+     * Writes the note on the result with this [id], tidied as a stopwatch's is. Its note is the one
+     * thing about a result that can change afterwards.
+     */
+    fun onResultNoteEdited(id: Long, note: String) =
+        keepResults(_results.value.map { if (it.id == id) it.copy(note = Note.tidied(note)) else it })
+
     /** Deletes the result with this [id] for good; there is no undo for it. */
     fun onResultDeleted(id: Long) = keepResults(_results.value.filterNot { it.id == id })
 
@@ -203,6 +216,7 @@ class TimingViewModel(
                 laps = stopwatch.laps,
                 totalTime = stopwatch.accumulated,
                 resetAt = resetAt,
+                note = stopwatch.note,
                 // The wall clock may have been put back since the start.
                 startedAt = stopwatch.startedAt?.coerceAtMost(resetAt),
             )
@@ -212,11 +226,12 @@ class TimingViewModel(
         return recorded.associate { (index, result) -> index to result.id }
     }
 
-    /** Results are only ever added or removed, so the same number of them means nothing changed. */
+    /** Keeps [results] in place of those there were, and saves them, unless nothing changed. */
     private fun keepResults(results: List<Result>) {
-        if (results.size == _results.value.size) return
-        _results.value = results.sortedWith(MOST_RECENT_FIRST)
-        historyStore.save(_results.value)
+        val sorted = results.sortedWith(MOST_RECENT_FIRST)
+        if (sorted == _results.value) return
+        _results.value = sorted
+        historyStore.save(sorted)
     }
 
     /**
@@ -238,16 +253,16 @@ class TimingViewModel(
     }
 
     /**
-     * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback];
-     * unless nothing actually changed, as when start all finds no idle stopwatch.
+     * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback], if
+     * any; unless nothing actually changed, as when start all finds no idle stopwatch.
      */
-    private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback) {
+    private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback?) {
         val before = _stopwatches.value
         val after = before.mapIndexed { index, stopwatch -> replacements[index] ?: stopwatch }
         if (after == before) return
         _stopwatches.value = after
         save(after)
-        haptics.play(feedback)
+        feedback?.let(haptics::play)
     }
 
     private fun restored(): List<Stopwatch> {

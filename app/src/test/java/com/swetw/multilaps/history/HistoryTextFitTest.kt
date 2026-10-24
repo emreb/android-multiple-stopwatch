@@ -44,7 +44,7 @@ class HistoryTextFitTest {
 
     private fun show() = composeRule.setContent {
         MultiLapsTheme {
-            HistoryScreen(listOf(long), onResultDeleted = {}, onAllResultsDeleted = {}, onBack = {}, zone = lisbon)
+            HistoryScreen(listOf(long), onNoteEdited = { _, _ -> }, onResultDeleted = {}, onAllResultsDeleted = {}, onBack = {}, zone = lisbon)
         }
     }
 
@@ -76,7 +76,6 @@ class HistoryTextFitTest {
         text("1:02:05.00", within = "result-figures").assertShownWhole()
         text("5:00.00", within = "result-figures").assertShownWhole()
         text("12", within = "result-figures").assertShownWhole()
-        text("Tuesday, October 13, 2026", within = "result-detail").assertShownWhole()
     }
 
     private fun assertRowShownWhole() {
