@@ -16,6 +16,8 @@ import kotlin.time.Duration
  * @property note what was written about the run; empty when there is none.
  * @property startedAt the wall-clock time the stopwatch was first started after its last reset,
  *   since the epoch; never after [resetAt]. Results kept before start times were recorded have none.
+ * @property stopwatchIndex which of the stopwatches, counting from 0, timed it. Results kept before
+ *   this was recorded do not say.
  */
 data class Result(
     val id: Long,
@@ -26,6 +28,7 @@ data class Result(
     val resetAt: Duration,
     val note: String = "",
     val startedAt: Duration? = null,
+    val stopwatchIndex: Int? = null,
 ) {
 
     init {

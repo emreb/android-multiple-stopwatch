@@ -21,7 +21,7 @@ class DaysTest {
     }
 
     @Test
-    fun `results are gathered under the day they were reset, keeping their order`() {
+    fun `results kept without start times are gathered under the day they were reset, keeping their order`() {
         val results = listOf(
             result(1, "2026-10-12T18:30", lisbon),
             result(2, "2026-10-12T09:00", lisbon),

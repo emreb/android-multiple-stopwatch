@@ -391,6 +391,22 @@ class ResultsTest {
     }
 
     @Test
+    fun `results from stopwatches started together keep the order of their stopwatches, however they were reset`() {
+        viewModel.onStartAllPressed()
+        clock.advanceBy(30.seconds)
+        (0..2).forEach(viewModel::onStartPressed)
+        (0..2).forEach(viewModel::onStopPressed)
+        clock.advanceBy(2.seconds)
+        for (index in listOf(2, 0, 1)) {
+            viewModel.onStopPressed(index)
+            letUndoExpire()
+        }
+
+        assertEquals(listOf("1", "2", "3"), results.map { it.name })
+        assertEquals(listOf("1", "2", "3"), reopened().results.value.map { it.name })
+    }
+
+    @Test
     fun `a result kept without a start time is placed by its reset`() {
         // Reset after the new result starts but before it is reset.
         val resetAt = clock.wallNow() + 10.seconds

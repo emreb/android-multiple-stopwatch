@@ -219,6 +219,7 @@ class TimingViewModel(
                 note = stopwatch.note,
                 // The wall clock may have been put back since the start.
                 startedAt = stopwatch.startedAt?.coerceAtMost(resetAt),
+                stopwatchIndex = index,
             )
         }
         lastResultId = firstId + indices.size - 1
@@ -282,11 +283,14 @@ class TimingViewModel(
         val MIN_RESET_INTERVAL: Duration = 1.seconds
 
         /**
-         * Most recently started first. Of results started at the same moment, the most recently
-         * reset comes first, and those reset together too stay in the order of their stopwatches.
+         * Most recently started first. Results started at the same moment, as by start all, stay in
+         * the order of their stopwatches however they were reset; of those kept before results said
+         * which stopwatch timed them, the most recently reset comes first.
          */
-        private val MOST_RECENT_FIRST =
-            compareByDescending<Result> { it.placedAt }.thenByDescending { it.resetAt }.thenBy { it.id }
+        private val MOST_RECENT_FIRST = compareByDescending<Result> { it.placedAt }
+            .thenBy(nullsLast()) { it.stopwatchIndex }
+            .thenByDescending { it.resetAt }
+            .thenBy { it.id }
 
         /** How long an offer to undo a reset stays open. */
         val UNDO_WINDOW: Duration = 5.seconds
