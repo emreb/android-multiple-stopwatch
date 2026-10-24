@@ -50,6 +50,10 @@ import kotlinx.coroutines.launch
 
 private const val SWATCHES_PER_ROW = 4
 
+/** How many lines a note box shows: a short paragraph at first, and no more than this as it grows. */
+internal const val NOTE_MIN_LINES = 4
+internal const val NOTE_MAX_LINES = 8
+
 /**
  * One stopwatch's name, colour, note and completed laps, over the timing screen, which keeps
  * running behind it.
@@ -152,6 +156,9 @@ private fun NoteField(note: String, onNoteChanged: (String) -> Unit) {
             onNoteChanged(text)
         },
         label = { Text(stringResource(R.string.note_field_label)) },
+        // Room for a short paragraph to begin with; past that it scrolls inside the box.
+        minLines = NOTE_MIN_LINES,
+        maxLines = NOTE_MAX_LINES,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp).testTag("note-field"),
     )

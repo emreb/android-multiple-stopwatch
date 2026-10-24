@@ -10,10 +10,12 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.LANDSCAPE_PHONE
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
@@ -22,6 +24,7 @@ import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.stopwatch.StopwatchState
 import com.swetw.multilaps.theme.MultiLapsTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -74,6 +77,14 @@ class NotesOnTimingScreenTest {
 
         assertEquals("Spikes on", viewModel.stopwatches.value[0].note)
         assertEquals(StopwatchState.Running, viewModel.stopwatches.value[0].state)
+    }
+
+    @Test
+    fun `the note field is a box for a short paragraph, not a single line`() {
+        openLapSheet(tile = 1)
+
+        val field = noteField().getUnclippedBoundsInRoot()
+        assertTrue("note field only ${field.bottom - field.top} tall", field.bottom - field.top >= 112.dp)
     }
 
     @Test

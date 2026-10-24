@@ -852,6 +852,9 @@ class TimingScreenTest {
         advance(30.seconds)
         press("Lap", tile = 4)
         openLapSheet(tile = 4)
+        // On its side the note's box fills the first screenful; the laps are a scroll below it.
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(FIRST_LAP_ITEM)
+        letSheetSettle()
 
         lapSheet().assertIsDisplayed()
         lapRows().assertCountEquals(1)
