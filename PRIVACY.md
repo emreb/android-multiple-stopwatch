@@ -11,7 +11,7 @@ MultiLaps keeps five things, and only on your device:
 - The names you give the stopwatches.
 - The colours you choose for them.
 - The current timing: whether each stopwatch is running, when it was started, its lap times, and any note you write on it. Alongside it the app notes when your device was last switched on, which is how a running stopwatch keeps the right time after a restart.
-- Your history: each time you reset a stopwatch that has laps, its name, colour, note, lap times and total time are kept as a result, with the date and time it was started and the date and time of the reset.
+- Your history: each time you reset a stopwatch that has laps, its name, colour, note, lap times and total time, and which of the four stopwatches it was, are kept as a result, with the date and time it was started and the date and time of the reset.
 - Whether it has already asked Google Play to show its rating card, so that it asks only once (see Rating below).
 
 This is kept so that your stopwatches are still there when you reopen the app, and so that you can look back at earlier times.
