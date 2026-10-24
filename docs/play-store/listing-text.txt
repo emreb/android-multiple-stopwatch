@@ -13,7 +13,7 @@ Stop is now the same size as Start on every stopwatch.
 The app is now a much smaller download, and runs on Android 7.0 and later.
 Every press on Lap now counts, however soon after the last.
 Shared results end with a link to MultiLaps on Google Play.
-Notes: write one on any stopwatch, and it is kept with the result.
+Notes: write one on any stopwatch, keep it with the result, and edit it in History.
 
 Release notes for 0.3.4
 History: when you reset a stopwatch, its laps are kept. Look back by day, open a result to see every lap, share one or several as text, and swipe left to delete.

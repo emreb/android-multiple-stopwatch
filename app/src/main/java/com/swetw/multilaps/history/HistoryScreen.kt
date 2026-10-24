@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -25,8 +26,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -57,8 +62,10 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import com.swetw.multilaps.R
@@ -67,6 +74,7 @@ import com.swetw.multilaps.theme.FigureStyles
 import com.swetw.multilaps.timing.BUTTON_SHAPE
 import com.swetw.multilaps.timing.LapColumns
 import com.swetw.multilaps.timing.LapRow
+import com.swetw.multilaps.timing.Note
 import com.swetw.multilaps.timing.NoteMark
 import com.swetw.multilaps.timing.ScreenButton
 import com.swetw.multilaps.timing.StopwatchColourKey
@@ -81,15 +89,21 @@ private val GAP = 8.dp
 /** About five lines of a result's note, the most it shows before it scrolls. */
 private val NOTE_MAX_HEIGHT = 120.dp
 
+/** The note's box in the dialog: about four lines to begin with, growing to about eight. */
+private val NOTE_BOX_MIN_HEIGHT = 128.dp
+private val NOTE_BOX_MAX_HEIGHT = 224.dp
+
 /**
  * What has been timed and reset, by day with the most recent first. Tapping a result opens its
- * laps in place of the list, from where that result can be shared or deleted. Timing carries on meanwhile; nothing here touches it.
+ * laps in place of the list, from where that result can be shared or deleted. A result's note can
+ * be edited from either. Timing carries on meanwhile; nothing here touches it.
  *
  * @param zone where the phone is, which decides the day and the time of day a result belongs to.
  */
 @Composable
 fun HistoryScreen(
     results: List<Result>,
+    onNoteEdited: (id: Long, note: String) -> Unit,
     onResultDeleted: (id: Long) -> Unit,
     onAllResultsDeleted: () -> Unit,
     onBack: () -> Unit,
@@ -99,6 +113,9 @@ fun HistoryScreen(
     // deleted is no longer found, and the list shows again.
     var openResultId by rememberSaveable { mutableStateOf<Long?>(null) }
     val open = results.find { it.id == openResultId }
+    // Whose note is being edited, from the list or a result's page alike.
+    var editingNoteOf by rememberSaveable { mutableStateOf<Long?>(null) }
+    val editing = results.find { it.id == editingNoteOf }
     // Held here, above the choice between list and result, so that coming back from a result
     // finds the list where it was left.
     val listState = rememberLazyListState()
@@ -121,22 +138,41 @@ fun HistoryScreen(
                     zone = zone,
                     locale = locale,
                     onResultPressed = { openResultId = it },
+                    onEditNoteAsked = { editingNoteOf = it },
                     onResultDeleted = onResultDeleted,
                     onAllResultsDeleted = onAllResultsDeleted,
                     onBack = onBack,
                 )
             } else {
                 BackHandler { openResultId = null }
-                ResultDetail(open, zone, locale, onDeleted = { onResultDeleted(open.id) }, onBack = { openResultId = null })
+                ResultDetail(
+                    open,
+                    zone,
+                    locale,
+                    onEditNoteAsked = { editingNoteOf = open.id },
+                    onDeleted = { onResultDeleted(open.id) },
+                    onBack = { openResultId = null },
+                )
             }
         }
+    }
+    editing?.let { result ->
+        NoteDialog(
+            id = result.id,
+            note = result.note,
+            onSaved = { note ->
+                editingNoteOf = null
+                onNoteEdited(result.id, note)
+            },
+            onDismissed = { editingNoteOf = null },
+        )
     }
 }
 
 /**
- * The results by day. A tap opens one; a swipe to the left offers to delete it; pressing and
- * holding one selects it, after which taps select and deselect, and what is selected can be shared
- * together.
+ * The results by day. A tap opens one; a swipe to the right opens its note to edit, and one to
+ * the left offers to delete it; pressing and holding one selects it, after which taps select and
+ * deselect, and what is selected can be shared together.
  */
 @Composable
 private fun ResultList(
@@ -145,6 +181,7 @@ private fun ResultList(
     zone: ZoneId,
     locale: Locale,
     onResultPressed: (id: Long) -> Unit,
+    onEditNoteAsked: (id: Long) -> Unit,
     onResultDeleted: (id: Long) -> Unit,
     onAllResultsDeleted: () -> Unit,
     onBack: () -> Unit,
@@ -213,6 +250,7 @@ private fun ResultList(
                         selected = result.id in selectedIds,
                         onPressed = { if (selecting) toggle(result.id) else onResultPressed(result.id) },
                         onHeld = { toggle(result.id) },
+                        onEditNoteAsked = { onEditNoteAsked(result.id) },
                         onDeleteAsked = { deleting = result.id },
                     )
                 }
@@ -305,8 +343,8 @@ private fun DayHeading(date: String) {
 
 /**
  * One result in the list: whose it was, when, and the three figures worth comparing. Swiped to
- * the left it offers to be deleted, and springs back to wait for the answer; a screen reader,
- * which cannot swipe, is offered the same as an action.
+ * the right it opens its note to edit, and to the left it offers to be deleted; either way it
+ * springs back to wait. A screen reader, which cannot swipe, is offered both as actions.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -318,6 +356,7 @@ private fun ResultRow(
     selected: Boolean,
     onPressed: () -> Unit,
     onHeld: () -> Unit,
+    onEditNoteAsked: () -> Unit,
     onDeleteAsked: () -> Unit,
 ) {
     val timeOfDay = formatTimeOfDay(result.resetTime(zone), locale)
@@ -326,6 +365,7 @@ private fun ResultRow(
     val laps = pluralStringResource(R.plurals.lap_count, result.lapCount, result.lapCount)
     val spoken = stringResource(R.string.result_description, result.name, timeOfDay, total, laps, best)
     val delete = stringResource(R.string.action_delete)
+    val editNote = stringResource(R.string.action_edit_note)
     val ink = MaterialTheme.colorScheme.onBackground
     val swipe = rememberSwipeToDismissBoxState()
     val scope = rememberCoroutineScope()
@@ -334,19 +374,28 @@ private fun ResultRow(
         // Called once the row has been let go far enough over, not while it is still being
         // dragged. The row goes back to wait for the answer rather than staying swiped away.
         onDismiss = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) onDeleteAsked()
+            when (value) {
+                SwipeToDismissBoxValue.StartToEnd -> onEditNoteAsked()
+                SwipeToDismissBoxValue.EndToStart -> onDeleteAsked()
+                SwipeToDismissBoxValue.Settled -> Unit
+            }
             scope.launch { swipe.reset() }
         },
-        enableDismissFromStartToEnd = false,
+        enableDismissFromStartToEnd = !selecting,
         enableDismissFromEndToStart = !selecting,
         backgroundContent = {
             // Drawn only while the row is on its way over; at rest it would show as a dark
             // fringe around the row's rounded corners.
-            if (swipe.dismissDirection == SwipeToDismissBoxValue.EndToStart) Box(
-                contentAlignment = Alignment.CenterEnd,
+            val (label, alignment) = when (swipe.dismissDirection) {
+                SwipeToDismissBoxValue.StartToEnd -> editNote to Alignment.CenterStart
+                SwipeToDismissBoxValue.EndToStart -> delete to Alignment.CenterEnd
+                SwipeToDismissBoxValue.Settled -> null to Alignment.Center
+            }
+            if (label != null) Box(
+                contentAlignment = alignment,
                 modifier = Modifier.fillMaxSize().clip(BUTTON_SHAPE).background(ink).padding(horizontal = 16.dp),
             ) {
-                Text(delete, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.background)
+                Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.background)
             }
         },
     ) {
@@ -373,6 +422,10 @@ private fun ResultRow(
                     if (selecting) this.selected = selected
                     if (!selecting) {
                         customActions = listOf(
+                            CustomAccessibilityAction(editNote) {
+                                onEditNoteAsked()
+                                true
+                            },
                             CustomAccessibilityAction(delete) {
                                 onDeleteAsked()
                                 true
@@ -421,7 +474,14 @@ private fun ResultRow(
 
 /** One result's figures and every lap, newest first as a stopwatch's own lap list shows them. */
 @Composable
-private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted: () -> Unit, onBack: () -> Unit) {
+private fun ResultDetail(
+    result: Result,
+    zone: ZoneId,
+    locale: Locale,
+    onEditNoteAsked: () -> Unit,
+    onDeleted: () -> Unit,
+    onBack: () -> Unit,
+) {
     var confirming by rememberSaveable { mutableStateOf(false) }
     val reset = result.resetTime(zone)
     val context = LocalContext.current
@@ -449,6 +509,13 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
+            )
+            ScreenButton(
+                label = R.string.action_edit_note,
+                enabled = true,
+                outlined = true,
+                onClick = onEditNoteAsked,
+                modifier = Modifier.testTag("edit-note"),
             )
             // This one result and no other: sharing is by the result, never the whole history.
             ScreenButton(
@@ -519,6 +586,59 @@ private fun Figure(@StringRes caption: Int, @StringRes description: Int, value: 
             softWrap = false,
             autoSize = TextAutoSize.StepBased(minFontSize = 11.sp, maxFontSize = FigureStyles.lap.fontSize, stepSize = 1.sp),
         )
+    }
+}
+
+/**
+ * A result's note to write or change. Only Save keeps what was typed; Cancel, back and a tap
+ * outside all leave the note as it was.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NoteDialog(id: Long, note: String, onSaved: (String) -> Unit, onDismissed: () -> Unit) {
+    // Laid out around the keyboard, which would otherwise cover Save on a phone on its side.
+    BasicAlertDialog(
+        onDismissRequest = onDismissed,
+        properties = DialogProperties(decorFitsSystemWindows = false),
+        modifier = Modifier.imePadding().testTag("note-dialog"),
+    ) {
+        NoteEditor(id, note, onSaved, onCancelled = onDismissed)
+    }
+}
+
+/** What the note dialog holds: the note to type into, and the choice to save it or not. */
+@Composable
+internal fun NoteEditor(id: Long, note: String, onSaved: (String) -> Unit, onCancelled: () -> Unit) {
+    // Keyed by the result, so that one result's unsaved text never turns up in another's.
+    var text by rememberSaveable(id) { mutableStateOf(note) }
+    Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        // Scrolls as a whole in a short window, as on a phone on its side with the keyboard up, so
+        // that Save and Cancel can always be reached.
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+        ) {
+            Text(stringResource(R.string.note_field_label), style = MaterialTheme.typography.headlineSmall)
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = Note.cutToFit(it) },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                // About the box a stopwatch's note has: a short paragraph, scrolling inside past
+                // that. Set by height, since the column around it scrolls.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = NOTE_BOX_MIN_HEIGHT, max = NOTE_BOX_MAX_HEIGHT)
+                    .testTag("note-dialog-field"),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), modifier = Modifier.fillMaxWidth()) {
+                TextButton(onClick = onCancelled, modifier = Modifier.testTag("cancel-note")) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+                TextButton(onClick = { onSaved(text) }, modifier = Modifier.testTag("save-note")) {
+                    Text(stringResource(R.string.action_save))
+                }
+            }
+        }
     }
 }
 

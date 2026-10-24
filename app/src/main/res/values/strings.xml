@@ -58,6 +58,8 @@
     <string name="action_delete">Delete</string>
     <string name="action_delete_all">Delete all</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_edit_note">Edit note</string>
     <string name="history_title">History</string>
     <string name="no_results_yet">No results yet. When you reset a stopwatch that has laps, its times are kept here.</string>
     <!-- Asked before results are deleted; the placeholder is how many would go. -->

@@ -175,4 +175,79 @@ class NotesTest {
         assertEquals(listOf("Ada's note", "Leo's note", "", ""), stopwatches.map { it.note })
         assertTrue(results.isEmpty())
     }
+
+    @Test
+    fun `a result's note can be written afterwards, and only the note changes`() {
+        timeAndStop(0)
+        viewModel.onStopPressed(0)
+        val before = results.single()
+
+        viewModel.onResultNoteEdited(before.id, "  Spikes on\nWindy  ")
+
+        assertEquals(before.copy(note = "Spikes on\nWindy"), results.single())
+        assertEquals(results, reopened().results.value)
+    }
+
+    @Test
+    fun `a result's note can be changed or cleared`() {
+        timeAndStop(0)
+        viewModel.onNoteChanged(0, "Spikes on")
+        viewModel.onStopPressed(0)
+        val id = results.single().id
+
+        viewModel.onResultNoteEdited(id, "Spikes off")
+        assertEquals("Spikes off", results.single().note)
+
+        viewModel.onResultNoteEdited(id, "   ")
+        assertEquals("", results.single().note)
+        assertEquals("", reopened().results.value.single().note)
+    }
+
+    @Test
+    fun `a result's note is cut to five hundred characters`() {
+        timeAndStop(0)
+        viewModel.onStopPressed(0)
+
+        viewModel.onResultNoteEdited(results.single().id, "a".repeat(600))
+
+        assertEquals("a".repeat(500), results.single().note)
+    }
+
+    @Test
+    fun `editing one result's note leaves the others, and their order, as they were`() {
+        timeAndStop(0)
+        timeAndStop(1)
+        viewModel.onResetAllPressed()
+        clock.advanceBy(10.seconds)
+        timeAndStop(2)
+        viewModel.onStopPressed(2)
+        val before = results
+
+        viewModel.onResultNoteEdited(before[1].id, "Spikes on")
+
+        assertEquals(before.map { it.id }, results.map { it.id })
+        assertEquals(listOf("", "Spikes on", ""), results.map { it.note })
+    }
+
+    @Test
+    fun `editing the note of a result that is no longer there does nothing`() {
+        timeAndStop(0)
+        viewModel.onStopPressed(0)
+        val before = results
+
+        viewModel.onResultNoteEdited(before.single().id + 1, "Spikes on")
+
+        assertEquals(before, results)
+    }
+
+    @Test
+    fun `a result whose note was edited is still taken back by undo`() {
+        timeAndStop(0)
+        viewModel.onStopPressed(0)
+        viewModel.onResultNoteEdited(results.single().id, "Spikes on")
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+
+        assertTrue(results.isEmpty())
+    }
 }
