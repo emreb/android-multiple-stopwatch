@@ -51,8 +51,8 @@ import kotlinx.coroutines.launch
 private const val SWATCHES_PER_ROW = 4
 
 /** How many lines a note box shows: a short paragraph at first, and no more than this as it grows. */
-internal const val NOTE_MIN_LINES = 4
-internal const val NOTE_MAX_LINES = 8
+private const val NOTE_MIN_LINES = 4
+private const val NOTE_MAX_LINES = 8
 
 /**
  * One stopwatch's name, colour, note and completed laps, over the timing screen, which keeps
