@@ -39,7 +39,7 @@ Returning a stopwatch to idle, clearing its laps from it. Name and colour are ke
 _Avoid_: Clear
 
 **Result**:
-The record of what one stopwatch had timed when it was reset: its name and colour at that moment, its note, its laps, best lap, total time, and the date and time. A stopwatch reset without a completed lap leaves none, and its note goes with it. A result never changes afterwards; it can only be deleted.
+The record of what one stopwatch had timed when it was reset: its name and colour at that moment, its note, its laps, best lap, total time, and the date and time. A stopwatch reset without a completed lap leaves none, and its note goes with it. A result's laps and times never change afterwards; only its note can be edited, and the result can be deleted.
 _Avoid_: Session, race, run, saved timing
 
 **History**:

@@ -162,6 +162,13 @@ class TimingViewModel(
         replace(mapOf(index to stopwatch.copy(note = Note.tidied(note))), feedback = null)
     }
 
+    /**
+     * Writes the note on the result with this [id], tidied as a stopwatch's is. Its note is the one
+     * thing about a result that can change afterwards.
+     */
+    fun onResultNoteEdited(id: Long, note: String) =
+        keepResults(_results.value.map { if (it.id == id) it.copy(note = Note.tidied(note)) else it })
+
     /** Deletes the result with this [id] for good; there is no undo for it. */
     fun onResultDeleted(id: Long) = keepResults(_results.value.filterNot { it.id == id })
 
@@ -215,11 +222,12 @@ class TimingViewModel(
         return recorded.associate { (index, result) -> index to result.id }
     }
 
-    /** Results are only ever added or removed, so the same number of them means nothing changed. */
+    /** Keeps [results] in place of those there were, and saves them, unless nothing changed. */
     private fun keepResults(results: List<Result>) {
-        if (results.size == _results.value.size) return
-        _results.value = results.sortedWith(MOST_RECENT_FIRST)
-        historyStore.save(_results.value)
+        val sorted = results.sortedWith(MOST_RECENT_FIRST)
+        if (sorted == _results.value) return
+        _results.value = sorted
+        historyStore.save(sorted)
     }
 
     /**

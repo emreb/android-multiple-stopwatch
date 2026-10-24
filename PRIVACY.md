@@ -16,7 +16,7 @@ MultiLaps keeps five things, and only on your device:
 
 This is kept so that your stopwatches are still there when you reopen the app, and so that you can look back at earlier times.
 
-Resetting a stopwatch clears its timing, lap times and note from the stopwatch, and keeps its name and colour; the note goes into the result with the laps. A name or colour stays until you change it. A result stays in History until you delete it there, one at a time or all at once. Clearing the app's data, or uninstalling the app, deletes all of it.
+Resetting a stopwatch clears its timing, lap times and note from the stopwatch, and keeps its name and colour; the note goes into the result with the laps. A name or colour stays until you change it. A result stays in History until you delete it there, one at a time or all at once; its note can be changed there too. Clearing the app's data, or uninstalling the app, deletes all of it.
 
 ## Sharing
 

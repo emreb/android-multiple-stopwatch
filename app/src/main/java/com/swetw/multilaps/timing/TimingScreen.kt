@@ -91,6 +91,7 @@ fun TimingScreen(viewModel: TimingViewModel, ratingPrompt: RatingPrompt = Rating
         val results by viewModel.results.collectAsStateWithLifecycle()
         HistoryScreen(
             results = results,
+            onNoteEdited = viewModel::onResultNoteEdited,
             onResultDeleted = viewModel::onResultDeleted,
             onAllResultsDeleted = viewModel::onAllResultsDeleted,
             onBack = {
