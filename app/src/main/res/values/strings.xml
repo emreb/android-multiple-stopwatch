@@ -75,9 +75,11 @@
     </plurals>
     <!-- Under a result's name in the history list: when it ran, lap count, best lap. -->
     <string name="result_details">%1$s, %2$s, best %3$s</string>
-    <!-- When a result ran, in the history list: the time of day it started, then the time it was reset. -->
+    <!-- When a result ran, in the history list and in shared text: the time of day it started, then the time it was reset. -->
     <string name="time_range">%1$s–%2$s</string>
-    <!-- The same, as spoken. -->
+    <!-- When a result ran, in shared text, where it was reset on a later day than it started: the time it started, then the date and time it was reset. Spaced, unlike time_range, because the date has commas of its own. -->
+    <string name="time_range_across_days">%1$s – %2$s</string>
+    <!-- The same as time_range, as spoken. -->
     <string name="time_range_spoken">%1$s to %2$s</string>
     <!-- A date, then a time of day: when a result was started or reset. -->
     <string name="date_and_time">%1$s, %2$s</string>
@@ -100,7 +102,7 @@
     <string name="toggle_result">select or deselect</string>
     <!-- A result as shared text. The placeholder of the title is the date. -->
     <string name="share_title">MultiLaps, %1$s</string>
-    <!-- A result's heading in shared text: name, then time of day. -->
+    <!-- A result's heading in shared text: name, then when it ran. -->
     <string name="share_result_heading">%1$s, %2$s</string>
     <!-- A result's figures in shared text: total time, lap count, best lap. -->
     <string name="share_result_summary">Total %1$s, %2$s, best %3$s</string>

@@ -35,11 +35,7 @@ fun shareText(results: List<Result>, zone: ZoneId, locale: Locale, resources: Re
 }
 
 private fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
-    val heading = resources.getString(
-        R.string.share_result_heading,
-        result.name,
-        formatTimeOfDay(result.resetTime(zone), locale),
-    )
+    val heading = resources.getString(R.string.share_result_heading, result.name, whenItRan(result, zone, locale, resources))
     val summary = resources.getString(
         R.string.share_result_summary,
         formatTime(result.totalTime),
@@ -51,4 +47,18 @@ private fun shareText(result: Result, zone: ZoneId, locale: Locale, resources: R
     }
     val note = listOfNotNull(result.note.ifEmpty { null })
     return (listOf(heading) + note + summary + laps).joinToString("\n")
+}
+
+/**
+ * The times a result ran from its start to its reset, the reset's date given as well only when it
+ * fell on a later day. A result without a start time gives its reset's time alone.
+ */
+private fun whenItRan(result: Result, zone: ZoneId, locale: Locale, resources: Resources): String {
+    val reset = result.resetTime(zone)
+    val resetTime = formatTimeOfDay(reset, locale)
+    val start = result.startTime(zone) ?: return resetTime
+    val startTime = formatTimeOfDay(start, locale)
+    if (start.toLocalDate() == reset.toLocalDate()) return resources.getString(R.string.time_range, startTime, resetTime)
+    val resetDateAndTime = resources.getString(R.string.date_and_time, formatDate(reset.toLocalDate(), locale), resetTime)
+    return resources.getString(R.string.time_range_across_days, startTime, resetDateAndTime)
 }
