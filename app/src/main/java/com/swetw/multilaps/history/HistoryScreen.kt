@@ -601,13 +601,18 @@ internal fun NoteEditor(id: Long, note: String, onSaved: (String) -> Unit, onCan
     // Keyed by the result, so that one result's unsaved text never turns up in another's.
     var text by rememberSaveable(id) { mutableStateOf(note) }
     Surface(shape = MaterialTheme.shapes.extraLarge, color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(24.dp)) {
+        // Scrolls as a whole in a short window, as on a phone on its side with the keyboard up, so
+        // that Save and Cancel can always be reached.
+        Column(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.verticalScroll(rememberScrollState()).padding(24.dp),
+        ) {
             Text(stringResource(R.string.note_field_label), style = MaterialTheme.typography.headlineSmall)
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = Note.cutToFit(it) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth().heightIn(max = NOTE_MAX_HEIGHT * 2).testTag("note-dialog-field"),
+                modifier = Modifier.fillMaxWidth().heightIn(max = NOTE_MAX_HEIGHT).testTag("note-dialog-field"),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = onCancelled, modifier = Modifier.testTag("cancel-note")) {
