@@ -50,9 +50,13 @@ import kotlinx.coroutines.launch
 
 private const val SWATCHES_PER_ROW = 4
 
+/** How many lines a note box shows: a short paragraph at first, and no more than this as it grows. */
+private const val NOTE_MIN_LINES = 4
+private const val NOTE_MAX_LINES = 8
+
 /**
- * One stopwatch's name, colour and completed laps, over the timing screen, which keeps running
- * behind it.
+ * One stopwatch's name, colour, note and completed laps, over the timing screen, which keeps
+ * running behind it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +65,7 @@ fun LapSheet(
     stopwatch: Stopwatch,
     onNameChanged: (String) -> Unit,
     onColourChosen: (StopwatchColour) -> Unit,
+    onNoteChanged: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -90,6 +95,7 @@ fun LapSheet(
             // leave a lap recorded meanwhile out of sight above the top.
             LazyColumn(modifier = Modifier.testTag("lap-list")) {
                 item { ColourPalette(selected = label.colour, onColourChosen = onColourChosen) }
+                item { NoteField(stopwatch.note, onNoteChanged) }
                 if (entries.isEmpty()) {
                     item {
                         Text(
@@ -133,6 +139,28 @@ private fun NameField(name: String, onNameChanged: (String) -> Unit, modifier: M
         singleLine = true,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
         modifier = modifier.testTag("name-field"),
+    )
+}
+
+/**
+ * Shows what is being typed, as the name field does: the note kept has the space around it
+ * dropped, but the field keeps it to carry on typing after.
+ */
+@Composable
+private fun NoteField(note: String, onNoteChanged: (String) -> Unit) {
+    var text by rememberSaveable { mutableStateOf(note) }
+    OutlinedTextField(
+        value = text,
+        onValueChange = {
+            text = Note.cutToFit(it)
+            onNoteChanged(text)
+        },
+        label = { Text(stringResource(R.string.note_field_label)) },
+        // Room for a short paragraph to begin with; past that it scrolls inside the box.
+        minLines = NOTE_MIN_LINES,
+        maxLines = NOTE_MAX_LINES,
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp).testTag("note-field"),
     )
 }
 

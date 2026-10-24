@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.stopwatch.FakeClock
 import com.swetw.multilaps.stopwatch.Stopwatch
 import com.swetw.multilaps.stopwatch.StopwatchState
+import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -94,5 +95,27 @@ class PreferencesTimingStoreTest {
         preferences.edit().putString(PreferencesTimingStore.KEY, future).commit()
 
         assertNull(store.load())
+    }
+
+    @Test
+    fun `notes come back exactly, with their lines and awkward characters`() {
+        val running = Stopwatch(note = "Zoë \"Zed\" O'Neil, 🏃\nWindy").start(clock.now())
+        val timing = SavedTiming.of(listOf(Stopwatch(note = "Spikes on"), running, Stopwatch()), clock)
+
+        store.save(timing)
+
+        assertEquals(timing, PreferencesTimingStore(preferences).load())
+    }
+
+    @Test
+    fun `timing saved before stopwatches had notes comes back with none`() {
+        val timing = SavedTiming.of(listOf(Stopwatch().start(clock.now()), Stopwatch()), clock)
+        store.save(timing)
+        val json = JSONObject(preferences.getString(PreferencesTimingStore.KEY, null)!!)
+        val saved = json.getJSONArray("stopwatches")
+        for (i in 0 until saved.length()) saved.getJSONObject(i).remove("note")
+        preferences.edit().putString(PreferencesTimingStore.KEY, json.toString()).commit()
+
+        assertEquals(timing, store.load())
     }
 }

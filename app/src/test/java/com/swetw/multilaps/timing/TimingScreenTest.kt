@@ -852,6 +852,9 @@ class TimingScreenTest {
         advance(30.seconds)
         press("Lap", tile = 4)
         openLapSheet(tile = 4)
+        // On its side the note's box fills the first screenful; the laps are a scroll below it.
+        composeRule.onNodeWithTag("lap-list").performScrollToIndex(FIRST_LAP_ITEM)
+        letSheetSettle()
 
         lapSheet().assertIsDisplayed()
         lapRows().assertCountEquals(1)
@@ -1347,7 +1350,7 @@ class TimingScreenTest {
 
 private const val SHEET_SETTLE_FRAMES = 60
 
-/** Where things sit in the sheet's list: the palette, the column headings, then the laps. */
+/** Where things sit in the sheet's list: the palette, the note, the column headings, then the laps. */
 private const val PALETTE_ITEM = 0
-private const val FIRST_LAP_ITEM = 2
+private const val FIRST_LAP_ITEM = 3
 private const val LAST_OF_FORTY_LAPS = FIRST_LAP_ITEM + 39

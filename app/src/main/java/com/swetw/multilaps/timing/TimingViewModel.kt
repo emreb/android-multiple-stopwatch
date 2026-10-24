@@ -156,6 +156,12 @@ class TimingViewModel(
 
     fun onColourChosen(index: Int, colour: StopwatchColour) = relabel(index) { it.copy(colour = colour) }
 
+    /** Writes the note on the run the stopwatch at [index] is timing; space alone leaves it without one. */
+    fun onNoteChanged(index: Int, note: String) {
+        val stopwatch = stopwatchAt(index)
+        replace(mapOf(index to stopwatch.copy(note = Note.tidied(note))), feedback = null)
+    }
+
     /** Deletes the result with this [id] for good; there is no undo for it. */
     fun onResultDeleted(id: Long) = keepResults(_results.value.filterNot { it.id == id })
 
@@ -201,6 +207,7 @@ class TimingViewModel(
                 laps = stopwatch.laps,
                 totalTime = stopwatch.accumulated,
                 resetAt = resetAt,
+                note = stopwatch.note,
             )
         }
         lastResultId = firstId + indices.size - 1
@@ -234,16 +241,16 @@ class TimingViewModel(
     }
 
     /**
-     * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback];
-     * unless nothing actually changed, as when start all finds no idle stopwatch.
+     * Puts [replacements] in place by position, saves, and lets the press be felt as [feedback], if
+     * any; unless nothing actually changed, as when start all finds no idle stopwatch.
      */
-    private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback) {
+    private fun replace(replacements: Map<Int, Stopwatch>, feedback: Feedback?) {
         val before = _stopwatches.value
         val after = before.mapIndexed { index, stopwatch -> replacements[index] ?: stopwatch }
         if (after == before) return
         _stopwatches.value = after
         save(after)
-        haptics.play(feedback)
+        feedback?.let(haptics::play)
     }
 
     private fun restored(): List<Stopwatch> {

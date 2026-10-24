@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +67,7 @@ import com.swetw.multilaps.theme.FigureStyles
 import com.swetw.multilaps.timing.BUTTON_SHAPE
 import com.swetw.multilaps.timing.LapColumns
 import com.swetw.multilaps.timing.LapRow
+import com.swetw.multilaps.timing.NoteMark
 import com.swetw.multilaps.timing.ScreenButton
 import com.swetw.multilaps.timing.StopwatchColourKey
 import com.swetw.multilaps.timing.color
@@ -74,6 +77,9 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 
 private val GAP = 8.dp
+
+/** About five lines of a result's note, the most it shows before it scrolls. */
+private val NOTE_MAX_HEIGHT = 120.dp
 
 /**
  * What has been timed and reset, by day with the most recent first. Tapping a result opens its
@@ -384,13 +390,21 @@ private fun ResultRow(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = result.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                    // The mark stays beside the name, however short, and a long name gives way to it.
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f),
-                    )
+                    ) {
+                        Text(
+                            text = result.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        if (result.note.isNotEmpty()) NoteMark(size = 14.dp)
+                    }
                     Text(total, style = FigureStyles.lap, maxLines = 1)
                 }
                 // One line that may run to two, so that on a narrow phone with enlarged text the
@@ -443,6 +457,18 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 outlined = true,
                 onClick = { context.share(shareText(listOf(result), zone, locale, context.resources, context.packageName)) },
                 modifier = Modifier.testTag("share-result"),
+            )
+        }
+        // A long note scrolls in a few lines of its own, rather than pushing the figures and
+        // laps out of sight.
+        if (result.note.isNotEmpty()) {
+            Text(
+                text = result.note,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .heightIn(max = NOTE_MAX_HEIGHT)
+                    .verticalScroll(rememberScrollState())
+                    .testTag("result-note"),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(GAP), modifier = Modifier.testTag("result-figures")) {
