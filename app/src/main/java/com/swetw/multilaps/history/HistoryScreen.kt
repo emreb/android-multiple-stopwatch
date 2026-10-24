@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
 import androidx.core.os.ConfigurationCompat
 import com.swetw.multilaps.R
@@ -86,6 +88,10 @@ private val GAP = 8.dp
 
 /** About five lines of a result's note, the most it shows before it scrolls. */
 private val NOTE_MAX_HEIGHT = 120.dp
+
+/** The note's box in the dialog: about four lines to begin with, growing to about eight. */
+private val NOTE_BOX_MIN_HEIGHT = 128.dp
+private val NOTE_BOX_MAX_HEIGHT = 224.dp
 
 /**
  * What has been timed and reset, by day with the most recent first. Tapping a result opens its
@@ -590,7 +596,12 @@ private fun Figure(@StringRes caption: Int, @StringRes description: Int, value: 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NoteDialog(id: Long, note: String, onSaved: (String) -> Unit, onDismissed: () -> Unit) {
-    BasicAlertDialog(onDismissRequest = onDismissed, modifier = Modifier.testTag("note-dialog")) {
+    // Laid out around the keyboard, which would otherwise cover Save on a phone on its side.
+    BasicAlertDialog(
+        onDismissRequest = onDismissed,
+        properties = DialogProperties(decorFitsSystemWindows = false),
+        modifier = Modifier.imePadding().testTag("note-dialog"),
+    ) {
         NoteEditor(id, note, onSaved, onCancelled = onDismissed)
     }
 }
@@ -612,7 +623,12 @@ internal fun NoteEditor(id: Long, note: String, onSaved: (String) -> Unit, onCan
                 value = text,
                 onValueChange = { text = Note.cutToFit(it) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                modifier = Modifier.fillMaxWidth().heightIn(max = NOTE_MAX_HEIGHT).testTag("note-dialog-field"),
+                // About the box a stopwatch's note has: a short paragraph, scrolling inside past
+                // that. Set by height, since the column around it scrolls.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = NOTE_BOX_MIN_HEIGHT, max = NOTE_BOX_MAX_HEIGHT)
+                    .testTag("note-dialog-field"),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = onCancelled, modifier = Modifier.testTag("cancel-note")) {
