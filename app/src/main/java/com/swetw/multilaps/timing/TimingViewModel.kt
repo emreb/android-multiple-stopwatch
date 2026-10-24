@@ -46,7 +46,7 @@ class TimingViewModel(
 
     private val _results = MutableStateFlow(historyStore.load().sortedWith(MOST_RECENT_FIRST))
 
-    /** What has been timed and reset, most recently reset first. */
+    /** What has been timed and reset, most recently started first; see [Result.placedAt]. */
     val results: StateFlow<List<Result>> = _results.asStateFlow()
 
     /** When each stopwatch was last stopped, or brought back stopped, in this run of the app. */
@@ -219,6 +219,7 @@ class TimingViewModel(
                 note = stopwatch.note,
                 // The wall clock may have been put back since the start.
                 startedAt = stopwatch.startedAt?.coerceAtMost(resetAt),
+                stopwatchIndex = index,
             )
         }
         lastResultId = firstId + indices.size - 1
@@ -281,8 +282,15 @@ class TimingViewModel(
         const val STOPWATCH_COUNT = 4
         val MIN_RESET_INTERVAL: Duration = 1.seconds
 
-        /** Results reset at the same moment stay in the order of their stopwatches. */
-        private val MOST_RECENT_FIRST = compareByDescending<Result> { it.resetAt }.thenBy { it.id }
+        /**
+         * Most recently started first. Results started at the same moment, as by start all, stay in
+         * the order of their stopwatches however they were reset; of those kept before results said
+         * which stopwatch timed them, the most recently reset comes first.
+         */
+        private val MOST_RECENT_FIRST = compareByDescending<Result> { it.placedAt }
+            .thenBy(nullsLast()) { it.stopwatchIndex }
+            .thenByDescending { it.resetAt }
+            .thenBy { it.id }
 
         /** How long an offer to undo a reset stays open. */
         val UNDO_WINDOW: Duration = 5.seconds

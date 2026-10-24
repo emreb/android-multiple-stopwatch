@@ -21,7 +21,7 @@ class DaysTest {
     }
 
     @Test
-    fun `results are gathered under the day they were reset, keeping their order`() {
+    fun `results kept without start times are gathered under the day they were reset, keeping their order`() {
         val results = listOf(
             result(1, "2026-10-12T18:30", lisbon),
             result(2, "2026-10-12T09:00", lisbon),
@@ -35,6 +35,26 @@ class DaysTest {
             ),
             results.byDay(lisbon),
         )
+    }
+
+    @Test
+    fun `a result is gathered under the day it started, though reset after midnight`() {
+        val results = listOf(
+            result(1, "2026-10-13T00:44", lisbon, startedAt = "2026-10-12T23:42"),
+            result(2, "2026-10-12T21:00", lisbon, startedAt = "2026-10-12T20:00"),
+        )
+
+        assertEquals(listOf(Day(LocalDate.of(2026, 10, 12), results)), results.byDay(lisbon))
+    }
+
+    @Test
+    fun `a result kept without a start time is gathered under the day it was reset`() {
+        val results = listOf(
+            result(1, "2026-10-13T00:44", lisbon),
+            result(2, "2026-10-12T23:50", lisbon, startedAt = "2026-10-12T23:42"),
+        )
+
+        assertEquals(listOf(13, 12), results.byDay(lisbon).map { it.date.dayOfMonth })
     }
 
     @Test

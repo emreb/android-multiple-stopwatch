@@ -32,6 +32,7 @@ class PreferencesHistoryStoreTest {
             resetAt = 20_000.days + 7.nanoseconds,
             note = "Spikes on, \"new\" ones 🏃\nWindy back straight",
             startedAt = 20_000.days - 170.seconds - 3.nanoseconds,
+            stopwatchIndex = 3,
         ),
         Result(7, "2", StopwatchColour.Red, listOf(61.seconds), 61.seconds, 20_001.days),
     )
@@ -132,6 +133,16 @@ class PreferencesHistoryStoreTest {
         store(json)
 
         assertEquals(listOf(results[0].copy(startedAt = null), results[1]), reloaded())
+    }
+
+    @Test
+    fun `a result kept before it said which stopwatch timed it loads without saying`() {
+        store.save(results)
+        val json = stored()
+        entries(json).getJSONObject(0).remove("stopwatchIndex")
+        store(json)
+
+        assertEquals(listOf(results[0].copy(stopwatchIndex = null), results[1]), reloaded())
     }
 
     @Test
