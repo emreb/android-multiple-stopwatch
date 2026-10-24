@@ -2,6 +2,7 @@ package com.swetw.multilaps.history
 
 import com.swetw.multilaps.timing.StopwatchColour
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -61,9 +62,17 @@ class DaysTest {
 
         assertEquals(LocalDateTime.parse("2026-10-12T16:42"), result.resetTime(lisbon).toLocalDateTime())
     }
+
+    @Test
+    fun `a result knows the time of day it started, where it has one`() {
+        val result = result(1, "2026-10-12T16:42", lisbon, startedAt = "2026-10-12T16:02")
+
+        assertEquals(LocalDateTime.parse("2026-10-12T16:02"), result.startTime(lisbon)?.toLocalDateTime())
+        assertNull(result(2, "2026-10-12T16:42", lisbon).startTime(lisbon))
+    }
 }
 
-/** A result with one lap, reset at [localTime] in [zone]. */
+/** A result with one lap, reset at [localTime] in [zone] and, if given, started at [startedAt] there. */
 fun result(
     id: Long,
     localTime: String,
@@ -72,6 +81,7 @@ fun result(
     colour: StopwatchColour = StopwatchColour.Blue,
     laps: List<Int> = listOf(60),
     extra: Int = 0,
+    startedAt: String? = null,
 ) = Result(
     id = id,
     name = name,
@@ -79,4 +89,5 @@ fun result(
     laps = laps.map { it.seconds },
     totalTime = (laps.sum() + extra).seconds,
     resetAt = LocalDateTime.parse(localTime).atZone(zone).toEpochSecond().seconds,
+    startedAt = startedAt?.let { LocalDateTime.parse(it).atZone(zone).toEpochSecond().seconds },
 )

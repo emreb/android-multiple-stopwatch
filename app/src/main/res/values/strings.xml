@@ -73,11 +73,19 @@
         <item quantity="one">%1$d lap</item>
         <item quantity="other">%1$d laps</item>
     </plurals>
-    <!-- Under a result's name in the history list: time of day, lap count, best lap. -->
+    <!-- Under a result's name in the history list: when it ran, lap count, best lap. -->
     <string name="result_details">%1$s, %2$s, best %3$s</string>
-    <!-- When a result was reset: the date, then the time of day. -->
+    <!-- When a result ran, in the history list: the time of day it started, then the time it was reset. -->
+    <string name="time_range">%1$s–%2$s</string>
+    <!-- The same, as spoken. -->
+    <string name="time_range_spoken">%1$s to %2$s</string>
+    <!-- A date, then a time of day: when a result was started or reset. -->
     <string name="date_and_time">%1$s, %2$s</string>
-    <!-- A result in the history list as spoken: name, time of day, total time, lap count, best lap. -->
+    <!-- The first of two lines on a result's page: when its stopwatch was started, as a date and time. -->
+    <string name="started_at">Started %1$s</string>
+    <!-- The second of the two: when it was reset, as a time of day, or a date and time where that fell on a later day. -->
+    <string name="reset_at">Reset %1$s</string>
+    <!-- A result in the history list as spoken: name, when it ran, total time, lap count, best lap. -->
     <string name="result_description">%1$s, %2$s, total time %3$s, %4$s, best lap %5$s</string>
     <!-- What tapping a result does, spoken after "double tap to". -->
     <string name="show_result">show its laps</string>

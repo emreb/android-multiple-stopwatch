@@ -34,8 +34,13 @@ class HistoryTextFitTest {
 
     private val lisbon = ZoneId.of("Europe/Lisbon")
 
-    /** Over an hour, with twelve laps: the widest figures a result is likely to show. */
-    private val long = result(1, "2026-10-12T23:42", lisbon, name = "Charlotte", laps = List(11) { 300 } + 425)
+    /**
+     * Over an hour, with twelve laps, run across midnight: the widest figures and dates a result is
+     * likely to show.
+     */
+    private val long = result(
+        1, "2026-10-13T00:44", lisbon, name = "Charlotte", laps = List(11) { 300 } + 425, startedAt = "2026-10-12T23:42",
+    )
 
     private fun show() = composeRule.setContent {
         MultiLapsTheme {

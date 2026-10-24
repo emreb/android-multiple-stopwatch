@@ -31,6 +31,7 @@ class PreferencesHistoryStoreTest {
             totalTime = 170.seconds + 1.nanoseconds,
             resetAt = 20_000.days + 7.nanoseconds,
             note = "Spikes on, \"new\" ones 🏃\nWindy back straight",
+            startedAt = 20_000.days - 170.seconds - 3.nanoseconds,
         ),
         Result(7, "2", StopwatchColour.Red, listOf(61.seconds), 61.seconds, 20_001.days),
     )
@@ -121,6 +122,26 @@ class PreferencesHistoryStoreTest {
         store(json)
 
         assertEquals(results, reloaded())
+    }
+
+    @Test
+    fun `a result kept before start times were recorded loads without one`() {
+        store.save(results)
+        val json = stored()
+        entries(json).getJSONObject(0).remove("startedAtNanos")
+        store(json)
+
+        assertEquals(listOf(results[0].copy(startedAt = null), results[1]), reloaded())
+    }
+
+    @Test
+    fun `a result that starts after its reset is left out`() {
+        store.save(results)
+        val json = stored()
+        entries(json).getJSONObject(0).put("startedAtNanos", (20_001.days).inWholeNanoseconds)
+        store(json)
+
+        assertEquals(results.drop(1), reloaded())
     }
 
     @Test

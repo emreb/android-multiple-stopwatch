@@ -69,12 +69,13 @@ class TimingViewModel(
     /** Start begins or resumes a stopwatch; pressed while running, it records a lap. */
     fun onStartPressed(index: Int) {
         val now = clock.now()
+        val wallNow = clock.wallNow()
         val stopwatch = stopwatchAt(index)
         when (stopwatch.state) {
             StopwatchState.Running -> replace(mapOf(index to stopwatch.lap(now)), Feedback.Lap)
             StopwatchState.Idle, StopwatchState.Stopped -> {
                 withdrawFromUndoOffer(index)
-                replace(mapOf(index to stopwatch.start(now)), Feedback.Start)
+                replace(mapOf(index to stopwatch.start(now, wallNow)), Feedback.Start)
             }
         }
     }
@@ -85,10 +86,11 @@ class TimingViewModel(
      */
     fun onStartAllPressed() {
         val now = clock.now()
+        val wallNow = clock.wallNow()
         val stopwatches = _stopwatches.value
         val idle = stopwatches.indices.filter { stopwatches[it].state == StopwatchState.Idle }
         idle.forEach(::withdrawFromUndoOffer)
-        replace(idle.associateWith { stopwatches[it].start(now) }, Feedback.Start)
+        replace(idle.associateWith { stopwatches[it].start(now, wallNow) }, Feedback.Start)
     }
 
     /**
@@ -215,6 +217,8 @@ class TimingViewModel(
                 totalTime = stopwatch.accumulated,
                 resetAt = resetAt,
                 note = stopwatch.note,
+                // The wall clock may have been put back since the start.
+                startedAt = stopwatch.startedAt?.coerceAtMost(resetAt),
             )
         }
         lastResultId = firstId + indices.size - 1

@@ -15,7 +15,7 @@ class SavedTimingTest {
     private val clock = FakeClock()
 
     private fun runningWithOneLap(): Stopwatch {
-        val started = Stopwatch().start(clock.now())
+        val started = Stopwatch().start(clock.now(), clock.wallNow())
         clock.advanceBy(30.seconds)
         return started.lap(clock.now())
     }
@@ -23,7 +23,7 @@ class SavedTimingTest {
     @Test
     fun `within the same boot stopwatches come back exactly as they were saved`() {
         val running = runningWithOneLap()
-        val stopped = Stopwatch().start(clock.now()).stop(clock.now() + 7.seconds)
+        val stopped = Stopwatch().start(clock.now(), clock.wallNow()).stop(clock.now() + 7.seconds)
         val saved = SavedTiming.of(listOf(running, stopped, Stopwatch()), clock)
 
         clock.advanceBy(10.minutes)
@@ -109,7 +109,7 @@ class SavedTimingTest {
     @Test
     fun `on a device that does not count its boots, a restart is recognised by when the device started`() {
         val clock = FakeClock(bootCount = 0)
-        val running = Stopwatch().start(clock.now())
+        val running = Stopwatch().start(clock.now(), clock.wallNow())
         val saved = SavedTiming.of(listOf(running), clock)
 
         clock.restart(downtime = 5.minutes, uptime = 2.hours, countsBoot = false)
@@ -121,7 +121,7 @@ class SavedTimingTest {
     @Test
     fun `on a device that does not count its boots, a small correction to the wall clock does not disturb the time`() {
         val clock = FakeClock(bootCount = 0)
-        val running = Stopwatch().start(clock.now())
+        val running = Stopwatch().start(clock.now(), clock.wallNow())
         val saved = SavedTiming.of(listOf(running), clock)
 
         clock.advanceBy(10.minutes)

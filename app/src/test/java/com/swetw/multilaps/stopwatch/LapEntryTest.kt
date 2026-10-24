@@ -8,7 +8,7 @@ import kotlin.time.Duration.Companion.seconds
 class LapEntryTest {
 
     private val start = 100.seconds
-    private val running = Stopwatch().start(now = start)
+    private val running = Stopwatch().start(now = start, wallNow = start)
 
     @Test
     fun `a stopwatch without completed laps has no entries, even while its first lap is in progress`() {
@@ -45,7 +45,7 @@ class LapEntryTest {
         val stopwatch = running
             .lap(now = start + 30.seconds)
             .stop(now = start + 40.seconds)
-            .start(now = start + 500.seconds)
+            .start(now = start + 500.seconds, wallNow = start + 500.seconds)
             .lap(now = start + 505.seconds)
 
         val newest = stopwatch.lapEntries().first()

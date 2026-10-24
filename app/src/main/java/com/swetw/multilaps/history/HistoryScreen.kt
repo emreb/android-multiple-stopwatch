@@ -359,11 +359,14 @@ private fun ResultRow(
     onEditNoteAsked: () -> Unit,
     onDeleteAsked: () -> Unit,
 ) {
-    val timeOfDay = formatTimeOfDay(result.resetTime(zone), locale)
+    val resetTime = formatTimeOfDay(result.resetTime(zone), locale)
+    val startTime = result.startTime(zone)?.let { formatTimeOfDay(it, locale) }
+    val ran = startTime?.let { stringResource(R.string.time_range, it, resetTime) } ?: resetTime
+    val spokenRan = startTime?.let { stringResource(R.string.time_range_spoken, it, resetTime) } ?: resetTime
     val total = formatTime(result.totalTime)
     val best = formatTime(result.bestLap)
     val laps = pluralStringResource(R.plurals.lap_count, result.lapCount, result.lapCount)
-    val spoken = stringResource(R.string.result_description, result.name, timeOfDay, total, laps, best)
+    val spoken = stringResource(R.string.result_description, result.name, spokenRan, total, laps, best)
     val delete = stringResource(R.string.action_delete)
     val editNote = stringResource(R.string.action_edit_note)
     val ink = MaterialTheme.colorScheme.onBackground
@@ -463,13 +466,35 @@ private fun ResultRow(
                 // One line that may run to two, so that on a narrow phone with enlarged text the
                 // lesser figures wrap instead of squeezing the name out.
                 Text(
-                    text = stringResource(R.string.result_details, timeOfDay, laps, best),
+                    text = stringResource(R.string.result_details, ran, laps, best),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
+}
+
+/**
+ * When a result ran: its start on one line and its reset on the next, the reset's date given only
+ * when that fell on a later day. A result without a start time gives its reset alone.
+ */
+@Composable
+private fun whenItRan(result: Result, zone: ZoneId, locale: Locale): String {
+    val reset = result.resetTime(zone)
+    val resetDateAndTime = stringResource(
+        R.string.date_and_time,
+        formatDate(reset.toLocalDate(), locale),
+        formatTimeOfDay(reset, locale),
+    )
+    val start = result.startTime(zone) ?: return resetDateAndTime
+    val startDateAndTime = stringResource(
+        R.string.date_and_time,
+        formatDate(start.toLocalDate(), locale),
+        formatTimeOfDay(start, locale),
+    )
+    val resetWhen = if (start.toLocalDate() == reset.toLocalDate()) formatTimeOfDay(reset, locale) else resetDateAndTime
+    return stringResource(R.string.started_at, startDateAndTime) + "\n" + stringResource(R.string.reset_at, resetWhen)
 }
 
 /** One result's figures and every lap, newest first as a stopwatch's own lap list shows them. */
@@ -483,7 +508,6 @@ private fun ResultDetail(
     onBack: () -> Unit,
 ) {
     var confirming by rememberSaveable { mutableStateOf(false) }
-    val reset = result.resetTime(zone)
     val context = LocalContext.current
 
     TopBar(
@@ -501,11 +525,7 @@ private fun ResultDetail(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(28.dp).clip(BUTTON_SHAPE).background(result.colour.color))
             Text(
-                text = stringResource(
-                    R.string.date_and_time,
-                    formatDate(reset.toLocalDate(), locale),
-                    formatTimeOfDay(reset, locale),
-                ),
+                text = whenItRan(result, zone, locale),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
