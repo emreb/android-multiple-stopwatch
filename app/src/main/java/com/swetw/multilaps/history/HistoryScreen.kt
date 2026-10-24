@@ -476,22 +476,25 @@ private fun ResultRow(
 }
 
 /**
- * The date and times a result ran from its start to its reset, the date given again with the
- * reset only when that fell on a later day. A result without a start time gives its reset alone.
+ * When a result ran: its start on one line and its reset on the next, the reset's date given only
+ * when that fell on a later day. A result without a start time gives its reset alone.
  */
 @Composable
 private fun whenItRan(result: Result, zone: ZoneId, locale: Locale): String {
     val reset = result.resetTime(zone)
-    val resetDate = formatDate(reset.toLocalDate(), locale)
-    val resetTime = formatTimeOfDay(reset, locale)
-    val start = result.startTime(zone) ?: return stringResource(R.string.date_and_time, resetDate, resetTime)
-    val startDate = formatDate(start.toLocalDate(), locale)
-    val startTime = formatTimeOfDay(start, locale)
-    return if (start.toLocalDate() == reset.toLocalDate()) {
-        stringResource(R.string.date_and_time_range, startDate, startTime, resetTime)
-    } else {
-        stringResource(R.string.date_and_time_range_across_days, startDate, startTime, resetDate, resetTime)
-    }
+    val resetDateAndTime = stringResource(
+        R.string.date_and_time,
+        formatDate(reset.toLocalDate(), locale),
+        formatTimeOfDay(reset, locale),
+    )
+    val start = result.startTime(zone) ?: return resetDateAndTime
+    val startDateAndTime = stringResource(
+        R.string.date_and_time,
+        formatDate(start.toLocalDate(), locale),
+        formatTimeOfDay(start, locale),
+    )
+    val resetWhen = if (start.toLocalDate() == reset.toLocalDate()) formatTimeOfDay(reset, locale) else resetDateAndTime
+    return stringResource(R.string.started_at, startDateAndTime) + "\n" + stringResource(R.string.reset_at, resetWhen)
 }
 
 /** One result's figures and every lap, newest first as a stopwatch's own lap list shows them. */

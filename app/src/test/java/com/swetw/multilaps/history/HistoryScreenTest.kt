@@ -156,12 +156,12 @@ class HistoryScreenTest {
     }
 
     @Test
-    fun `a result's page gives its date with its start and reset times`() {
+    fun `a result's page gives its start and its reset on lines of their own`() {
         results = listOf(ada.copy(startedAt = ada.resetAt - 40.minutes))
         show()
         row("Ada").performClick()
 
-        composeRule.onNode(hasTextIgnoringSpaces("Monday, October 12, 2026, 4:02 PM–4:42 PM")).assertIsDisplayed()
+        composeRule.onNode(hasTextIgnoringSpaces("Started Monday, October 12, 2026, 4:02 PM\nReset 4:42 PM")).assertIsDisplayed()
     }
 
     @Test
@@ -171,7 +171,7 @@ class HistoryScreenTest {
         row("Ada").performClick()
 
         composeRule.onNode(
-            hasTextIgnoringSpaces("Monday, October 12, 2026, 11:50 PM – Tuesday, October 13, 2026, 12:10 AM"),
+            hasTextIgnoringSpaces("Started Monday, October 12, 2026, 11:50 PM\nReset Tuesday, October 13, 2026, 12:10 AM"),
         ).assertIsDisplayed()
     }
 

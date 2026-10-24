@@ -79,12 +79,12 @@
     <string name="time_range">%1$s–%2$s</string>
     <!-- The same, as spoken. -->
     <string name="time_range_spoken">%1$s to %2$s</string>
-    <!-- When a result kept without a start time was reset: the date, then the time of day. -->
+    <!-- A date, then a time of day: when a result was started or reset. -->
     <string name="date_and_time">%1$s, %2$s</string>
-    <!-- When a result started and was reset on one day: the date, the start time, the reset time. -->
-    <string name="date_and_time_range">%1$s, %2$s–%3$s</string>
-    <!-- When a result was reset on a later day than it started: the start date and time, then the reset date and time. -->
-    <string name="date_and_time_range_across_days">%1$s, %2$s – %3$s, %4$s</string>
+    <!-- The first of two lines on a result's page: when its stopwatch was started, as a date and time. -->
+    <string name="started_at">Started %1$s</string>
+    <!-- The second of the two: when it was reset, as a time of day, or a date and time where that fell on a later day. -->
+    <string name="reset_at">Reset %1$s</string>
     <!-- A result in the history list as spoken: name, when it ran, total time, lap count, best lap. -->
     <string name="result_description">%1$s, %2$s, total time %3$s, %4$s, best lap %5$s</string>
     <!-- What tapping a result does, spoken after "double tap to". -->
