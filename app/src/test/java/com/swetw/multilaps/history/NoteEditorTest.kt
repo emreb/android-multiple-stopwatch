@@ -3,16 +3,19 @@ package com.swetw.multilaps.history
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
 import com.swetw.multilaps.theme.MultiLapsTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -54,6 +57,13 @@ class NoteEditorTest {
     fun `it is titled as a note and starts from the note there is`() {
         composeRule.onNode(hasText("Note")).assertExists()
         assertFieldText("Spikes on")
+    }
+
+    @Test
+    fun `the note is a box for a short paragraph, not a single line`() {
+        val box = field().getUnclippedBoundsInRoot()
+
+        assertTrue("note box only ${box.bottom - box.top} tall", box.bottom - box.top >= 112.dp)
     }
 
     @Test
