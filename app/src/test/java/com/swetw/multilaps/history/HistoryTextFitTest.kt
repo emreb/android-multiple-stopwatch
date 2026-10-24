@@ -2,14 +2,19 @@ package com.swetw.multilaps.history
 
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.swetw.multilaps.Devices.LANDSCAPE_PHONE
 import com.swetw.multilaps.Devices.SMALL_PHONE
+import com.swetw.multilaps.Devices.SMALL_PHONE_LANDSCAPE
 import com.swetw.multilaps.theme.MultiLapsTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -69,6 +74,35 @@ class HistoryTextFitTest {
         assertTrue("$text runs past its edge", lines.all { layout.getLineRight(it) <= layout.size.width })
     }
 
+    /** As [assertShownWhole], and every line breaks between words, never inside one. */
+    private fun SemanticsNodeInteraction.assertShownWholeWords() {
+        assertShownWhole()
+        val layout = layout()
+        val text = layout.layoutInput.text.text
+        val broken = (0 until layout.lineCount - 1).map { layout.getLineEnd(it) }
+            .filter { end -> !text[end - 1].isWhitespace() && !text[end].isWhitespace() }
+        assertTrue("$text breaks inside a word at $broken", broken.isEmpty())
+    }
+
+    /**
+     * The result's page gives its start and reset in whole words and still offers both its buttons:
+     * on the date's line where [beside], or on a line below it otherwise.
+     */
+    private fun assertDetailDateShownWhole(beside: Boolean) {
+        show()
+        composeRule.onNode(hasTestTag("result-row")).performClick()
+
+        val date = text("Started", within = "result-detail").apply { assertShownWholeWords() }.getUnclippedBoundsInRoot()
+        for (tag in listOf("edit-note", "share-result")) {
+            val button = composeRule.onNodeWithTag(tag).assertIsDisplayed().getUnclippedBoundsInRoot()
+            if (beside) {
+                assertTrue("$tag at ${button.top} is not beside the date ending ${date.bottom}", button.top < date.bottom)
+            } else {
+                assertTrue("$tag at ${button.top} is not below the date ending ${date.bottom}", button.top >= date.bottom)
+            }
+        }
+    }
+
     private fun assertDetailFiguresShownWhole() {
         show()
         composeRule.onNode(hasTestTag("result-row")).performClick()
@@ -100,6 +134,31 @@ class HistoryTextFitTest {
     @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
     fun `a total of over an hour is shown whole on a result's page, on a small phone with enlarged text`() =
         assertDetailFiguresShownWhole()
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
+    fun `a result's page gives its start and reset in whole words with its buttons below, on a small phone with enlarged text`() =
+        assertDetailDateShownWhole(beside = false)
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE)
+    fun `a result's page gives its start and reset in whole words beside its buttons, on a small phone`() =
+        assertDetailDateShownWhole(beside = true)
+
+    @Test
+    @Config(qualifiers = "w360dp-h740dp-port")
+    fun `a result's page gives its start and reset in whole words beside its buttons, on an ordinary phone`() =
+        assertDetailDateShownWhole(beside = true)
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `a result's page gives its start and reset beside its buttons on a phone on its side, where height is short`() =
+        assertDetailDateShownWhole(beside = true)
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE, fontScale = 1.5f)
+    fun `a result's page gives its start and reset beside its buttons on a small phone on its side, even with enlarged text`() =
+        assertDetailDateShownWhole(beside = true)
 
     @Test
     @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)

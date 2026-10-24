@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -48,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -64,6 +66,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.sp
@@ -82,12 +85,22 @@ import com.swetw.multilaps.timing.color
 import com.swetw.multilaps.timing.contentColor
 import java.time.ZoneId
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 private val GAP = 8.dp
 
 /** About five lines of a result's note, the most it shows before it scrolls. */
 private val NOTE_MAX_HEIGHT = 120.dp
+
+/** Between a result's date and its buttons, and between the buttons. */
+private val BESIDE = 12.dp
+
+/**
+ * The least width a result's date is given beside its buttons, at ordinary text size, before they
+ * go below it instead; enlarged text asks for proportionally more.
+ */
+private val DATE_MIN_WIDTH = 120.dp
 
 /** The note's box in the dialog: about four lines to begin with, growing to about eight. */
 private val NOTE_BOX_MIN_HEIGHT = 128.dp
@@ -457,7 +470,7 @@ private fun ResultRow(
                             style = MaterialTheme.typography.titleMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
+                            modifier = Modifier.weight(1f),
                         )
                         if (result.note.isNotEmpty()) NoteMark(size = 14.dp)
                     }
@@ -497,6 +510,45 @@ private fun whenItRan(result: Result, zone: ZoneId, locale: Locale): String {
     return stringResource(R.string.started_at, startDateAndTime) + "\n" + stringResource(R.string.reset_at, resetWhen)
 }
 
+/**
+ * A result's [date] with its [buttons] at the end of the same line, where that leaves the date room
+ * for its longest word and for [DATE_MIN_WIDTH], scaled with the text. Otherwise, as on a narrow
+ * phone with enlarged text, the date has the whole width and the buttons go on the line below, so
+ * it never breaks inside a word. Wide screens keep one line, sparing the height a short one needs.
+ */
+@Composable
+private fun DateBesideButtons(date: @Composable () -> Unit, buttons: @Composable RowScope.() -> Unit) {
+    Layout(
+        contents = listOf(date) + @Composable {
+            Row(horizontalArrangement = Arrangement.spacedBy(BESIDE), verticalAlignment = Alignment.CenterVertically) { buttons() }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    ) { (dateMeasurables, buttonMeasurables), constraints ->
+        val width = constraints.maxWidth
+        val gap = BESIDE.roundToPx()
+        val buttonRow = buttonMeasurables.single().measure(Constraints(maxWidth = width))
+        val dateMeasurable = dateMeasurables.single()
+        val room = width - buttonRow.width - gap
+        // Enlarged text needs proportionally more room before the date reads as more than a column.
+        val dateNeeds = maxOf(dateMeasurable.minIntrinsicWidth(Constraints.Infinity), (DATE_MIN_WIDTH.toPx() * fontScale).roundToInt())
+        if (room >= dateNeeds) {
+            val datePlaced = dateMeasurable.measure(Constraints(maxWidth = room))
+            val height = maxOf(datePlaced.height, buttonRow.height)
+            layout(width, height) {
+                datePlaced.placeRelative(0, (height - datePlaced.height) / 2)
+                buttonRow.placeRelative(width - buttonRow.width, (height - buttonRow.height) / 2)
+            }
+        } else {
+            val datePlaced = dateMeasurable.measure(Constraints(maxWidth = width))
+            val below = datePlaced.height + GAP.roundToPx()
+            layout(width, below + buttonRow.height) {
+                datePlaced.placeRelative(0, 0)
+                buttonRow.placeRelative(width - buttonRow.width, below)
+            }
+        }
+    }
+}
+
 /** One result's figures and every lap, newest first as a stopwatch's own lap list shows them. */
 @Composable
 private fun ResultDetail(
@@ -522,14 +574,19 @@ private fun ResultDetail(
         verticalArrangement = Arrangement.spacedBy(GAP),
         modifier = Modifier.padding(horizontal = GAP).testTag("result-detail"),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(28.dp).clip(BUTTON_SHAPE).background(result.colour.color))
-            Text(
-                text = whenItRan(result, zone, locale),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-            )
+        DateBesideButtons(
+            date = {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(28.dp).clip(BUTTON_SHAPE).background(result.colour.color))
+                    Text(
+                        text = whenItRan(result, zone, locale),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            },
+        ) {
             ScreenButton(
                 label = R.string.action_edit_note,
                 enabled = true,
