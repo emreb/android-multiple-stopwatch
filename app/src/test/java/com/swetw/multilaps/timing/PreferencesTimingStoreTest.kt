@@ -30,8 +30,8 @@ class PreferencesTimingStoreTest {
     @Test
     fun `stopwatches in every state come back exactly, to the nanosecond`() {
         val start = clock.now() + 1.nanoseconds
-        val running = Stopwatch().start(start).lap(start + 30.seconds + 7.nanoseconds)
-        val stopped = Stopwatch().start(start)
+        val running = Stopwatch().start(start, clock.wallNow()).lap(start + 30.seconds + 7.nanoseconds)
+        val stopped = Stopwatch().start(start, clock.wallNow())
             .lap(start + 20.seconds)
             .lap(start + 45.seconds + 123.milliseconds)
             .stop(start + 50.seconds)
@@ -60,11 +60,23 @@ class PreferencesTimingStoreTest {
 
     @Test
     fun `a later save replaces an earlier one`() {
-        store.save(SavedTiming.of(listOf(Stopwatch().start(clock.now())), clock))
+        store.save(SavedTiming.of(listOf(Stopwatch().start(clock.now(), clock.wallNow())), clock))
         val later = SavedTiming.of(listOf(Stopwatch()), clock)
         store.save(later)
 
         assertEquals(later, store.load())
+    }
+
+    @Test
+    fun `timing saved before start times were kept loads, with no start time`() {
+        val earlier = """{"version":1,"bootCount":1,"bootedAtNanos":0,"stopwatches":[""" +
+            """{"state":"Stopped","lapsNanos":[30000000000],"accumulatedNanos":40000000000}]}"""
+        preferences.edit().putString(PreferencesTimingStore.KEY, earlier).commit()
+
+        val stopwatch = store.load()!!.stopwatches.single()
+        assertEquals(StopwatchState.Stopped, stopwatch.state)
+        assertEquals(listOf(30.seconds), stopwatch.laps)
+        assertNull(stopwatch.startedAt)
     }
 
     @Test
@@ -78,7 +90,7 @@ class PreferencesTimingStoreTest {
 
     @Test
     fun `data describing an impossible stopwatch is treated as nothing saved`() {
-        store.save(SavedTiming.of(listOf(Stopwatch().start(clock.now())), clock))
+        store.save(SavedTiming.of(listOf(Stopwatch().start(clock.now(), clock.wallNow())), clock))
         val tampered = preferences.getString(PreferencesTimingStore.KEY, null)!!
             .replace("\"Running\"", "\"Idle\"")
         preferences.edit().putString(PreferencesTimingStore.KEY, tampered).commit()

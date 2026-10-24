@@ -11,7 +11,7 @@ import kotlin.time.Duration.Companion.seconds
 class StopwatchLapsTest {
 
     private val start = 100.seconds
-    private val running = Stopwatch().start(now = start)
+    private val running = Stopwatch().start(now = start, wallNow = start)
 
     @Test
     fun `a stopwatch without completed laps has no last or best lap`() {
@@ -62,7 +62,7 @@ class StopwatchLapsTest {
         val stopwatch = running
             .lap(now = start + 30.seconds)
             .stop(now = start + 40.seconds)
-            .start(now = start + 500.seconds)
+            .start(now = start + 500.seconds, wallNow = start + 500.seconds)
 
         assertEquals(1, stopwatch.lapCount)
         assertEquals(10.seconds, stopwatch.currentLap(now = start + 500.seconds))
@@ -102,7 +102,7 @@ class StopwatchLapsTest {
     fun `a lap press straight after resuming counts`() {
         val resumed = running
             .stop(now = start + 20.seconds)
-            .start(now = start + 60.seconds)
+            .start(now = start + 60.seconds, wallNow = start + 60.seconds)
 
         val lapped = resumed.lap(now = start + 60.seconds + 300.milliseconds)
 

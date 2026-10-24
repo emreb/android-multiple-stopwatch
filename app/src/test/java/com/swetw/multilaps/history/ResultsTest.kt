@@ -1,15 +1,20 @@
 package com.swetw.multilaps.history
 
 import com.swetw.multilaps.stopwatch.FakeClock
+import com.swetw.multilaps.stopwatch.Stopwatch
+import com.swetw.multilaps.stopwatch.StopwatchState
 import com.swetw.multilaps.timing.FakeLabelStore
 import com.swetw.multilaps.timing.FakeTimingStore
+import com.swetw.multilaps.timing.SavedTiming
 import com.swetw.multilaps.timing.StopwatchColour
 import com.swetw.multilaps.timing.TimingViewModel
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class ResultsTest {
@@ -66,6 +71,95 @@ class ResultsTest {
         assertEquals(2, result.lapCount)
         assertEquals(63.seconds, result.totalTime)
         assertEquals(resetAt, result.resetAt)
+    }
+
+    @Test
+    fun `a result keeps the wall-clock time of its stopwatch's first start, not of a resume`() {
+        val startedAt = clock.wallNow()
+        timeAndStop(0)
+        clock.advanceBy(10.minutes)
+        viewModel.onStartPressed(0)
+        clock.advanceBy(5.seconds)
+        viewModel.onStopPressed(0)
+        clock.advanceBy(2.seconds)
+        val resetAt = clock.wallNow()
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertEquals(startedAt, results.single().startedAt)
+        assertEquals(resetAt, results.single().resetAt)
+    }
+
+    @Test
+    fun `stopwatches set off by start all share their start time`() {
+        val startedAt = clock.wallNow()
+        viewModel.onStartAllPressed()
+        clock.advanceBy(30.seconds)
+        (0..1).forEach(viewModel::onStartPressed)
+        (0..3).forEach(viewModel::onStopPressed)
+        clock.advanceBy(2.seconds)
+        viewModel.onResetAllPressed()
+        letUndoExpire()
+
+        assertEquals(listOf(startedAt, startedAt), results.map { it.startedAt })
+    }
+
+    @Test
+    fun `the start time outlives the app being closed, and the phone restarting, between start and reset`() {
+        val startedAt = clock.wallNow()
+        viewModel.onStartPressed(0)
+        clock.advanceBy(30.seconds)
+        viewModel.onStartPressed(0)
+        viewModel = reopened()
+        clock.restart(downtime = 2.minutes)
+        viewModel = reopened()
+        viewModel.onStopPressed(0)
+        clock.advanceBy(2.seconds)
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertEquals(startedAt, results.single().startedAt)
+    }
+
+    @Test
+    fun `an undone reset gives the stopwatch back its start time`() {
+        val startedAt = clock.wallNow()
+        timeAndStop(0)
+        viewModel.onStopPressed(0)
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+
+        assertEquals(startedAt, viewModel.stopwatches.value[0].startedAt)
+
+        clock.advanceBy(2.seconds)
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertEquals(startedAt, results.single().startedAt)
+    }
+
+    @Test
+    fun `a start time the wall clock has since been put back before is held to the reset`() {
+        timeAndStop(0)
+        clock.adjustWallClockBy(-1.days)
+        val resetAt = clock.wallNow()
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertEquals(resetAt, results.single().startedAt)
+    }
+
+    @Test
+    fun `a stopwatch carried over from before start times were kept gives a result without one`() {
+        timingStore.saved = SavedTiming.of(
+            listOf(Stopwatch(StopwatchState.Stopped, listOf(30.seconds), 40.seconds)) + List(3) { Stopwatch() },
+            clock,
+        )
+        viewModel = reopened()
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertNull(results.single().startedAt)
     }
 
     @Test

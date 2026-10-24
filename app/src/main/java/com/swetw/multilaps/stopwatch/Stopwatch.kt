@@ -10,12 +10,16 @@ enum class StopwatchState { Idle, Running, Stopped }
  * @property countingFrom the clock reading of the press that last started, resumed or lapped this
  *   stopwatch; set only while running. It can be negative once carried over a restart, standing
  *   for a press made before the device booted.
+ * @property startedAt the wall-clock time, since the epoch, of the first start after the last
+ *   reset; never set while idle. A stopwatch carried over from before start times were kept has
+ *   none until its next reset.
  */
 data class Stopwatch(
     val state: StopwatchState = StopwatchState.Idle,
     val laps: List<Duration> = emptyList(),
     val accumulated: Duration = Duration.ZERO,
     val countingFrom: Duration? = null,
+    val startedAt: Duration? = null,
 ) {
 
     private val completedLapsTime: Duration = laps.fold(Duration.ZERO, Duration::plus)
@@ -26,6 +30,9 @@ data class Stopwatch(
         }
         require(state != StopwatchState.Idle || accumulated == Duration.ZERO) {
             "An idle stopwatch has no time"
+        }
+        require(state != StopwatchState.Idle || startedAt == null) {
+            "An idle stopwatch has not been started"
         }
         require(completedLapsTime <= accumulated) {
             "Completed laps cannot be longer than the total time"
@@ -39,10 +46,11 @@ data class Stopwatch(
 
     val bestLap: Duration? get() = laps.minOrNull()
 
-    fun start(now: Duration): Stopwatch = when (state) {
+    /** Starts or resumes; [wallNow] becomes the start time only when starting from idle. */
+    fun start(now: Duration, wallNow: Duration): Stopwatch = when (state) {
         StopwatchState.Running -> this
-        StopwatchState.Idle, StopwatchState.Stopped ->
-            copy(state = StopwatchState.Running, countingFrom = now)
+        StopwatchState.Idle -> copy(state = StopwatchState.Running, countingFrom = now, startedAt = wallNow)
+        StopwatchState.Stopped -> copy(state = StopwatchState.Running, countingFrom = now)
     }
 
     /** Completes the current lap. Every press counts, however soon after the last. */
@@ -59,7 +67,7 @@ data class Stopwatch(
 
     fun reset(): Stopwatch = when (state) {
         StopwatchState.Stopped ->
-            copy(state = StopwatchState.Idle, laps = emptyList(), accumulated = Duration.ZERO)
+            copy(state = StopwatchState.Idle, laps = emptyList(), accumulated = Duration.ZERO, startedAt = null)
         StopwatchState.Idle, StopwatchState.Running -> this
     }
 

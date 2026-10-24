@@ -13,6 +13,8 @@ import kotlin.time.Duration
  * @property laps the completed laps, oldest first; there is always at least one.
  * @property totalTime the total time at the reset, which takes in a last lap left unfinished.
  * @property resetAt the wall-clock time of the reset, since the epoch.
+ * @property startedAt the wall-clock time the stopwatch was first started after its last reset,
+ *   since the epoch; never after [resetAt]. Results kept before start times were recorded have none.
  */
 data class Result(
     val id: Long,
@@ -21,6 +23,7 @@ data class Result(
     val laps: List<Duration>,
     val totalTime: Duration,
     val resetAt: Duration,
+    val startedAt: Duration? = null,
 ) {
 
     init {
@@ -28,6 +31,7 @@ data class Result(
         require(laps.fold(Duration.ZERO, Duration::plus) <= totalTime) {
             "Completed laps cannot be longer than the total time"
         }
+        require(startedAt == null || startedAt <= resetAt) { "A result cannot start after its reset" }
     }
 
     val lapCount: Int get() = laps.size

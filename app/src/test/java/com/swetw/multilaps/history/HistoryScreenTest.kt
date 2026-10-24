@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -51,6 +52,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.time.ZoneId
+import kotlin.time.Duration.Companion.minutes
 
 @RunWith(AndroidJUnit4::class)
 @Config(qualifiers = PORTRAIT_PHONE)
@@ -140,6 +142,50 @@ class HistoryScreenTest {
         val spoken = row("Ada").fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single()
         assertEquals("Ada, 4:42 PM, total time 4:44.00, 3 laps, best lap 1:22.00", spoken.replace(' ', ' '))
         row("Leo").assertContentDescriptionContains("1 lap,")
+    }
+
+    @Test
+    fun `a result that has a start time is read out and shown from its start to its reset`() {
+        results = listOf(ada.copy(startedAt = ada.resetAt - 40.minutes))
+        show()
+
+        val spoken = row("Ada").fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single()
+        assertEquals("Ada, 4:02 PM to 4:42 PM, total time 4:44.00, 3 laps, best lap 1:22.00", spoken.replace('\u202f', ' '))
+        composeRule.onNode(hasTextIgnoringSpaces("4:02 PM–4:42 PM, 3 laps, best 1:22.00"), useUnmergedTree = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `a result's page gives its date with its start and reset times`() {
+        results = listOf(ada.copy(startedAt = ada.resetAt - 40.minutes))
+        show()
+        row("Ada").performClick()
+
+        composeRule.onNode(hasTextIgnoringSpaces("Monday, October 12, 2026, 4:02 PM–4:42 PM")).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a result reset on a later day than it started gives the date again with the reset`() {
+        results = listOf(result(1, "2026-10-13T00:10", lisbon, name = "Ada", startedAt = "2026-10-12T23:50"))
+        show()
+        row("Ada").performClick()
+
+        composeRule.onNode(
+            hasTextIgnoringSpaces("Monday, October 12, 2026, 11:50 PM – Tuesday, October 13, 2026, 12:10 AM"),
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a result kept before start times were recorded gives only its date and reset time`() {
+        show()
+        row("Ada").performClick()
+
+        composeRule.onNode(hasTextIgnoringSpaces("Monday, October 12, 2026, 4:42 PM")).assertIsDisplayed()
+    }
+
+    /** Text as written, taking the narrow no-break space some versions put before "PM" for a plain one. */
+    private fun hasTextIgnoringSpaces(text: String) = SemanticsMatcher("has text $text") { node ->
+        node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.replace('\u202f', ' ') == text }
     }
 
     @Test
