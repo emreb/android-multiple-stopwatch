@@ -25,9 +25,14 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.unit.dp
+import org.junit.Assert.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
 import com.swetw.multilaps.Devices.SMALL_PHONE
+import com.swetw.multilaps.Devices.SMALL_PHONE_LANDSCAPE
 import com.swetw.multilaps.theme.MultiLapsTheme
 import org.junit.Rule
 import org.junit.Test
@@ -266,6 +271,29 @@ class NotesInHistoryTest {
         settle()
 
         noteDialog().assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
+    fun `on a small phone with enlarged text the result's page keeps room for its date beside the buttons`() {
+        show()
+        row("Ada").performClick()
+        settle()
+
+        val date = composeRule.onNode(hasText("October", substring = true)).getUnclippedBoundsInRoot()
+        assertTrue("date squeezed to ${date.right - date.left}", date.right - date.left >= 96.dp)
+        composeRule.onNodeWithTag("edit-note").assertIsDisplayed()
+        composeRule.onNodeWithTag("share-result").assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE_LANDSCAPE)
+    fun `in a short window a long note still leaves save within reach`() {
+        show(listOf(ada.copy(note = (1..40).joinToString("\n") { "Line $it" })))
+        row("Ada").performTouchInput { swipeRight() }
+        settle()
+
+        composeRule.onNodeWithTag("save-note").performScrollTo().assertIsDisplayed()
     }
 }
 
