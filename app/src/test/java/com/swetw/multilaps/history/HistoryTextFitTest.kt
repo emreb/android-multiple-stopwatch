@@ -39,7 +39,7 @@ class HistoryTextFitTest {
 
     private fun show() = composeRule.setContent {
         MultiLapsTheme {
-            HistoryScreen(listOf(long), onResultDeleted = {}, onAllResultsDeleted = {}, onBack = {}, zone = lisbon)
+            HistoryScreen(listOf(long), onNoteEdited = { _, _ -> }, onResultDeleted = {}, onAllResultsDeleted = {}, onBack = {}, zone = lisbon)
         }
     }
 
