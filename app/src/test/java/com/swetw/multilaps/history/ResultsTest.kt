@@ -349,7 +349,7 @@ class ResultsTest {
     }
 
     @Test
-    fun `results are listed most recently reset first`() {
+    fun `results are listed most recently started first`() {
         listOf("Ada", "Leo", "Mia").forEachIndexed { index, name ->
             viewModel.onNameChanged(index, name)
             timeAndStop(index)
@@ -361,13 +361,64 @@ class ResultsTest {
     }
 
     @Test
-    fun `results reset at the same moment keep the order of their stopwatches`() {
-        timeAndStop(0)
+    fun `a result started later comes first, though reset sooner`() {
+        viewModel.onStartPressed(0)
+        clock.advanceBy(10.seconds)
         timeAndStop(1)
-        timeAndStop(2)
+        viewModel.onStopPressed(1)
+        letUndoExpire()
+        clock.advanceBy(5.seconds)
+        viewModel.onStartPressed(0)
+        viewModel.onStopPressed(0)
+        clock.advanceBy(2.seconds)
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertEquals(listOf("2", "1"), results.map { it.name })
+        assertEquals(listOf("2", "1"), reopened().results.value.map { it.name })
+    }
+
+    @Test
+    fun `results reset at the same moment, from stopwatches started together, keep the order of their stopwatches`() {
+        viewModel.onStartAllPressed()
+        clock.advanceBy(30.seconds)
+        (0..2).forEach(viewModel::onStartPressed)
+        (0..3).forEach(viewModel::onStopPressed)
+        clock.advanceBy(2.seconds)
         viewModel.onResetAllPressed()
 
         assertEquals(listOf("1", "2", "3"), results.map { it.name })
+    }
+
+    @Test
+    fun `a result kept without a start time is placed by its reset`() {
+        // Reset after the new result starts but before it is reset.
+        val resetAt = clock.wallNow() + 10.seconds
+        historyStore.saved = listOf(Result(99, "Old", StopwatchColour.Red, listOf(30.seconds), 30.seconds, resetAt))
+        viewModel = reopened()
+        timeAndStop(0)
+        viewModel.onStopPressed(0)
+        letUndoExpire()
+
+        assertEquals(listOf("Old", "1"), results.map { it.name })
+    }
+
+    @Test
+    fun `undoing a reset takes back only its own result, wherever that is listed`() {
+        viewModel.onStartPressed(0)
+        clock.advanceBy(10.seconds)
+        timeAndStop(1)
+        viewModel.onStopPressed(1)
+        letUndoExpire()
+        clock.advanceBy(5.seconds)
+        viewModel.onStartPressed(0)
+        viewModel.onStopPressed(0)
+        clock.advanceBy(2.seconds)
+        viewModel.onStopPressed(0)
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+
+        assertEquals(listOf("2"), results.map { it.name })
     }
 
     @Test

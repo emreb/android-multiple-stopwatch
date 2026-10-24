@@ -38,6 +38,26 @@ class DaysTest {
     }
 
     @Test
+    fun `a result is gathered under the day it started, though reset after midnight`() {
+        val results = listOf(
+            result(1, "2026-10-13T00:44", lisbon, startedAt = "2026-10-12T23:42"),
+            result(2, "2026-10-12T21:00", lisbon, startedAt = "2026-10-12T20:00"),
+        )
+
+        assertEquals(listOf(Day(LocalDate.of(2026, 10, 12), results)), results.byDay(lisbon))
+    }
+
+    @Test
+    fun `a result kept without a start time is gathered under the day it was reset`() {
+        val results = listOf(
+            result(1, "2026-10-13T00:44", lisbon),
+            result(2, "2026-10-12T23:50", lisbon, startedAt = "2026-10-12T23:42"),
+        )
+
+        assertEquals(listOf(13, 12), results.byDay(lisbon).map { it.date.dayOfMonth })
+    }
+
+    @Test
     fun `either side of midnight is two days`() {
         val results = listOf(
             result(1, "2026-10-13T00:00", lisbon),

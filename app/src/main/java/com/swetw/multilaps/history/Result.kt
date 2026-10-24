@@ -36,6 +36,9 @@ data class Result(
         require(startedAt == null || startedAt <= resetAt) { "A result cannot start after its reset" }
     }
 
+    /** What places this result in History: its start, or its reset where no start time was kept. */
+    val placedAt: Duration get() = startedAt ?: resetAt
+
     val lapCount: Int get() = laps.size
 
     val bestLap: Duration get() = laps.min()
