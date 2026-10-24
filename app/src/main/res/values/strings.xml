@@ -75,9 +75,9 @@
     </plurals>
     <!-- Under a result's name in the history list: when it ran, lap count, best lap. -->
     <string name="result_details">%1$s, %2$s, best %3$s</string>
-    <!-- When a result ran, in the history list: the time of day it started, then the time it was reset. -->
+    <!-- When a result ran, in the history list and in shared text: the time of day it started, then the time it was reset. -->
     <string name="time_range">%1$s–%2$s</string>
-    <!-- When a result ran, in shared text, where it was reset on a later day than it started: the time it started, then the date and time it was reset. -->
+    <!-- When a result ran, in shared text, where it was reset on a later day than it started: the time it started, then the date and time it was reset. Spaced, unlike time_range, because the date has commas of its own. -->
     <string name="time_range_across_days">%1$s – %2$s</string>
     <!-- The same as time_range, as spoken. -->
     <string name="time_range_spoken">%1$s to %2$s</string>

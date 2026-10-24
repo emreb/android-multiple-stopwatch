@@ -121,13 +121,20 @@ class ShareTextTest {
     }
 
     @Test
-    fun `a result reset on a later day than it started is shared with the reset's date as well`() {
+    fun `a result reset on a later day than it started is shared under the day it started, with the reset's date as well`() {
         val ada = result(1, "2026-10-13T00:10", lisbon, name = "Ada", startedAt = "2026-10-12T23:50")
 
         assertEquals(
-            "Ada, 23:50 – Tuesday, 13 October 2026, 00:10",
-            shareText(listOf(ada), lisbon, Locale.UK, resources, APP).lines()[2],
+            listOf("MultiLaps, Monday, 12 October 2026", "", "Ada, 23:50 – Tuesday, 13 October 2026, 00:10"),
+            shareText(listOf(ada), lisbon, Locale.UK, resources, APP).lines().take(3),
         )
+    }
+
+    @Test
+    fun `a result kept without a start time is shared with its reset time alone`() {
+        val ada = result(1, "2026-10-12T16:42", lisbon, name = "Ada")
+
+        assertEquals("Ada, 16:42", shareText(listOf(ada), lisbon, Locale.UK, resources, APP).lines()[2])
     }
 
     @Test
