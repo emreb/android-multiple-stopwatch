@@ -161,4 +161,18 @@ class NotesTest {
     fun `there is no note to write on a stopwatch that does not exist`() {
         assertThrows(IllegalArgumentException::class.java) { viewModel.onNoteChanged(4, "Spikes on") }
     }
+
+    @Test
+    fun `undoing reset all brings back each stopwatch's own note`() {
+        timeAndStop(0)
+        timeAndStop(1)
+        viewModel.onNoteChanged(0, "Ada's note")
+        viewModel.onNoteChanged(1, "Leo's note")
+        viewModel.onResetAllPressed()
+        clock.advanceBy(2.seconds)
+        viewModel.onUndoPressed()
+
+        assertEquals(listOf("Ada's note", "Leo's note", "", ""), stopwatches.map { it.note })
+        assertTrue(results.isEmpty())
+    }
 }

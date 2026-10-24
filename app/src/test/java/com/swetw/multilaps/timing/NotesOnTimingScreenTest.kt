@@ -104,6 +104,7 @@ class NotesOnTimingScreenTest {
 
         noteMark(tile = 1).assertIsDisplayed()
         noteMark(tile = 2).assertDoesNotExist()
+        composeRule.onNode(hasTestTag("stopwatch-name") and inTile(1)).assert(hasContentDescription("Has a note"))
     }
 
     @Test

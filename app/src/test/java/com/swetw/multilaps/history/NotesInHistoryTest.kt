@@ -8,6 +8,8 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.swetw.multilaps.Devices.PORTRAIT_PHONE
@@ -96,5 +98,17 @@ class NotesInHistoryTest {
         row("Leo").performClick()
 
         composeRule.onNodeWithTag("result-note").assertDoesNotExist()
+    }
+
+    @Test
+    @Config(qualifiers = SMALL_PHONE)
+    fun `a long note leaves the figures and laps in sight, and can be scrolled to its end`() {
+        val lines = (1..40).joinToString("\n") { "Line $it" }
+        show(listOf(ada.copy(note = lines)))
+        row("Ada").performClick()
+
+        composeRule.onNodeWithTag("result-figures").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("lap-row")[0].assertIsDisplayed()
+        composeRule.onNodeWithTag("result-note").assertIsDisplayed().assert(hasScrollAction())
     }
 }

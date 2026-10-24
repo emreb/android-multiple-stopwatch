@@ -22,6 +22,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -75,6 +77,9 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 
 private val GAP = 8.dp
+
+/** About five lines of a result's note, the most it shows before it scrolls. */
+private val NOTE_MAX_HEIGHT = 120.dp
 
 /**
  * What has been timed and reset, by day with the most recent first. Tapping a result opens its
@@ -454,11 +459,16 @@ private fun ResultDetail(result: Result, zone: ZoneId, locale: Locale, onDeleted
                 modifier = Modifier.testTag("share-result"),
             )
         }
+        // A long note scrolls in a few lines of its own, rather than pushing the figures and
+        // laps out of sight.
         if (result.note.isNotEmpty()) {
             Text(
                 text = result.note,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.testTag("result-note"),
+                modifier = Modifier
+                    .heightIn(max = NOTE_MAX_HEIGHT)
+                    .verticalScroll(rememberScrollState())
+                    .testTag("result-note"),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(GAP), modifier = Modifier.testTag("result-figures")) {
