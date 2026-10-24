@@ -2,6 +2,7 @@ package com.swetw.multilaps.history
 
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.swetw.multilaps.Devices.LANDSCAPE_PHONE
 import com.swetw.multilaps.Devices.SMALL_PHONE
 import com.swetw.multilaps.Devices.SMALL_PHONE_LANDSCAPE
 import com.swetw.multilaps.theme.MultiLapsTheme
@@ -82,14 +84,23 @@ class HistoryTextFitTest {
         assertTrue("$text breaks inside a word at $broken", broken.isEmpty())
     }
 
-    /** The result's page gives its start and reset in whole words, and still offers both its buttons. */
-    private fun assertDetailDateShownWhole() {
+    /**
+     * The result's page gives its start and reset in whole words and still offers both its buttons:
+     * on the date's line where [beside], or on a line below it otherwise.
+     */
+    private fun assertDetailDateShownWhole(beside: Boolean) {
         show()
         composeRule.onNode(hasTestTag("result-row")).performClick()
 
-        text("Started", within = "result-detail").assertShownWholeWords()
-        composeRule.onNodeWithTag("edit-note").assertIsDisplayed()
-        composeRule.onNodeWithTag("share-result").assertIsDisplayed()
+        val date = text("Started", within = "result-detail").apply { assertShownWholeWords() }.getUnclippedBoundsInRoot()
+        for (tag in listOf("edit-note", "share-result")) {
+            val button = composeRule.onNodeWithTag(tag).assertIsDisplayed().getUnclippedBoundsInRoot()
+            if (beside) {
+                assertTrue("$tag at ${button.top} is not beside the date ending ${date.bottom}", button.top < date.bottom)
+            } else {
+                assertTrue("$tag at ${button.top} is not below the date ending ${date.bottom}", button.top >= date.bottom)
+            }
+        }
     }
 
     private fun assertDetailFiguresShownWhole() {
@@ -126,23 +137,28 @@ class HistoryTextFitTest {
 
     @Test
     @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)
-    fun `a result's page gives its start and reset in whole words beside its buttons, on a small phone with enlarged text`() =
-        assertDetailDateShownWhole()
+    fun `a result's page gives its start and reset in whole words with its buttons below, on a small phone with enlarged text`() =
+        assertDetailDateShownWhole(beside = false)
 
     @Test
     @Config(qualifiers = SMALL_PHONE)
     fun `a result's page gives its start and reset in whole words beside its buttons, on a small phone`() =
-        assertDetailDateShownWhole()
+        assertDetailDateShownWhole(beside = true)
 
     @Test
     @Config(qualifiers = "w360dp-h740dp-port")
     fun `a result's page gives its start and reset in whole words beside its buttons, on an ordinary phone`() =
-        assertDetailDateShownWhole()
+        assertDetailDateShownWhole(beside = true)
+
+    @Test
+    @Config(qualifiers = LANDSCAPE_PHONE)
+    fun `a result's page gives its start and reset beside its buttons on a phone on its side, where height is short`() =
+        assertDetailDateShownWhole(beside = true)
 
     @Test
     @Config(qualifiers = SMALL_PHONE_LANDSCAPE, fontScale = 1.5f)
-    fun `a result's page gives its start and reset in whole words beside its buttons, on a small phone on its side with enlarged text`() =
-        assertDetailDateShownWhole()
+    fun `a result's page gives its start and reset beside its buttons on a small phone on its side, even with enlarged text`() =
+        assertDetailDateShownWhole(beside = true)
 
     @Test
     @Config(qualifiers = SMALL_PHONE, fontScale = 1.5f)

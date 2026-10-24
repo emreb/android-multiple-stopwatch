@@ -19,6 +19,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -186,6 +187,20 @@ class HistoryScreenTest {
     /** Text as written, taking the narrow no-break space some versions put before "PM" for a plain one. */
     private fun hasTextIgnoringSpaces(text: String) = SemanticsMatcher("has text $text") { node ->
         node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.replace('\u202f', ' ') == text }
+    }
+
+    @Test
+    fun `in a right-to-left language a result's buttons come before its date, from the right`() {
+        composeRule.setContent {
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Rtl,
+            ) { Screen() }
+        }
+        row("Ada").performClick()
+
+        val date = composeRule.onNode(hasText("October", substring = true)).getUnclippedBoundsInRoot()
+        val share = composeRule.onNodeWithTag("share-result").getUnclippedBoundsInRoot()
+        assertTrue("share at ${share.left}, date at ${date.left}", share.right <= date.left)
     }
 
     @Test

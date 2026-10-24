@@ -93,6 +93,9 @@ private val GAP = 8.dp
 /** About five lines of a result's note, the most it shows before it scrolls. */
 private val NOTE_MAX_HEIGHT = 120.dp
 
+/** Between a result's date and its buttons, and between the buttons. */
+private val BESIDE = 12.dp
+
 /**
  * The least width a result's date is given beside its buttons, at ordinary text size, before they
  * go below it instead; enlarged text asks for proportionally more.
@@ -509,20 +512,20 @@ private fun whenItRan(result: Result, zone: ZoneId, locale: Locale): String {
 
 /**
  * A result's [date] with its [buttons] at the end of the same line, where that leaves the date room
- * for its longest word and at least [DATE_MIN_WIDTH], scaled with the text. Where it would not, as on a narrow phone with
- * enlarged text, the date has the whole width and the buttons go on the line below, so the date is
- * never broken inside a word. A wide screen keeps them on one line, and the height that saves.
+ * for its longest word and for [DATE_MIN_WIDTH], scaled with the text. Otherwise, as on a narrow
+ * phone with enlarged text, the date has the whole width and the buttons go on the line below, so
+ * it never breaks inside a word. Wide screens keep one line, sparing the height a short one needs.
  */
 @Composable
 private fun DateBesideButtons(date: @Composable () -> Unit, buttons: @Composable RowScope.() -> Unit) {
     Layout(
         contents = listOf(date) + @Composable {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) { buttons() }
+            Row(horizontalArrangement = Arrangement.spacedBy(BESIDE), verticalAlignment = Alignment.CenterVertically) { buttons() }
         },
         modifier = Modifier.fillMaxWidth(),
     ) { (dateMeasurables, buttonMeasurables), constraints ->
         val width = constraints.maxWidth
-        val gap = 12.dp.roundToPx()
+        val gap = BESIDE.roundToPx()
         val buttonRow = buttonMeasurables.single().measure(Constraints(maxWidth = width))
         val dateMeasurable = dateMeasurables.single()
         val room = width - buttonRow.width - gap
@@ -532,15 +535,15 @@ private fun DateBesideButtons(date: @Composable () -> Unit, buttons: @Composable
             val datePlaced = dateMeasurable.measure(Constraints(maxWidth = room))
             val height = maxOf(datePlaced.height, buttonRow.height)
             layout(width, height) {
-                datePlaced.place(0, (height - datePlaced.height) / 2)
-                buttonRow.place(width - buttonRow.width, (height - buttonRow.height) / 2)
+                datePlaced.placeRelative(0, (height - datePlaced.height) / 2)
+                buttonRow.placeRelative(width - buttonRow.width, (height - buttonRow.height) / 2)
             }
         } else {
             val datePlaced = dateMeasurable.measure(Constraints(maxWidth = width))
-            val below = datePlaced.height + 8.dp.roundToPx()
+            val below = datePlaced.height + GAP.roundToPx()
             layout(width, below + buttonRow.height) {
-                datePlaced.place(0, 0)
-                buttonRow.place(width - buttonRow.width, below)
+                datePlaced.placeRelative(0, 0)
+                buttonRow.placeRelative(width - buttonRow.width, below)
             }
         }
     }
